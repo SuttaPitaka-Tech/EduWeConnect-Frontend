@@ -128,7 +128,8 @@ npx tsc --noEmit   # → 0 errors required
 - [ ] Zero `window.confirm()` — use `<Dialog>` instead
 - [ ] Every mutation has `toast.success()` + `toast.error(formatApiClientError(...))`
 - [ ] Every query has `staleTime: 0`
-- [ ] Loading states use `<Spinner />` — never `<p>Loading...</p>`
+- [ ] **Mandatory Spinner on every API call:** Buttons must have `isLoading={mutation.isPending}`, tables/pages must render `<Spinner />` until the API succeeds.
+- [ ] Loading states use `<Spinner />` or `<SkeletonRow />` — never `<p>Loading...</p>`
 - [ ] All colors use `var(--token)` — no hardcoded hex values
 - [ ] Form labels use `text-xs` (12px) — never `text-sm`
 - [ ] Cross-feature imports only via `@/features/<domain>` barrel (`index.ts`)
@@ -291,6 +292,45 @@ export function useCreateAttendanceMutation() {
     },
   })
 }
+### Mandatory Loading Spinner on EVERY API Call
+```tsx
+// 1. In Query/Page views — Show centered Spinner or Skeleton until data is ready:
+if (isLoading) {
+  return (
+    <div className="flex h-64 items-center justify-center">
+      <Spinner size={32} />
+    </div>
+  )
+}
+
+// 2. In Mutation/Form submit buttons — Always bind isLoading={mutation.isPending}:
+<Button
+  type="submit"
+  variant="primary"
+  isLoading={createMutation.isPending}
+>
+  Save Record
+</Button>
+
+// 3. Inside Modals / Dialogs / Side Sheets:
+// While fetching modal edit data, show centered Spinner; during submit, bind isLoading to modal action button:
+{isLoadingRecord ? (
+  <div className="flex h-48 items-center justify-center">
+    <Spinner size={32} />
+  </div>
+) : (
+  <form onSubmit={handleSubmit(onSubmit)}>
+    {/* Form Inputs */}
+    <DialogFooter>
+      <Button variant="outline" disabled={updateMutation.isPending} onClick={onClose}>
+        Cancel
+      </Button>
+      <Button variant="primary" type="submit" isLoading={updateMutation.isPending}>
+        Save Changes
+      </Button>
+    </DialogFooter>
+  </form>
+)}
 ```
 
 ---
