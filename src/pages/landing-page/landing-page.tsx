@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui'
 import { eduLogo, heroBg, lotusLarge, footerBg } from '@/assets/images'
 import { 
@@ -31,6 +31,8 @@ function Divider() {
 }
 
 export default function LandingPage() {
+  const navigate = useNavigate()
+
   return (
     <div className="min-h-screen bg-[var(--cream)] flex flex-col font-sans">
       {/* Header */}
@@ -57,7 +59,7 @@ export default function LandingPage() {
             <Link to="/login" className="text-[15px] font-semibold text-[var(--navy)] hover:opacity-70 transition-opacity">
               Sign in
             </Link>
-            <Button variant="primary" size="lg" className="rounded-md font-semibold px-7 shadow-sm">
+            <Button onClick={() => navigate('/register')} variant="primary" size="lg" className="rounded-md font-semibold px-7 shadow-sm">
               Get started
             </Button>
           </div>
@@ -90,7 +92,7 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-4">
-              <Button variant="primary" size="lg" className="rounded-md font-semibold px-8 h-[52px] text-[15px] shadow-sm">
+              <Button onClick={() => navigate('/register')} variant="primary" size="lg" className="rounded-md font-semibold px-8 h-[52px] text-[15px] shadow-sm">
                 Get started
               </Button>
               <Button 
@@ -173,7 +175,7 @@ export default function LandingPage() {
               </p>
             </div>
             
-            <Button className="bg-[#B8862C] hover:bg-[#a67725] text-white rounded-md font-semibold px-8 h-[52px] text-[15px] border-none shadow-md shrink-0 transition-colors z-20">
+            <Button onClick={() => navigate('/register')} className="bg-[#B8862C] hover:bg-[#a67725] text-white rounded-md font-semibold px-8 h-[52px] text-[15px] border-none shadow-md shrink-0 transition-colors z-20">
               Get started now <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </div>
