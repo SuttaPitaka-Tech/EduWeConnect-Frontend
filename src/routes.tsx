@@ -21,7 +21,7 @@ import { GuestOnlyRoute } from '@/components/guest-only-route'
 import { AuthProvider }   from '@/contexts/auth-context'
 
 // ── Auth pages ──────────────────────────────────────────────────────────────
-const LoginPage          = lazyWithRetry(() => import('@/features/auth/pages/login-page'))
+const LandingPage        = lazyWithRetry(() => import('@/pages/landing-page/landing-page'))
 const ForgotPasswordPage = lazyWithRetry(() => import('@/features/auth/pages/forgot-password-page'))
 const OtpPage            = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
 
@@ -87,11 +87,7 @@ export function createAppRouter(queryClient: QueryClient) {
     // ── Guest-only auth routes ───────────────────────────────────────────────
     {
       path: '/login',
-      element: (
-        <AuthProvider>
-          <GuestOnlyRoute><Lazy><LoginPage /></Lazy></GuestOnlyRoute>
-        </AuthProvider>
-      ),
+      element: <Lazy><LandingPage /></Lazy>,
     },
     {
       path: '/forgot-password',
