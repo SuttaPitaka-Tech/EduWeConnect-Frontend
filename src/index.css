@@ -1,0 +1,179 @@
+/* =====================================================
+   EduWeConnect — Global Design System
+   MANAGER-APPROVED TOKENS. DO NOT CHANGE VALUES.
+   ===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Primary Brand Colors */
+  --navy: #102A43;
+  --deep-navy: #0B1F33;
+  --gold: #B8862C;
+  --light-gold: #D6A84F;
+
+  /* Background */
+  --cream: #F7F1E3;
+  --warm-white: #FFFDF8;
+  --beige: #EDE2CC;
+  --sand: #D8C29D;
+
+  /* Text */
+  --text-primary: #102A43;
+  --text-secondary: #536579;
+  --text-muted: #7C8794;
+
+  /* Borders / Inputs */
+  --border: #DED5C5;
+  --input-bg: #FFFCF6;
+
+  /* Success / Support */
+  --success: #56745A;
+
+  /* Main Background */
+  --page-background: linear-gradient(
+    135deg,
+    #F7F1E3 0%,
+    #FFFDF8 45%,
+    #EDE2CC 100%
+  );
+
+  /* Login/Register Card */
+  --card-background: rgba(255, 253, 248, 0.96);
+  --card-shadow: 0 20px 60px rgba(16, 42, 67, 0.15);
+
+  /* Primary Button */
+  --button-background: #102A43;
+  --button-hover: #0B1F33;
+  --button-text: #FFFFFF;
+
+  /* Gold Decorative Gradient */
+  --gold-gradient: linear-gradient(135deg, #B8862C, #D6A84F);
+
+  /* Footer */
+  --footer-background: #0B1F33;
+  --footer-text: #F7F1E3;
+  --footer-accent: #D6A84F;
+
+  /* Radius */
+  --radius: 0.5rem;
+}
+
+/* ── Base Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--page-background);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Input Focus: zero glow ring ── */
+input:focus,
+input:focus-visible,
+select:focus,
+select:focus-visible,
+textarea:focus,
+textarea:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--navy) !important;
+}
+
+/* ── Button hover lift physics (Action buttons ONLY — NOT dropdowns/inputs) ── */
+button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):hover,
+[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 42, 67, 0.15), 0 2px 4px rgba(16, 42, 67, 0.08);
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):active,
+[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):active {
+  transform: translateY(0);
+  transition: transform 80ms ease-out;
+}
+
+/* Dropdown triggers stay 100% flat with zero movement */
+[data-dropdown-trigger] {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--beige);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--sand);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+/* ── Table Row Hover Effect ── */
+tbody tr {
+  transition: background-color 150ms ease;
+}
+tbody tr:hover {
+  background-color: var(--cream, #F7F1E3) !important;
+}
+
+/* ── Toast Variant Styling (White BG + --cream Border + Themed Icons/Text) ── */
+[data-sonner-toast] {
+  background-color: #FFFFFF !important;
+  border-color: var(--cream, #F7F1E3) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 30px -5px rgba(16, 42, 67, 0.12), 0 0 0 1px rgba(247, 241, 227, 0.6) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-title] {
+  color: #15803d !important;
+}
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: #16a34a !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-title] {
+  color: #b91c1c !important;
+}
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: #dc2626 !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-title] {
+  color: #b45309 !important;
+}
+[data-sonner-toast][data-type="warning"] [data-icon] {
+  color: #d97706 !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-title] {
+  color: #1d4ed8 !important;
+}
+[data-sonner-toast][data-type="info"] [data-icon] {
+  color: #2563eb !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: #475569 !important;
+}
