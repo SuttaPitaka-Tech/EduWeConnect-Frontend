@@ -47,22 +47,15 @@ export function AppHeader() {
   const fullName = user ? `${user.firstName} ${user.lastName}` : 'Guest'
 
   return (
-    <header
-      className="w-full sticky top-0 z-50"
-      style={{
-        background:   'var(--beige)',
-        borderBottom: '1px solid rgba(184,134,44,0.25)',
-        boxShadow:    '0 2px 12px rgba(16,42,67,0.07)',
-      }}
-    >
-      <div className="w-full px-4 md:px-6 h-[52px] flex items-center justify-between">
+    <header className="w-full bg-[var(--cream)] sticky top-0 z-50 shadow-sm border-b border-[var(--border)]/60">
+      <div className="w-full px-3 md:px-5 h-[64px] flex items-center justify-between">
 
-        {/* ── Left corner: Logo ────────────────────────────────────────────── */}
-        <Link to="/app/attendance" className="flex items-center shrink-0">
+        {/* ── Left corner: Logo (Full left edge) ───────────────────────────── */}
+        <Link to="/app/attendance" className="flex items-center shrink-0 -ml-1">
           <img
             src={eduLogo}
             alt="EduWeConnect"
-            className="h-[52px] w-auto object-contain"
+            className="h-[60px] w-auto object-contain"
           />
         </Link>
 
@@ -72,20 +65,19 @@ export function AppHeader() {
             data-plain
             data-dropdown-trigger
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2.5 p-0 bg-transparent border-0 outline-none shadow-none cursor-pointer select-none hover:bg-transparent hover:shadow-none !transform-none !transition-none"
-            style={{ background: 'transparent', boxShadow: 'none', border: 'none', transform: 'none' }}
+            className="flex items-center gap-3 p-1.5 px-3 rounded-xl bg-white/60 hover:bg-white/90 border border-[var(--border)]/70 shadow-sm cursor-pointer select-none transition-all"
           >
             <InitialsAvatar
               name={fullName}
               size="md"
-              className="!bg-[var(--beige)] border border-[var(--sand)]"
+              className="!bg-[var(--cream)] border border-[var(--sand)]"
             />
-            <span className="hidden md:block text-[15px] font-semibold max-w-[140px] truncate" style={{ color: 'var(--navy)' }}>
+            <span className="hidden md:block text-[14px] font-semibold max-w-[150px] truncate text-[var(--navy)]">
               {fullName}
             </span>
             <ChevronDown
-              className="w-4 h-4"
-              style={{ color: 'var(--navy)', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 150ms ease' }}
+              className="w-4 h-4 text-[var(--navy)] transition-transform duration-150"
+              style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
             />
           </button>
 
