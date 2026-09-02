@@ -21,7 +21,8 @@ import { GuestOnlyRoute } from '@/components/guest-only-route'
 import { AuthProvider }   from '@/contexts/auth-context'
 
 // ── Auth pages ──────────────────────────────────────────────────────────────
-const LoginPage          = lazyWithRetry(() => import('@/features/auth/pages/login-page'))
+const LandingPage        = lazyWithRetry(() => import('@/pages/landing-page/landing-page'))
+const RegisterPage       = lazyWithRetry(() => import('@/pages/register-page/register-page'))
 const ForgotPasswordPage = lazyWithRetry(() => import('@/features/auth/pages/forgot-password-page'))
 const OtpPage            = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
 
@@ -49,9 +50,19 @@ function Lazy({ children }: { children: JSX.Element }) {
 export function createAppRouter(queryClient: QueryClient) {
   return createBrowserRouter([
 
-    // ── Protected app shell ──────────────────────────────────────────────────
+    // ── Public Landing Page ──────────────────────────────────────────────────
     {
       path: '/',
+      element: (
+        <AuthProvider>
+          <GuestOnlyRoute><Lazy><LandingPage /></Lazy></GuestOnlyRoute>
+        </AuthProvider>
+      ),
+    },
+
+    // ── Protected app shell ──────────────────────────────────────────────────
+    {
+      path: '/app',
       element: (
         <AuthProvider>
           <ProtectedRoute>
@@ -61,7 +72,7 @@ export function createAppRouter(queryClient: QueryClient) {
       ),
       children: [
         // Root redirect → Attendance module directly
-        { index: true, element: <Navigate to="/attendance" replace /> },
+        { index: true, element: <Navigate to="/app/attendance" replace /> },
 
         // Attendance — fully developed reference module
         {
@@ -89,9 +100,13 @@ export function createAppRouter(queryClient: QueryClient) {
       path: '/login',
       element: (
         <AuthProvider>
-          <GuestOnlyRoute><Lazy><LoginPage /></Lazy></GuestOnlyRoute>
+          <GuestOnlyRoute><Lazy><LandingPage /></Lazy></GuestOnlyRoute>
         </AuthProvider>
       ),
+    },
+    {
+      path: '/register',
+      element: <Lazy><RegisterPage /></Lazy>,
     },
     {
       path: '/forgot-password',
@@ -111,7 +126,7 @@ export function createAppRouter(queryClient: QueryClient) {
     },
 
     // Catch-all
-    { path: '*', element: <Navigate to="/attendance" replace /> },
+    { path: '*', element: <Navigate to="/" replace /> },
   ], {
     future: {
       v7_relativeSplatPath: true,
