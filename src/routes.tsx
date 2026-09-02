@@ -20,9 +20,9 @@ import { ProtectedRoute } from '@/components/protected-route'
 import { GuestOnlyRoute } from '@/components/guest-only-route'
 import { AuthProvider }   from '@/contexts/auth-context'
 
-// ── Auth pages ──────────────────────────────────────────────────────────────
-const LandingPage        = lazyWithRetry(() => import('@/pages/landing-page/landing-page'))
-const RegisterPage       = lazyWithRetry(() => import('@/pages/register-page/register-page'))
+// ── Pages ──────────────────────────────────────────────────────────────────
+const LandingPage        = lazyWithRetry(() => import('@/pages/landing-page'))
+const RegisterPage       = lazyWithRetry(() => import('@/features/auth/pages/register-page'))
 const ForgotPasswordPage = lazyWithRetry(() => import('@/features/auth/pages/forgot-password-page'))
 const OtpPage            = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
 

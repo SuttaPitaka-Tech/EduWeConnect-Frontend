@@ -92,23 +92,27 @@ textarea:focus-visible {
   border-color: var(--navy) !important;
 }
 
-/* ── Button hover lift physics (Action buttons ONLY — NOT dropdowns/inputs) ── */
-button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):hover,
-[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):hover {
+/* ── Button hover lift physics (Action buttons ONLY — NOT dropdowns/inputs/plain icons) ── */
+button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):not([data-plain]):hover,
+[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):not([data-plain]):hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(16, 42, 67, 0.15), 0 2px 4px rgba(16, 42, 67, 0.08);
   transition: transform 150ms ease-out, box-shadow 150ms ease-out;
 }
 
-button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):active,
-[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):active {
+button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):not([data-plain]):active,
+[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):not([data-plain]):active {
   transform: translateY(0);
   transition: transform 80ms ease-out;
 }
 
-/* Dropdown triggers stay 100% flat with zero movement */
+/* Dropdown triggers stay flat; plain icon buttons suppress only shadow */
 [data-dropdown-trigger] {
   transform: none !important;
+  box-shadow: none !important;
+}
+
+[data-plain] {
   box-shadow: none !important;
 }
 

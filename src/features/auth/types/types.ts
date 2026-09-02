@@ -4,6 +4,7 @@ import type {
   otpSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  registerSchema,
   loginResponseSchema,
   meResponseSchema,
 } from '../schemas/schemas'
@@ -11,10 +12,11 @@ import type { UserRole } from '../enums/auth.enum'
 
 // ── Form value types (inferred from Zod — zero duplication) ───────────────
 
-export type LoginFormValues         = z.infer<typeof loginSchema>
-export type OtpFormValues           = z.infer<typeof otpSchema>
+export type LoginFormValues          = z.infer<typeof loginSchema>
+export type OtpFormValues            = z.infer<typeof otpSchema>
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 export type ResetPasswordFormValues  = z.infer<typeof resetPasswordSchema>
+export type RegisterFormValues       = z.infer<typeof registerSchema>
 
 // ── API response types ─────────────────────────────────────────────────────
 

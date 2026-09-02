@@ -76,7 +76,7 @@ export default function LandingPage() {
         />
         
         {/* Subtle Gradient Overlay for Text Readability */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#F7F1E3] via-[#F7F1E3]/50 to-transparent pointer-events-none md:w-[60%]" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-[var(--cream)] via-[var(--cream)]/50 to-transparent pointer-events-none md:w-[60%]" />
 
         {/* Hero Content Layer */}
         <div className="relative z-10 mx-auto w-full max-w-[1440px] px-6 md:px-12 lg:px-20 pt-16 pb-20 md:pt-20 md:pb-24 lg:pt-24 lg:pb-32 flex items-center">
@@ -105,7 +105,7 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-14 flex items-center gap-3">
-              <span className="h-2 w-2 rounded-full bg-[#4a6b51] shadow-sm"></span>
+              <span className="h-2 w-2 rounded-full bg-[var(--success)] shadow-sm"></span>
               <span className="text-[13px] font-semibold text-[var(--navy)] opacity-70 tracking-wide uppercase">
                 Built for schools and colleges in India
               </span>
@@ -154,7 +154,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer Section */}
-      <footer className="relative w-full overflow-hidden bg-[#0A1A2F]">
+      <footer className="relative w-full overflow-hidden bg-[var(--deep-navy)]">
         {/* Background Image Layer */}
         <div 
           className="absolute inset-0 z-0 bg-no-repeat bg-cover bg-center"
@@ -175,7 +175,7 @@ export default function LandingPage() {
               </p>
             </div>
             
-            <Button onClick={() => navigate('/register')} className="bg-[#B8862C] hover:bg-[#a67725] text-white rounded-md font-semibold px-8 h-[52px] text-[15px] border-none shadow-md shrink-0 transition-colors z-20">
+            <Button onClick={() => navigate('/register')} variant="primary" className="bg-[var(--gold)] hover:bg-[var(--light-gold)] text-white rounded-md font-semibold px-8 h-[52px] text-[15px] border-none shadow-md shrink-0 transition-colors z-20">
               Get started now <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
           </div>
@@ -197,7 +197,7 @@ export default function LandingPage() {
               {/* Social Icons */}
               <div className="flex items-center gap-3">
                 {[Mail, Linkedin, Twitter, Youtube].map((Icon, idx) => (
-                  <a key={idx} href="#" className="flex items-center justify-center w-[36px] h-[36px] rounded-full border border-[#F7F1E3]/20 text-[#F7F1E3]/80 hover:bg-[#F7F1E3]/10 hover:text-white transition-all">
+                  <a key={idx} href="#" className="flex items-center justify-center w-[36px] h-[36px] rounded-full border border-[var(--footer-text)]/20 text-[var(--footer-text)]/80 hover:bg-[var(--footer-text)]/10 hover:text-white transition-all">
                     <Icon className="w-4 h-4" strokeWidth={1.5} />
                   </a>
                 ))}
