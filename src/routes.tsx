@@ -27,6 +27,7 @@ const ForgotPasswordPage = lazyWithRetry(() => import('@/features/auth/pages/for
 const OtpPage            = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
 
 // ── Layouts ──────────────────────────────────────────────────────────────────
+const PublicLayout    = lazyWithRetry(() => import('@/layouts/public-layout'))
 const DashboardLayout = lazyWithRetry(() => import('@/layouts/dashboard-layout'))
 
 // ── Attendance (fully implemented reference module) ──────────────────────────
@@ -50,14 +51,17 @@ function Lazy({ children }: { children: JSX.Element }) {
 export function createAppRouter(queryClient: QueryClient) {
   return createBrowserRouter([
 
-    // ── Public Landing Page ──────────────────────────────────────────────────
+    // ── Public pages (header + footer via PublicLayout) ──────────────────────
     {
-      path: '/',
       element: (
         <AuthProvider>
-          <GuestOnlyRoute><Lazy><LandingPage /></Lazy></GuestOnlyRoute>
+          <GuestOnlyRoute><Lazy><PublicLayout /></Lazy></GuestOnlyRoute>
         </AuthProvider>
       ),
+      children: [
+        { path: '/',      element: <Lazy><LandingPage /></Lazy> },
+        { path: '/login', element: <Lazy><LandingPage /></Lazy> },
+      ],
     },
 
     // ── Protected app shell ──────────────────────────────────────────────────
@@ -96,14 +100,6 @@ export function createAppRouter(queryClient: QueryClient) {
     },
 
     // ── Guest-only auth routes ───────────────────────────────────────────────
-    {
-      path: '/login',
-      element: (
-        <AuthProvider>
-          <GuestOnlyRoute><Lazy><LandingPage /></Lazy></GuestOnlyRoute>
-        </AuthProvider>
-      ),
-    },
     {
       path: '/register',
       element: <Lazy><RegisterPage /></Lazy>,
