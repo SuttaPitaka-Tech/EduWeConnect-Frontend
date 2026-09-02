@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { Plus } from 'lucide-react'
-import { Spinner } from '@/components/ui/spinner'
+import { useSearchParams } from 'react-router-dom'
+import { Button, MasterCodePagination, Spinner } from '@/components/ui'
 import { AttendanceStatsBar } from '../components/attendance-stats-bar'
 import { AttendanceFilters } from '../components/attendance-filters'
 import { AttendanceTable } from '../components/attendance-table'
@@ -12,19 +12,28 @@ import {
   ATTENDANCE_DEFAULT_PAGE,
   ATTENDANCE_DEFAULT_PAGE_SIZE,
 } from '../constants/constants'
+import { useState } from 'react'
 
 /** Route-level container — lazy-loaded in routes.tsx via lazyWithRetry() */
 export default function AttendancePage() {
-  const [params, setParams]         = useState<AttendanceListParams>({
-    page:     ATTENDANCE_DEFAULT_PAGE,
-    pageSize: ATTENDANCE_DEFAULT_PAGE_SIZE,
-  })
-  const [createOpen, setCreateOpen] = useState(false)
+  // ── URL-driven table state (Rule §20 — useSearchParams, never useState for filters) ──
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [createOpen, setCreateOpen]     = useState(false)
+
+  const params: AttendanceListParams = {
+    page:     Number(searchParams.get('page'))     || ATTENDANCE_DEFAULT_PAGE,
+    pageSize: Number(searchParams.get('pageSize')) || ATTENDANCE_DEFAULT_PAGE_SIZE,
+    classId:  searchParams.get('classId')  ?? undefined,
+    date:     searchParams.get('date')     ?? undefined,
+    status:   (searchParams.get('status')  ?? undefined) as AttendanceListParams['status'],
+    type:     (searchParams.get('type')    ?? undefined) as AttendanceListParams['type'],
+    session:  (searchParams.get('session') ?? undefined) as AttendanceListParams['session'],
+    search:   searchParams.get('search')   ?? undefined,
+  }
 
   const {
     rows,
     total,
-    totalPages,
     isLoading,
     isFetching,
     isError,
@@ -39,15 +48,43 @@ export default function AttendancePage() {
   })
 
   function handleParamsChange(next: Partial<AttendanceListParams>) {
-    setParams((p) => ({ ...p, ...next, page: ATTENDANCE_DEFAULT_PAGE }))
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev)
+      Object.entries(next).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') updated.set(k, String(v))
+        else updated.delete(k)
+      })
+      updated.set('page', String(ATTENDANCE_DEFAULT_PAGE)) // reset to page 1 on every filter change
+      return updated
+    })
   }
 
   function handleClear() {
-    setParams({ page: ATTENDANCE_DEFAULT_PAGE, pageSize: ATTENDANCE_DEFAULT_PAGE_SIZE })
+    setSearchParams({
+      page:     String(ATTENDANCE_DEFAULT_PAGE),
+      pageSize: String(ATTENDANCE_DEFAULT_PAGE_SIZE),
+    })
   }
 
   function handleDelete(id: string) {
     remove(id)
+  }
+
+  function handlePageChange(page: number) {
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev)
+      updated.set('page', String(page))
+      return updated
+    })
+  }
+
+  function handlePageSizeChange(pageSize: number) {
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev)
+      updated.set('pageSize', String(pageSize))
+      updated.set('page', String(ATTENDANCE_DEFAULT_PAGE))
+      return updated
+    })
   }
 
   // Full-page initial loading
@@ -69,6 +106,9 @@ export default function AttendancePage() {
     )
   }
 
+  const currentPage = params.page ?? ATTENDANCE_DEFAULT_PAGE
+  const currentPageSize = params.pageSize ?? ATTENDANCE_DEFAULT_PAGE_SIZE
+
   return (
     <div className="flex flex-col gap-4">
       {/* ── Page Header ── */}
@@ -82,22 +122,19 @@ export default function AttendancePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href="/ui-showcase"
-            className="flex h-8 items-center gap-1.5 rounded-md border bg-white px-3 text-xs font-semibold text-[var(--navy)] shadow-sm hover:bg-slate-50 transition-colors"
-            style={{ borderColor: 'var(--border)' }}
+          <Button
+            variant="outline"
+            onClick={() => window.location.assign('/ui-showcase')}
           >
             🎨 UI Showcase
-          </a>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
             onClick={() => setCreateOpen(true)}
-            className="flex h-8 items-center gap-1.5 rounded-md px-3.5 text-xs font-semibold"
-            style={{ background: 'var(--button-background)', color: 'var(--button-text)' }}
           >
             <Plus className="size-3.5" aria-hidden />
             Mark Attendance
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -127,45 +164,24 @@ export default function AttendancePage() {
           <AttendanceTable
             rows={rows}
             isLoading={isFetching}
-            page={params.page ?? ATTENDANCE_DEFAULT_PAGE}
-            pageSize={params.pageSize ?? ATTENDANCE_DEFAULT_PAGE_SIZE}
+            page={currentPage}
+            pageSize={currentPageSize}
             deletingId={deletingId}
             onDelete={handleDelete}
           />
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div
-            className="flex items-center justify-between border-t px-4 py-3"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Page {params.page ?? 1} of {totalPages}
-            </p>
-            <div className="flex gap-1.5">
-              <button
-                type="button"
-                disabled={(params.page ?? 1) <= 1}
-                onClick={() => setParams((p) => ({ ...p, page: (p.page ?? 1) - 1 }))}
-                className="h-7 rounded-md border px-3 text-xs font-medium disabled:opacity-40"
-                style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-              >
-                Prev
-              </button>
-              <button
-                type="button"
-                disabled={(params.page ?? 1) >= totalPages}
-                onClick={() => setParams((p) => ({ ...p, page: (p.page ?? 1) + 1 }))}
-                className="h-7 rounded-md border px-3 text-xs font-medium disabled:opacity-40"
-                style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* ── Pagination — MasterCodePagination (Rule: ZERO inline UI) ── */}
+      {total > 0 && (
+        <MasterCodePagination
+          totalItems={total}
+          currentPage={currentPage}
+          pageSize={currentPageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      )}
 
       {/* Create Modal */}
       <CreateAttendanceModal

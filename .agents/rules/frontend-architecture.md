@@ -106,7 +106,7 @@ npx tsc --noEmit     # Must show 0 errors before every commit/PR
 
 | Category | Components |
 |---|---|
-| **Loading/Feedback** | `Spinner` · `Toaster` · `Alert` · `Skeleton/SkeletonRow/SkeletonCard` · `Progress` |
+| **Loading/Feedback** | `Spinner` · `Toaster` · `toast` · `Alert` · `Skeleton/SkeletonRow/SkeletonCard` · `Progress` |
 | **Actions** | `Button` (primary/secondary/outline/ghost/danger/gold) · `ActionIconButton` (view/edit/delete) |
 | **Form Controls** | `Input` · `SearchInput` · `Textarea` · `Label` · `FormError` · `Dropdown` · `SearchDropdown` · `MultiSelectDropdown` · `Checkbox` · `Switch` · `RadioGroup` |
 | **Layout/Surface** | `Card/CardHeader/CardTitle/CardContent/CardFooter` · `Separator` · `Divider` · `StatCard` · `EmptyState` |
@@ -133,6 +133,7 @@ npx tsc --noEmit   # → 0 errors required
 - [ ] All colors use `var(--token)` — no hardcoded hex values
 - [ ] Form labels use `text-xs` (12px) — never `text-sm`
 - [ ] Cross-feature imports only via `@/features/<domain>` barrel (`index.ts`)
+- [ ] `useInvalidate<Domain>()` exported from every feature queries file
 
 ---
 
@@ -495,6 +496,17 @@ import {
   </DialogContent>
 </Dialog>
 ```
+
+---
+
+## Corner Radius & Border Radius Hierarchy (Manager-Approved)
+
+| Level | Tailwind Class | Pixels | Usage |
+|---|---|---|---|
+| **Controls** | `rounded-[6px]` / `rounded-md` | `6px` | Buttons, Inputs, Checkboxes, Pagination Cards, Action Icons |
+| **Containers** | `rounded-xl` | `12px` | Cards, StatCards, Table Containers, Popovers |
+| **Overlays** | `rounded-2xl` | `16px` | Dialog Modals, Large Sheets |
+| **Pills** | `rounded-full` | `9999px` | Avatars, Toggle Switches, Badge Pills |
 
 ---
 
@@ -1060,6 +1072,441 @@ const [data, setData] = useState([])
 const { data, isLoading, isError } = useQuery(attendanceListQueryOptions(params))
 await queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: 'all' })
 const [a, b] = await Promise.all([fetchA(), fetchB()])   // only in api.ts / loader
+```
+
+---
+
+## SECTION 19: GLOBAL CLIENT STATE — Zustand
+
+> **Non-server UI state** (sidebar open/close, active tenant, theme, modal state) must use **Zustand** — never `useState` lifted to a Context Provider, never stored in TanStack Query cache.
+> **One store per concern** — not one giant global store.
+
+```ts
+// ✅ CORRECT — one focused store per concern
+// store/sidebar.store.ts
+import { create } from 'zustand'
+
+interface SidebarStore {
+  isOpen: boolean
+  toggle: () => void
+  close: () => void
+}
+
+export const useSidebarStore = create<SidebarStore>((set) => ({
+  isOpen: true,
+  toggle: () => set((s) => ({ isOpen: !s.isOpen })),
+  close: () => set({ isOpen: false }),
+}))
+
+// ❌ BANNED — lifting useState to Context
+const SidebarContext = createContext({ isOpen: true }) // BANNED
+// ❌ BANNED — storing UI state in TanStack Query cache
+queryClient.setQueryData(['sidebar-open'], true) // BANNED
+```
+
+---
+
+## SECTION 20: URL-DRIVEN TABLE STATE — `useSearchParams`
+
+> All filters, sort, page, and pageSize in tables MUST live in `useSearchParams` — never local `useState` — so table views are shareable and bookmarkable via URL.
+
+```tsx
+// ✅ CORRECT — URL-driven table state
+import { useSearchParams } from 'react-router-dom'
+import { ATTENDANCE_DEFAULT_PAGE, ATTENDANCE_DEFAULT_PAGE_SIZE } from '../constants/constants'
+import type { AttendanceListParams } from '../types/types'
+
+export default function AttendancePage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const params: AttendanceListParams = {
+    page:     Number(searchParams.get('page'))     || ATTENDANCE_DEFAULT_PAGE,
+    pageSize: Number(searchParams.get('pageSize')) || ATTENDANCE_DEFAULT_PAGE_SIZE,
+    classId:  searchParams.get('classId')  ?? undefined,
+    date:     searchParams.get('date')     ?? undefined,
+    status:   (searchParams.get('status')  ?? undefined) as AttendanceListParams['status'],
+    type:     (searchParams.get('type')    ?? undefined) as AttendanceListParams['type'],
+  }
+
+  function handleParamsChange(next: Partial<AttendanceListParams>) {
+    setSearchParams((prev) => {
+      const updated = new URLSearchParams(prev)
+      Object.entries(next).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') updated.set(k, String(v))
+        else updated.delete(k)
+      })
+      updated.set('page', String(ATTENDANCE_DEFAULT_PAGE)) // reset to page 1 on filter change
+      return updated
+    })
+  }
+
+  function handleClear() {
+    setSearchParams({
+      page:     String(ATTENDANCE_DEFAULT_PAGE),
+      pageSize: String(ATTENDANCE_DEFAULT_PAGE_SIZE),
+    })
+  }
+}
+
+// ❌ BANNED — local useState for table params
+const [params, setParams] = useState<AttendanceListParams>({ page: 1, pageSize: 20 }) // BANNED
+```
+
+---
+
+## SECTION 21: OPTIMISTIC UPDATES
+
+> High-frequency actions (attendance marking, status toggles, chat sends) MUST use `onMutate` + rollback via `onError` instead of waiting for server round-trip. Always call `cancelQueries` inside `onMutate` first.
+
+```ts
+// ✅ CORRECT — Optimistic update pattern
+export function useToggleAttendanceStatusMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: UpdateAttendanceDto & { id: string }) =>
+      updateAttendanceApi(payload.id, payload),
+
+    onMutate: async (variables) => {
+      // 1. Cancel in-flight queries so they don't overwrite optimistic state
+      await queryClient.cancelQueries({ queryKey: attendanceKeys.all })
+      // 2. Snapshot current state for rollback
+      const snapshot = queryClient.getQueryData(attendanceKeys.lists())
+      // 3. Apply optimistic update immediately
+      queryClient.setQueryData(attendanceKeys.lists(), (old: AttendanceListResponse | undefined) => ({
+        ...old,
+        data: old?.data.map((r) =>
+          r.id === variables.id ? { ...r, status: variables.status } : r
+        ) ?? [],
+      }))
+      return { snapshot } // context for rollback
+    },
+
+    onError: (_err, _vars, context) => {
+      // Rollback to snapshot on failure
+      if (context?.snapshot) {
+        queryClient.setQueryData(attendanceKeys.lists(), context.snapshot)
+      }
+      toast.error(formatApiClientError(_err, 'Failed to update status.'))
+    },
+
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: 'all' })
+    },
+  })
+}
+```
+
+---
+
+## SECTION 22: MULTI-TENANT ISOLATION
+
+> Every query key and API call MUST be scoped by `schoolId`/`tenantId` to prevent cross-tenant data collisions. `schoolId` is injected automatically by the Axios request interceptor from Zustand auth store — **never manually appended per feature**.
+
+```ts
+// ✅ Axios interceptor auto-injects schoolId header
+// src/lib/api-client.ts
+apiClient.interceptors.request.use((config) => {
+  const { schoolId } = useAuthStore.getState() // Zustand store — outside React
+  if (schoolId) config.headers['X-School-Id'] = schoolId
+  return config
+})
+
+// ✅ Query keys MUST scope by schoolId
+export const attendanceKeys = {
+  all:   (schoolId: string) => ['attendance', schoolId] as const,
+  lists: (schoolId: string) => [...attendanceKeys.all(schoolId), 'list'] as const,
+  list:  (schoolId: string, params: AttendanceListParams) =>
+           [...attendanceKeys.lists(schoolId), params] as const,
+}
+
+// ❌ BANNED — schoolId-less key (global cache collision across tenants)
+export const attendanceKeys = { all: ['attendance'] as const } // BANNED
+```
+
+---
+
+## SECTION 23: AUTH & SESSION SECURITY
+
+> Access tokens stored in **httpOnly cookies** (set by NestJS backend with `Secure; SameSite=Strict`) — **never localStorage or sessionStorage**. Axios interceptor handles 401 silently: refresh once, retry original request, then force logout on second failure.
+
+```ts
+// ✅ 401 interceptor with silent refresh + force logout
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const original = error.config as AxiosRequestConfig & { _retry?: boolean }
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true
+      try {
+        await refreshTokenApi()           // POST /auth/refresh (httpOnly cookie)
+        return apiClient(original)        // retry original request
+      } catch {
+        useAuthStore.getState().logout()  // force logout on refresh failure
+        return Promise.reject(error)
+      }
+    }
+    return Promise.reject(error)
+  },
+)
+
+// ✅ Idle session timeout — show warning modal at 13 min, auto-logout at 15 min
+// Implemented in a dedicated IdleTimerProvider context in src/contexts/
+```
+
+**Absolute bans:**
+```ts
+localStorage.setItem('token', accessToken)   // ❌ BANNED
+sessionStorage.setItem('token', accessToken) // ❌ BANNED
+```
+
+---
+
+## SECTION 24: ROLE-BASED ACCESS & AUDIT LOG
+
+> Route access controlled by `<RoleGuard allowedRoles={[Role.ADMIN]}>`. **Zero inline role checks in JSX.** Every destructive or financial mutation writes an audit-log entry via `auditLogApi()` shared utility.
+
+```tsx
+// ✅ RoleGuard wraps routes in routes.tsx
+import { RoleGuard } from '@/components/role-guard'
+{
+  path: 'finance',
+  element: (
+    <RoleGuard allowedRoles={[Role.ADMIN, Role.ACCOUNTANT]}>
+      <Lazy><FinancePage /></Lazy>
+    </RoleGuard>
+  ),
+}
+
+// ❌ BANNED — inline role check in JSX
+{user.role === 'admin' && <DeleteButton />}   // BANNED
+
+// ✅ Audit log on destructive/financial mutations
+// src/lib/audit-log.ts
+export async function auditLogApi(entry: {
+  action:    string
+  entity:    string
+  entityId:  string
+  actor:     string
+  timestamp: string
+}) {
+  await apiClient.post('/audit-log', entry)
+}
+
+// Usage in mutation onSuccess:
+onSuccess: async (_, variables) => {
+  toast.success('Fee collected.')
+  await auditLogApi({
+    action:    'FEE_COLLECTED',
+    entity:    'Fee',
+    entityId:  variables.feeId,
+    actor:     useAuthStore.getState().userId,
+    timestamp: new Date().toISOString(),
+  })
+  await queryClient.invalidateQueries({ queryKey: feeKeys.all })
+},
+```
+
+---
+
+## SECTION 25: REAL-TIME LAYER — SocketProvider
+
+> WebSocket connections MUST live in a single `SocketProvider` context with typed reconnect/backoff logic — **never opened ad-hoc inside components**.
+
+```tsx
+// ✅ CORRECT — single provider in src/contexts/socket-provider.tsx
+export function SocketProvider({ children }: { children: React.ReactNode }) {
+  const socketRef = React.useRef<WebSocket | null>(null)
+  const retryRef  = React.useRef(0)
+
+  function connect() {
+    const ws = new WebSocket(import.meta.env.VITE_WS_URL)
+    ws.onclose = () => {
+      const delay = Math.min(1000 * 2 ** retryRef.current, 30000) // exponential backoff, max 30s
+      retryRef.current += 1
+      setTimeout(connect, delay)
+    }
+    ws.onopen = () => { retryRef.current = 0 }
+    socketRef.current = ws
+  }
+
+  React.useEffect(() => { connect(); return () => socketRef.current?.close() }, [])
+  // Note: this is the ONE allowed useEffect — for WebSocket lifecycle at app root level only
+
+  return <SocketContext.Provider value={socketRef}>{children}</SocketContext.Provider>
+}
+
+// ❌ BANNED — ad-hoc WebSocket inside a component
+export function ChatWindow() {
+  const ws = new WebSocket(url) // BANNED — opens a new connection per component mount
+}
+```
+
+---
+
+## SECTION 26: FILE UPLOADS & MEDIA
+
+> Standardize on **one `<FileUpload>` component** in `@/components/ui` with max size, MIME type whitelist, and upload progress state. Never use raw `<input type="file">` inside feature pages.
+
+```tsx
+// ✅ CORRECT — centralized FileUpload component
+import { FileUpload } from '@/components/ui'
+
+<FileUpload
+  accept={['image/jpeg', 'image/png', 'application/pdf']}
+  maxSizeMb={5}
+  onUpload={async (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    await uploadResourceApi(formData)
+  }}
+/>
+
+// ❌ BANNED — raw file input in feature page
+<input type="file" onChange={handleFileChange} />  // BANNED
+```
+
+**Gallery / resource images** must be lazy-loaded with `loading="lazy"` and served from the asset registry (`@/assets/images`) or a CDN URL — never inline base64.
+
+---
+
+## SECTION 27: EXPORT, PRINT & LOCALE
+
+> CSV/PDF export via shared utilities. Printable pages use `@media print`. Indian locale formatting via **one** `formatINR()` and **one** `formatDate()` utility — **never inline `Intl` calls scattered across features**.
+
+### Shared utilities in `src/lib/`
+
+```ts
+// src/lib/format-currency.ts
+// ₹1,23,456 — Indian numbering system
+export function formatINR(amount: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency', currency: 'INR', maximumFractionDigits: 0,
+  }).format(amount)
+}
+
+// src/lib/format-date.ts
+// dd/mm/yyyy IST
+export function formatDate(date: string | Date): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Kolkata',
+  }).format(new Date(date))
+}
+
+// src/lib/export-csv.ts
+export function exportToCsv(filename: string, rows: Record<string, unknown>[]): void {
+  const headers = Object.keys(rows[0] ?? {})
+  const csv = [headers.join(','), ...rows.map((r) => headers.map((h) => r[h]).join(','))].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url  = URL.createObjectURL(blob)
+  const a    = Object.assign(document.createElement('a'), { href: url, download: `${filename}.csv` })
+  a.click()
+  URL.revokeObjectURL(url)
+}
+```
+
+```css
+/* Printable pages (report cards, hall tickets, receipts) */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+}
+```
+
+**Absolute bans:**
+```ts
+new Intl.NumberFormat('en-IN', ...).format(amount) // ❌ inline in JSX — use formatINR()
+new Intl.DateTimeFormat(...).format(date)           // ❌ inline in JSX — use formatDate()
+```
+
+---
+
+## SECTION 28: BULK OPERATIONS — `useBulkMutation`
+
+> Bulk actions (bulk attendance marking, bulk fee collection) use a **single `useBulkMutation` pattern** with per-row progress and partial-failure reporting — **never `Promise.all` of individual mutations fired from a component**.
+
+```ts
+// ✅ CORRECT — useBulkMutation pattern
+export function useBulkMarkAttendanceMutation() {
+  const queryClient = useQueryClient()
+  const [progress, setProgress] = React.useState<Record<string, 'pending' | 'success' | 'error'>>({})
+
+  async function bulkMutate(records: CreateAttendanceDto[]) {
+    setProgress(Object.fromEntries(records.map((r) => [r.records[0].memberId, 'pending'])))
+
+    const results = await Promise.allSettled(
+      records.map((r) =>
+        createAttendanceApi(r)
+          .then(() => setProgress((p) => ({ ...p, [r.records[0].memberId]: 'success' })))
+          .catch(() => setProgress((p) => ({ ...p, [r.records[0].memberId]: 'error' })))
+      )
+    )
+
+    const failed = results.filter((r) => r.status === 'rejected').length
+    if (failed > 0) toast.error(`${failed} record(s) failed to save.`)
+    else toast.success('All attendance records saved.')
+
+    await queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: 'all' })
+  }
+
+  return { bulkMutate, progress }
+}
+
+// ❌ BANNED — raw Promise.all in component
+const handleBulk = () => Promise.all(selected.map((id) => deleteMutation.mutate(id))) // BANNED
+```
+
+---
+
+## SECTION 29: ERROR BOUNDARIES, OBSERVABILITY & QUALITY GATES
+
+### Error Boundaries
+```tsx
+// ✅ Every route wrapped in <ErrorBoundary> so one broken widget can't crash the dashboard
+import { ErrorBoundary } from 'react-error-boundary'
+
+function Lazy({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary fallback={<WidgetError />}>
+      <Suspense fallback={<PageLoader />}>{children}</Suspense>
+    </ErrorBoundary>
+  )
+}
+```
+
+### Sentry / Observability
+```ts
+// src/main.tsx — wire at app boot before React renders
+import * as Sentry from '@sentry/react'
+Sentry.init({ dsn: import.meta.env.VITE_SENTRY_DSN, tracesSampleRate: 0.2 })
+
+// All toast.error() calls must also report to Sentry:
+export function toastError(message: string, error?: unknown) {
+  toast.error(message)
+  if (error) Sentry.captureException(error)
+}
+```
+
+### ENV Validation — Zod `envSchema` at boot
+```ts
+// src/lib/env.ts — parsed at app boot; fail fast on missing vars
+import { z } from 'zod'
+const envSchema = z.object({
+  VITE_API_URL:     z.string().url(),
+  VITE_WS_URL:      z.string().url(),
+  VITE_SENTRY_DSN:  z.string().optional(),
+  VITE_USE_MOCK:    z.enum(['true', 'false']).default('false'),
+})
+export const env = envSchema.parse(import.meta.env)
+// If any required var is missing → throws immediately at startup with a clear error message
+```
+
+### Quality Gates — Pre-Commit Checklist Update
+```bash
+# ALL must pass before every commit (not just tsc):
+npx tsc --noEmit                        # 0 type errors
+npx eslint . --max-warnings=0           # 0 ESLint warnings
+npx prettier --check .                  # formatting consistent
+npx vitest run                          # tests pass (min 80% coverage on mutations + form validation)
 ```
 
 ---
