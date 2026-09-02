@@ -22,6 +22,7 @@ import { AuthProvider }   from '@/contexts/auth-context'
 
 // ── Pages ──────────────────────────────────────────────────────────────────
 const LandingPage        = lazyWithRetry(() => import('@/pages/landing-page'))
+const LoginPage          = lazyWithRetry(() => import('@/features/auth/pages/login-page'))
 const RegisterPage       = lazyWithRetry(() => import('@/features/auth/pages/register-page'))
 const ForgotPasswordPage = lazyWithRetry(() => import('@/features/auth/pages/forgot-password-page'))
 const OtpPage            = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
@@ -59,8 +60,7 @@ export function createAppRouter(queryClient: QueryClient) {
         </AuthProvider>
       ),
       children: [
-        { path: '/',      element: <Lazy><LandingPage /></Lazy> },
-        { path: '/login', element: <Lazy><LandingPage /></Lazy> },
+        { path: '/', element: <Lazy><LandingPage /></Lazy> },
       ],
     },
 
@@ -99,7 +99,15 @@ export function createAppRouter(queryClient: QueryClient) {
       ],
     },
 
-    // ── Guest-only auth routes ───────────────────────────────────────────────
+    // ── Guest-only auth routes (no public header/footer) ──────────────────────
+    {
+      path: '/login',
+      element: (
+        <AuthProvider>
+          <Lazy><LoginPage /></Lazy>
+        </AuthProvider>
+      ),
+    },
     {
       path: '/register',
       element: <Lazy><RegisterPage /></Lazy>,
@@ -119,6 +127,31 @@ export function createAppRouter(queryClient: QueryClient) {
           <GuestOnlyRoute><Lazy><OtpPage /></Lazy></GuestOnlyRoute>
         </AuthProvider>
       ),
+    },
+
+    // ── Dev/Design Tools (no auth required) ─────────────────────────────────
+    {
+      path: '/ui-showcase',
+      element: (
+        <AuthProvider>
+          <Lazy><DashboardLayout /></Lazy>
+        </AuthProvider>
+      ),
+      children: [
+        { index: true, element: <Lazy><UiShowcasePage /></Lazy> },
+      ],
+    },
+    {
+      // Test route — view AppHeader/AppFooter without login
+      path: '/test/attendance',
+      element: (
+        <AuthProvider>
+          <Lazy><DashboardLayout /></Lazy>
+        </AuthProvider>
+      ),
+      children: [
+        { index: true, element: <Lazy><AttendancePage /></Lazy> },
+      ],
     },
 
     // Catch-all

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Home } from 'lucide-react'
 import { Button, Input, Dropdown, Checkbox } from '@/components/ui'
 import { registerSchema, type RegisterFormValues } from '@/features/auth'
 
@@ -359,6 +359,18 @@ export function RegisterForm() {
               Sign in here
             </Link>
           </p>
+
+          {/* Home link */}
+          <div className="flex justify-center mt-1">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-[12px] font-medium hover:underline"
+              style={{ color: 'var(--gold)' }}
+            >
+              <Home className="w-3.5 h-3.5" />
+              Home
+            </Link>
+          </div>
 
         </form>
       </div>

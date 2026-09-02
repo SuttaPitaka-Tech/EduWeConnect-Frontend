@@ -67,8 +67,11 @@ import {
   Skeleton,
   SkeletonCard,
   Progress,
+  ScrollArea,
   type DropdownOption,
 } from '@/components/ui'
+import { PublicHeader } from '@/components/public-header'
+import { PublicFooter } from '@/components/public-footer'
 
 const SAMPLE_DROPDOWN_OPTIONS: DropdownOption[] = [
   { value: '', label: 'Select option...' },
@@ -109,7 +112,7 @@ export default function UiShowcasePage() {
               EduWeConnect Design System & UI Showcase
             </h1>
             <p className="text-xs text-[var(--text-muted,#7C8794)]">
-              Interactive preview of all 31 design tokens and UI primitives in <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">src/components/ui/</code>
+              Interactive preview of all 32 UI primitives in <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">src/components/ui/</code>
             </p>
           </div>
         </div>
@@ -685,6 +688,69 @@ export default function UiShowcasePage() {
           </Button>
         </SheetFooter>
       </Sheet>
+      {/* ── Section: ScrollArea ── */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold text-[var(--navy,#102A43)]">ScrollArea</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          {/* Vertical */}
+          <Card>
+            <CardHeader><CardTitle>Vertical Scroll</CardTitle></CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[180px] rounded-lg border p-3" style={{ borderColor: 'var(--border)' }}>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--border)' }}>
+                    <InitialsAvatar name={`Student ${i + 1}`} size="sm" />
+                    <div>
+                      <p className="text-xs font-semibold" style={{ color: 'var(--navy)' }}>Student {i + 1}</p>
+                      <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Roll No: {1000 + i + 1}</p>
+                    </div>
+                  </div>
+                ))}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Horizontal */}
+          <Card>
+            <CardHeader><CardTitle>Horizontal Scroll</CardTitle></CardHeader>
+            <CardContent>
+              <ScrollArea orientation="horizontal" className="w-full rounded-lg border p-3" style={{ borderColor: 'var(--border)' }}>
+                <div className="flex gap-3" style={{ width: 'max-content' }}>
+                  {['Mathematics', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography', 'English', 'Sanskrit'].map((sub) => (
+                    <div key={sub} className="flex flex-col items-center gap-2 p-3 rounded-xl min-w-[90px]" style={{ background: 'var(--beige)' }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--cream)' }}>
+                        <span className="text-[11px] font-bold" style={{ color: 'var(--gold)' }}>{sub[0]}</span>
+                      </div>
+                      <span className="text-[11px] font-semibold text-center" style={{ color: 'var(--navy)' }}>{sub}</span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+        </div>
+      </div>
+
+      {/* ── Section: PublicHeader Preview ── */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold text-[var(--navy,#102A43)]">Public Header</h2>
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Shared sticky header — used in PublicLayout for all public-facing pages.</p>
+        <div className="rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
+          <PublicHeader />
+        </div>
+      </div>
+
+      {/* ── Section: PublicFooter Preview ── */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold text-[var(--navy,#102A43)]">Public Footer</h2>
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Shared navy footer — used in PublicLayout for all public-facing pages.</p>
+        <div className="rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
+          <PublicFooter />
+        </div>
+      </div>
+
     </div>
   )
 }

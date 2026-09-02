@@ -30,6 +30,7 @@ export { RadioGroup }                            from './radio-group'
 // ── Layout & Surfaces ───────────────────────────────────────────
 export { Card, CardHeader, CardTitle, CardContent, CardFooter } from './card'
 export { Separator }                             from './separator'
+export { ScrollArea }                            from './scroll-area'
 export { Divider, StatCard, EmptyState }         from './utils-ui'
 
 // ── Data Display ─────────────────────────────────────────────────

@@ -71,11 +71,12 @@ export default function LandingPage() {
                 Get started
               </Button>
               <Button
+                onClick={() => navigate('/login')}
                 variant="outline"
                 size="lg"
-                className="rounded-md font-semibold px-8 h-[52px] text-[15px] bg-transparent border-[1.5px] border-[var(--sand)] hover:bg-[var(--sand)]/10 text-[var(--navy)] transition-all"
+                className="rounded-md font-semibold px-8 h-[52px] text-[15px] bg-transparent border-[1.5px] border-[var(--navy)] text-[var(--navy)] transition-all"
               >
-                See a walkthrough
+                Sign In
               </Button>
             </div>
 
