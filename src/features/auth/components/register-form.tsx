@@ -1,8 +1,7 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Home } from 'lucide-react'
+import { Mail, ArrowRight, ShieldCheck, Home, Building2, Phone, MapPin } from 'lucide-react'
 import { Button, Input, Dropdown, Checkbox } from '@/components/ui'
 import { registerSchema, type RegisterFormValues } from '@/features/auth'
 
@@ -30,11 +29,12 @@ function MicrosoftIcon(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
-const USER_TYPE_OPTIONS = [
-  { value: 'student',   label: 'Student' },
-  { value: 'staff',     label: 'Staff / Teacher' },
-  { value: 'admin',     label: 'Administrator' },
-  { value: 'parent',    label: 'Parent' },
+const ORGANIZATION_TYPE_OPTIONS = [
+  { value: 'pre_school',     label: 'Pre School' },
+  { value: 'school',         label: 'School' },
+  { value: 'pre_university', label: 'Pre University' },
+  { value: 'college',        label: 'College' },
+  { value: 'university',     label: 'University' },
 ] as const
 
 // ── Reusable field wrapper ────────────────────────────────────────────────────
@@ -48,9 +48,6 @@ function FieldIcon({ children }: { children: React.ReactNode }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export function RegisterForm() {
-  const [showPassword,        setShowPassword]        = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
   const {
     register,
     control,
@@ -59,12 +56,12 @@ export function RegisterForm() {
   } = useForm<RegisterFormValues>({
     resolver:      zodResolver(registerSchema),
     defaultValues: {
-      userType:        '',
-      fullName:        '',
-      email:           '',
-      password:        '',
-      confirmPassword: '',
-      acceptTerms:     false,
+      organizationType:  '',
+      organizationName:  '',
+      organizationEmail: '',
+      contactNumber:     '',
+      address:           '',
+      acceptTerms:       false,
     },
   })
 
@@ -91,73 +88,72 @@ export function RegisterForm() {
       <div className="p-6 md:p-8">
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
 
-          {/* ── User Type ─────────────────────────────────────────────────── */}
+          {/* ── Organization Type ─────────────────────────────────────────── */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
-              User Type
+              Organization Type
             </label>
             <Controller
-              name="userType"
+              name="organizationType"
               control={control}
               render={({ field }) => (
                 <Dropdown
                   value={field.value}
                   onChange={field.onChange}
-                  options={USER_TYPE_OPTIONS}
-                  placeholder="Select your role"
-                  invalid={!!errors.userType}
+                  options={ORGANIZATION_TYPE_OPTIONS}
+                  placeholder="Select organization type"
+                  invalid={!!errors.organizationType}
                   className="h-[44px] rounded-xl"
                 />
               )}
             />
-            {errors.userType && (
-              <p className="text-[11px] text-red-500 mt-0.5">{errors.userType.message}</p>
+            {errors.organizationType && (
+              <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationType.message}</p>
             )}
           </div>
 
-          {/* ── Name + Email row ───────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-            {/* Full Name */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
-                Full Name
-              </label>
-              <div className="relative">
-                <FieldIcon>
-                  <User className="h-[15px] w-[15px] text-[var(--gold)]" strokeWidth={1.75} />
-                </FieldIcon>
-                <Input
-                  {...register('fullName')}
-                  type="text"
-                  placeholder="Enter full name"
-                  error={!!errors.fullName}
-                  className="pl-10 h-[44px] rounded-xl text-[13px]"
-                  style={{
-                    background: 'rgba(255,255,255,0.7)',
-                    backdropFilter: 'blur(8px)',
-                  }}
-                />
-              </div>
-              {errors.fullName && (
-                <p className="text-[11px] text-red-500 mt-0.5">{errors.fullName.message}</p>
-              )}
+          {/* ── Organization Name ─────────────────────────────────────────── */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
+              Organization Name
+            </label>
+            <div className="relative">
+              <FieldIcon>
+                <Building2 className="h-[15px] w-[15px] text-[var(--gold)]" strokeWidth={1.75} />
+              </FieldIcon>
+              <Input
+                {...register('organizationName')}
+                type="text"
+                placeholder="Enter organization name"
+                error={!!errors.organizationName}
+                className="pl-10 h-[44px] rounded-xl text-[13px]"
+                style={{
+                  background: 'rgba(255,255,255,0.7)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              />
             </div>
+            {errors.organizationName && (
+              <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationName.message}</p>
+            )}
+          </div>
 
-            {/* Email */}
+          {/* ── Organization Email & Contact Number (Same Row) ─────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Organization Email */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
-                Email Address
+                Organization Email
               </label>
               <div className="relative">
                 <FieldIcon>
                   <Mail className="h-[15px] w-[15px] text-[var(--gold)]" strokeWidth={1.75} />
                 </FieldIcon>
                 <Input
-                  {...register('email')}
+                  {...register('organizationEmail')}
                   type="email"
-                  placeholder="your@email.com"
-                  error={!!errors.email}
+                  placeholder="organization@domain.com"
+                  error={!!errors.organizationEmail}
                   className="pl-10 h-[44px] rounded-xl text-[13px]"
                   style={{
                     background: 'rgba(255,255,255,0.7)',
@@ -165,83 +161,61 @@ export function RegisterForm() {
                   }}
                 />
               </div>
-              {errors.email && (
-                <p className="text-[11px] text-red-500 mt-0.5">{errors.email.message}</p>
+              {errors.organizationEmail && (
+                <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationEmail.message}</p>
+              )}
+            </div>
+
+            {/* Contact Number */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
+                Contact Number
+              </label>
+              <div className="relative">
+                <FieldIcon>
+                  <Phone className="h-[15px] w-[15px] text-[var(--gold)]" strokeWidth={1.75} />
+                </FieldIcon>
+                <Input
+                  {...register('contactNumber')}
+                  type="tel"
+                  placeholder="Enter contact number"
+                  error={!!errors.contactNumber}
+                  className="pl-10 h-[44px] rounded-xl text-[13px]"
+                  style={{
+                    background: 'rgba(255,255,255,0.7)',
+                    backdropFilter: 'blur(8px)',
+                  }}
+                />
+              </div>
+              {errors.contactNumber && (
+                <p className="text-[11px] text-red-500 mt-0.5">{errors.contactNumber.message}</p>
               )}
             </div>
           </div>
 
-          {/* ── Password ──────────────────────────────────────────────────── */}
+          {/* ── Address ───────────────────────────────────────────────────── */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
-              Password
+              Address
             </label>
             <div className="relative">
               <FieldIcon>
-                <Lock className="h-[15px] w-[15px] text-[var(--gold)]" strokeWidth={1.75} />
+                <MapPin className="h-[15px] w-[15px] text-[var(--gold)]" strokeWidth={1.75} />
               </FieldIcon>
               <Input
-                {...register('password')}
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Create a strong password"
-                error={!!errors.password}
-                className="pl-10 pr-11 h-[44px] rounded-xl text-[13px]"
+                {...register('address')}
+                type="text"
+                placeholder="Enter organization address"
+                error={!!errors.address}
+                className="pl-10 h-[44px] rounded-xl text-[13px]"
                 style={{
                   background: 'rgba(255,255,255,0.7)',
                   backdropFilter: 'blur(8px)',
                 }}
               />
-              <button
-                type="button"
-                data-plain="true"
-                tabIndex={-1}
-                onClick={() => setShowPassword((p) => !p)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center justify-center bg-transparent border-none outline-none shadow-none text-[var(--text-muted)] focus:outline-none cursor-pointer"
-              >
-                {showPassword
-                  ? <EyeOff className="h-[15px] w-[15px]" />
-                  : <Eye     className="h-[15px] w-[15px]" />}
-              </button>
             </div>
-            {errors.password && (
-              <p className="text-[11px] text-red-500 mt-0.5">{errors.password.message}</p>
-            )}
-          </div>
-
-          {/* ── Confirm Password ──────────────────────────────────────────── */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <FieldIcon>
-                <Lock className="h-[15px] w-[15px] text-[var(--gold)]" strokeWidth={1.75} />
-              </FieldIcon>
-              <Input
-                {...register('confirmPassword')}
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Confirm your password"
-                error={!!errors.confirmPassword}
-                className="pl-10 pr-11 h-[44px] rounded-xl text-[13px]"
-                style={{
-                  background: 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(8px)',
-                }}
-              />
-              <button
-                type="button"
-                data-plain="true"
-                tabIndex={-1}
-                onClick={() => setShowConfirmPassword((p) => !p)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center justify-center bg-transparent border-none outline-none shadow-none text-[var(--text-muted)] focus:outline-none cursor-pointer"
-              >
-                {showConfirmPassword
-                  ? <EyeOff className="h-[15px] w-[15px]" />
-                  : <Eye     className="h-[15px] w-[15px]" />}
-              </button>
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-[11px] text-red-500 mt-0.5">{errors.confirmPassword.message}</p>
+            {errors.address && (
+              <p className="text-[11px] text-red-500 mt-0.5">{errors.address.message}</p>
             )}
           </div>
 
@@ -286,7 +260,7 @@ export function RegisterForm() {
             isLoading={isSubmitting}
             className="w-full h-[50px] rounded-xl font-bold text-[15px] mt-1 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all group"
           >
-            Create Account
+            Register
             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
           </Button>
 

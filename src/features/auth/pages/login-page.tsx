@@ -21,7 +21,7 @@ export default function LoginPage() {
 
       {/* Main Content Area */}
       <div className="relative z-10 flex-1 flex items-start justify-center w-full px-4 pt-20 pb-6">
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-20 w-full max-w-[1100px]">
+        <div className="flex flex-col lg:flex-row items-start justify-center gap-10 lg:gap-20 w-full max-w-[1100px]">
 
           {/* LEFT COLUMN: Branding & Info */}
           <div className="flex flex-col items-center text-center flex-1 max-w-[420px] pt-2 lg:pt-0">
@@ -80,7 +80,7 @@ export default function LoginPage() {
           </div>
 
           {/* RIGHT COLUMN: Form Card */}
-          <div className="w-full max-w-[420px] -mt-16 lg:-mt-20">
+          <div className="w-full max-w-[420px] -mt-6 lg:-mt-8">
 
             {/* Card Header */}
             <div className="flex flex-col items-center text-center mb-2">
