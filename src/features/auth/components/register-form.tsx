@@ -10,10 +10,10 @@ import { registerSchema, type RegisterFormValues } from '@/features/auth'
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.15v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.15C1.43 8.55 1 10.22 1 12s.43 3.45 1.15 4.93l3.69-2.84z" fill="#FBBC05"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.15 7.07l3.69 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.15v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.15C1.43 8.55 1 10.22 1 12s.43 3.45 1.15 4.93l3.69-2.84z" fill="#FBBC05" />
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.15 7.07l3.69 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
     </svg>
   )
 }
@@ -21,20 +21,20 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 function MicrosoftIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
-      <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
-      <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
-      <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+      <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+      <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+      <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+      <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
     </svg>
   )
 }
 
 const ORGANIZATION_TYPE_OPTIONS = [
-  { value: 'pre_school',     label: 'Pre School' },
-  { value: 'school',         label: 'School' },
+  { value: 'pre_school', label: 'Pre School' },
+  { value: 'school', label: 'School' },
   { value: 'pre_university', label: 'Pre University' },
-  { value: 'college',        label: 'College' },
-  { value: 'university',     label: 'University' },
+  { value: 'college', label: 'College' },
+  { value: 'university', label: 'University' },
 ] as const
 
 // ── Reusable field wrapper ────────────────────────────────────────────────────
@@ -54,14 +54,14 @@ export function RegisterForm() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
-    resolver:      zodResolver(registerSchema),
+    resolver: zodResolver(registerSchema),
     defaultValues: {
-      organizationType:  '',
-      organizationName:  '',
+      organizationType: '',
+      organizationName: '',
       organizationEmail: '',
-      contactNumber:     '',
-      address:           '',
-      acceptTerms:       false,
+      contactNumber: '',
+      address: '',
+      acceptTerms: false,
     },
   })
 
@@ -78,15 +78,15 @@ export function RegisterForm() {
     <div
       className="relative rounded-3xl overflow-hidden"
       style={{
-        background:   'linear-gradient(145deg, rgba(255,253,248,0.92) 0%, rgba(247,241,227,0.88) 100%)',
+        background: 'linear-gradient(145deg, rgba(255,253,248,0.92) 0%, rgba(247,241,227,0.88) 100%)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
-        boxShadow:    '0 32px 80px rgba(16,42,67,0.22), inset 0 1px 0 rgba(255,255,255,0.7)',
-        border:       '1px solid rgba(255,255,255,0.55)',
+        boxShadow: '0 32px 80px rgba(16,42,67,0.22), inset 0 1px 0 rgba(255,255,255,0.7)',
+        border: '1px solid rgba(255,255,255,0.55)',
       }}
     >
-      <div className="p-6 md:p-8">
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+      <div className="p-6 md:px-8 md:py-7">
+        <form className="flex flex-col gap-3.5" onSubmit={handleSubmit(onSubmit)}>
 
           {/* ── Organization Type ─────────────────────────────────────────── */}
           <div className="flex flex-col gap-1.5">
@@ -103,7 +103,7 @@ export function RegisterForm() {
                   options={ORGANIZATION_TYPE_OPTIONS}
                   placeholder="Select organization type"
                   invalid={!!errors.organizationType}
-                  className="h-[44px] rounded-xl"
+                  className="h-[42px] rounded-xl text-[13px]"
                 />
               )}
             />
@@ -126,7 +126,7 @@ export function RegisterForm() {
                 type="text"
                 placeholder="Enter organization name"
                 error={!!errors.organizationName}
-                className="pl-10 h-[44px] rounded-xl text-[13px]"
+                className="pl-10 h-[42px] rounded-xl text-[13px]"
                 style={{
                   background: 'rgba(255,255,255,0.7)',
                   backdropFilter: 'blur(8px)',
@@ -154,7 +154,7 @@ export function RegisterForm() {
                   type="email"
                   placeholder="organization@domain.com"
                   error={!!errors.organizationEmail}
-                  className="pl-10 h-[44px] rounded-xl text-[13px]"
+                  className="pl-10 h-[42px] rounded-xl text-[13px]"
                   style={{
                     background: 'rgba(255,255,255,0.7)',
                     backdropFilter: 'blur(8px)',
@@ -180,7 +180,7 @@ export function RegisterForm() {
                   type="tel"
                   placeholder="Enter contact number"
                   error={!!errors.contactNumber}
-                  className="pl-10 h-[44px] rounded-xl text-[13px]"
+                  className="pl-10 h-[42px] rounded-xl text-[13px]"
                   style={{
                     background: 'rgba(255,255,255,0.7)',
                     backdropFilter: 'blur(8px)',
@@ -207,7 +207,7 @@ export function RegisterForm() {
                 type="text"
                 placeholder="Enter organization address"
                 error={!!errors.address}
-                className="pl-10 h-[44px] rounded-xl text-[13px]"
+                className="pl-10 h-[42px] rounded-xl text-[13px]"
                 style={{
                   background: 'rgba(255,255,255,0.7)',
                   backdropFilter: 'blur(8px)',
@@ -258,14 +258,14 @@ export function RegisterForm() {
             type="submit"
             variant="gold"
             isLoading={isSubmitting}
-            className="w-full h-[50px] rounded-xl font-bold text-[15px] mt-1 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all group"
+            className="w-full h-[47px] rounded-xl font-bold text-[14.5px] mt-0.5 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.008] active:scale-[0.99] transition-all group"
           >
             Register
             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
           </Button>
 
           {/* ── Divider ───────────────────────────────────────────────────── */}
-          <div className="flex items-center gap-3 my-1">
+          <div className="flex items-center gap-3 my-0.5">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
             <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-widest shrink-0">
               or continue with
@@ -279,11 +279,11 @@ export function RegisterForm() {
             {/* Google */}
             <button
               type="button"
-              className="flex items-center justify-center gap-2 h-[42px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 h-[40px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.01] active:scale-[0.98]"
               style={{
                 background: 'rgba(255,255,255,0.8)',
-                border:     '1px solid rgba(220,213,197,0.8)',
-                boxShadow:  '0 2px 8px rgba(16,42,67,0.06)',
+                border: '1px solid rgba(220,213,197,0.8)',
+                boxShadow: '0 2px 8px rgba(16,42,67,0.06)',
                 backdropFilter: 'blur(8px)',
               }}
             >
@@ -294,11 +294,11 @@ export function RegisterForm() {
             {/* Microsoft */}
             <button
               type="button"
-              className="flex items-center justify-center gap-2 h-[42px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 h-[40px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.01] active:scale-[0.98]"
               style={{
                 background: 'rgba(255,255,255,0.8)',
-                border:     '1px solid rgba(220,213,197,0.8)',
-                boxShadow:  '0 2px 8px rgba(16,42,67,0.06)',
+                border: '1px solid rgba(220,213,197,0.8)',
+                boxShadow: '0 2px 8px rgba(16,42,67,0.06)',
                 backdropFilter: 'blur(8px)',
               }}
             >
@@ -309,11 +309,11 @@ export function RegisterForm() {
             {/* SSO */}
             <button
               type="button"
-              className="flex items-center justify-center gap-2 h-[42px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 h-[40px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.01] active:scale-[0.98]"
               style={{
                 background: 'rgba(184,134,44,0.08)',
-                border:     '1px solid rgba(184,134,44,0.3)',
-                boxShadow:  '0 2px 8px rgba(184,134,44,0.08)',
+                border: '1px solid rgba(184,134,44,0.3)',
+                boxShadow: '0 2px 8px rgba(184,134,44,0.08)',
                 backdropFilter: 'blur(8px)',
               }}
             >
@@ -324,7 +324,7 @@ export function RegisterForm() {
           </div>
 
           {/* ── Sign in link ──────────────────────────────────────────────── */}
-          <p className="text-center text-[12px] text-[var(--text-secondary)] font-medium mt-1">
+          <p className="text-center text-[12px] text-[var(--text-secondary)] font-medium mt-0.5">
             Already have an account?{' '}
             <Link
               to="/login"
@@ -335,7 +335,7 @@ export function RegisterForm() {
           </p>
 
           {/* Home link */}
-          <div className="flex justify-center mt-1">
+          <div className="flex justify-center mt-0.5">
             <Link
               to="/"
               className="inline-flex items-center gap-1.5 text-[12px] font-medium hover:underline"

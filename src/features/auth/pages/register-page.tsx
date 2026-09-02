@@ -75,7 +75,7 @@ export default function RegisterPage() {
           </div>
 
           {/* RIGHT COLUMN: Form Card — thin container only */}
-          <div className="w-full max-w-[480px]">
+          <div className="w-full max-w-[456px]">
 
             {/* Card Header */}
             <div className="flex flex-col items-center text-center mb-2">
