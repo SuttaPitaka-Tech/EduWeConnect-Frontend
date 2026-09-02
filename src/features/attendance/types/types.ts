@@ -67,3 +67,9 @@ export interface CreateAttendanceModalProps {
   open:          boolean
   onOpenChange:  (open: boolean) => void
 }
+
+export interface AttendanceFormProps {
+  onSuccess?:     () => void
+  onCancel?:      () => void
+  defaultValues?: Partial<MarkAttendanceFormValues>
+}
