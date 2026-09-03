@@ -36,12 +36,30 @@ export const resetPasswordSchema = z
 // ── Register ───────────────────────────────────────────────────────────────
 
 export const registerSchema = z.object({
-  organizationType:  z.string().min(1, 'Please select an organization type'),
-  organizationName:  z.string().trim().min(2, 'Organization name is required'),
   organizationEmail: z.string().trim().email('Enter a valid organization email'),
-  contactNumber:     z.string().trim().min(10, 'Enter a valid contact number (at least 10 digits)'),
-  address:           z.string().trim().min(3, 'Address is required'),
-  acceptTerms:       z.boolean().refine((v) => v === true, 'You must accept the terms'),
+  organizationName: z.string().trim().min(2, 'Organization name is required'),
+  organizationMobile: z.string().trim().min(10, 'Enter a valid mobile number'),
+  organizationType: z.string().min(1, 'Select an organization type'),
+  address: z.string().trim().min(3, 'Address is required'),
+  city: z.string().trim().min(1, 'City/Village is required'),
+  district: z.string().trim().min(1, 'District is required'),
+  pincode: z.string().trim().min(1, 'Pin code is required'),
+  state: z.string().trim().min(1, 'State is required'),
+  country: z.string().trim().min(1, 'Country is required'),
+  
+  // Document Uploads
+  panNumber: z.string().trim().min(1, 'PAN number is required'),
+  panFile: z.any().refine((val) => val !== null && val !== undefined && val !== '', 'PAN file is required'),
+  gstNumber: z.string().trim().min(1, 'GST number is required'),
+  gstFile: z.any().refine((val) => val !== null && val !== undefined && val !== '', 'GST file is required'),
+  regCertNumber: z.string().trim().min(1, 'Registration number is required'),
+  regCertFile: z.any().refine((val) => val !== null && val !== undefined && val !== '', 'Registration certificate is required'),
+  otherDocuments: z.array(
+    z.object({
+      name: z.string().trim().min(1, 'Document name is required'),
+      file: z.any().refine((val) => val !== null && val !== undefined && val !== '', 'File is required')
+    })
+  ).optional(),
 })
 
 // ── API response shapes ────────────────────────────────────────────────────
