@@ -92,6 +92,17 @@ textarea:focus-visible {
   border-color: var(--navy) !important;
 }
 
+/* ── Browser Autofill Override — use --warm-white instead of grey/blue ── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #FFFDF8 inset !important;
+  -webkit-text-fill-color: var(--navy) !important;
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: var(--navy);
+}
+
 /* ── Button hover lift physics (Action buttons ONLY — NOT dropdowns/inputs/plain icons) ── */
 button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):not([data-plain]):hover,
 [role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):not([data-plain]):hover {
