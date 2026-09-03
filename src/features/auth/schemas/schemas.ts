@@ -60,6 +60,15 @@ export const registerSchema = z.object({
       file: z.any().refine((val) => val !== null && val !== undefined && val !== '', 'File is required')
     })
   ).optional(),
+
+  // Organization Head Details
+  orgHeadEmail: z.string().trim().email('Enter a valid email'),
+  orgHeadMobile: z.string().trim().min(10, 'Enter a valid mobile number'),
+  orgHeadFirstName: z.string().trim().min(1, 'First name is required'),
+  orgHeadMiddleName: z.string().trim().optional(),
+  orgHeadLastName: z.string().trim().min(1, 'Last name is required'),
+  orgHeadAadharNumber: z.string().trim().min(12, 'Enter a valid Aadhar number'),
+  orgHeadAadharFile: z.any().refine((val) => val !== null && val !== undefined && val !== '', 'Aadhar card file is required'),
 })
 
 // ── API response shapes ────────────────────────────────────────────────────

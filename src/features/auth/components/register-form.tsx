@@ -2,7 +2,7 @@ import { useState, useRef, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Mail, ArrowRight, Home, Building2, Phone, MapPin, CheckCircle2, Upload, Plus, Trash2, FileText } from 'lucide-react'
+import { Mail, ArrowRight, Home, Building2, Phone, MapPin, CheckCircle2, Upload, Plus, Trash2, FileText, Eye } from 'lucide-react'
 import { Button, Input, Dropdown, Textarea } from '@/components/ui'
 import { registerSchema, type RegisterFormValues } from '@/features/auth'
 import { Country, State, City } from 'country-state-city'
@@ -55,6 +55,7 @@ export function RegisterForm() {
     setValue,
     watch,
     handleSubmit,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -76,6 +77,13 @@ export function RegisterForm() {
       regCertNumber: '',
       regCertFile: null,
       otherDocuments: [],
+      orgHeadEmail: '',
+      orgHeadMobile: '',
+      orgHeadFirstName: '',
+      orgHeadMiddleName: '',
+      orgHeadLastName: '',
+      orgHeadAadharNumber: '',
+      orgHeadAadharFile: null,
     },
   })
 
@@ -118,9 +126,25 @@ export function RegisterForm() {
     }
   }
 
-  const submitDetails = (data: RegisterFormValues) => {
+  const submitDetails = () => {
     setShowConfirmModal(false)
-    setStep(7)
+    if (step === 4) {
+      clearErrors()
+      setStep(5)
+    } else if (step === 6) {
+      clearErrors()
+      setStep(7)
+    } else if (step === 8) {
+      setStep(9)
+    } else if (step === 9) {
+      setStep(10)
+    }
+  }
+
+  const handleViewFile = (file: File | null | undefined) => {
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    window.open(url, '_blank')
   }
 
   const onFormSubmit = async (e: React.FormEvent) => {
@@ -142,16 +166,22 @@ export function RegisterForm() {
       if (isValid) {
         setStep(6)
       }
+    } else if (step === 7) {
+      const isValid = await trigger(['orgHeadEmail', 'orgHeadMobile', 'orgHeadFirstName', 'orgHeadMiddleName', 'orgHeadLastName', 'orgHeadAadharNumber', 'orgHeadAadharFile'])
+      if (isValid) {
+        setStep(8)
+      }
     }
   }
 
   if (step >= 3) {
     return (
-      <div 
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed" 
-        style={{ backgroundImage: `url(${buddhaBg})` }}
-      >
-        <div className="w-full max-w-[700px]">
+      <>
+        <div 
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-start px-4 py-10 md:py-20 overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed" 
+          style={{ backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url(${buddhaBg})` }}
+        >
+          <div className={`w-full ${step === 9 ? 'max-w-[850px]' : 'max-w-[700px]'} transition-all duration-300 mt-auto mb-auto`}>
           <div className="flex flex-col items-center text-center mb-4">
             <h1 className="text-xl md:text-2xl font-serif font-bold text-[var(--navy)] mb-1">Organization Details</h1>
             <p className="text-[var(--text-secondary)] font-medium text-sm">Please complete your organization profile.</p>
@@ -390,7 +420,7 @@ export function RegisterForm() {
                     <Button type="button" variant="outline" onClick={() => setStep(3)} className="flex-1 h-[45px] rounded-xl font-bold shadow-sm">
                       Edit
                     </Button>
-                    <Button type="button" variant="gold" onClick={() => setStep(5)} className="flex-1 h-[45px] rounded-xl font-bold shadow-md">
+                    <Button type="button" variant="gold" onClick={() => setShowConfirmModal(true)} className="flex-1 h-[45px] rounded-xl font-bold shadow-md">
                       Confirm & Save
                     </Button>
                   </div>
@@ -535,23 +565,51 @@ export function RegisterForm() {
                       <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
                         <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">PAN Number</span>
                         <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('panNumber')}</span>
-                        <span className="text-[10px] text-[var(--gold)] font-medium mt-1 truncate max-w-[200px]">📄 {(getValues('panFile') as File)?.name}</span>
+                        {getValues('panFile') && (
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('panFile') as File)?.name}>📄 {(getValues('panFile') as File)?.name}</span>
+                            <button type="button" onClick={() => handleViewFile(getValues('panFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
                         <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">GST Number</span>
                         <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('gstNumber')}</span>
-                        <span className="text-[10px] text-[var(--gold)] font-medium mt-1 truncate max-w-[200px]">📄 {(getValues('gstFile') as File)?.name}</span>
+                        {getValues('gstFile') && (
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('gstFile') as File)?.name}>📄 {(getValues('gstFile') as File)?.name}</span>
+                            <button type="button" onClick={() => handleViewFile(getValues('gstFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
                         <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Registration Certificate</span>
                         <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('regCertNumber')}</span>
-                        <span className="text-[10px] text-[var(--gold)] font-medium mt-1 truncate max-w-[400px]">📄 {(getValues('regCertFile') as File)?.name}</span>
+                        {getValues('regCertFile') && (
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[300px]" title={(getValues('regCertFile') as File)?.name}>📄 {(getValues('regCertFile') as File)?.name}</span>
+                            <button type="button" onClick={() => handleViewFile(getValues('regCertFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          </div>
+                        )}
                       </div>
                       
                       {getValues('otherDocuments')?.length ? getValues('otherDocuments')?.map((doc, i) => (
                         <div key={i} className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2 md:col-span-1">
                           <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">{doc.name}</span>
-                          <span className="text-[10px] text-[var(--gold)] font-medium mt-1 truncate max-w-[200px]">📄 {(doc.file as File)?.name}</span>
+                          {doc.file && (
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(doc.file as File)?.name}>📄 {(doc.file as File)?.name}</span>
+                              <button type="button" onClick={() => handleViewFile(doc.file as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                                <Eye className="w-3 h-3" /> View
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )) : null}
                     </div>
@@ -570,35 +628,317 @@ export function RegisterForm() {
               )}
 
               {step === 7 && (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <CheckCircle2 className="w-20 h-20 text-[var(--gold)] mb-6" />
-                  <h2 className="text-2xl font-bold text-[var(--navy)] mb-3">Details Submitted!</h2>
-                  <p className="text-[14px] text-[var(--text-secondary)]">This is the placeholder for the next form step.</p>
-                </div>
-              )}
+                <div className="flex flex-col gap-4">
+                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)]">
+                    <h3 className="text-base font-bold text-[var(--navy)] border-b border-[var(--border)] pb-2 mb-4">Organization Head Details</h3>
+                    
+                    <div className="flex flex-col gap-4">
+                      {/* Name Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">First Name</label>
+                          <Input {...register('orgHeadFirstName')} placeholder="First Name" error={!!errors.orgHeadFirstName} className="h-[40px] pl-3 rounded-xl text-[13px]" />
+                          {errors.orgHeadFirstName && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadFirstName.message as string}</p>}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Middle Name</label>
+                          <Input {...register('orgHeadMiddleName')} placeholder="Middle Name" className="h-[40px] pl-3 rounded-xl text-[13px]" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Last Name</label>
+                          <Input {...register('orgHeadLastName')} placeholder="Last Name" error={!!errors.orgHeadLastName} className="h-[40px] pl-3 rounded-xl text-[13px]" />
+                          {errors.orgHeadLastName && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadLastName.message as string}</p>}
+                        </div>
+                      </div>
 
-              {showConfirmModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-                  <div className="bg-white rounded-3xl p-8 max-w-[400px] w-full shadow-2xl text-center border border-[var(--border)]">
-                    <h3 className="text-xl font-bold text-[var(--navy)] mb-3">Are you sure?</h3>
-                    <p className="text-[14px] text-[var(--text-secondary)] mb-8 leading-relaxed">
-                      Are you sure all the entered data and documents are correct? If you're sure please click on the next button to move forward, or else click cancel.
-                    </p>
-                    <div className="flex gap-4">
-                      <Button type="button" variant="outline" onClick={() => setShowConfirmModal(false)} className="flex-1 h-[45px] rounded-xl font-bold">
-                        Cancel
-                      </Button>
-                      <Button type="button" variant="gold" onClick={handleSubmit(submitDetails)} className="flex-1 h-[45px] rounded-xl font-bold">
-                        Next
-                      </Button>
+                      {/* Contact Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Email Address</label>
+                          <Input type="email" {...register('orgHeadEmail')} placeholder="head@organization.com" error={!!errors.orgHeadEmail} className="h-[40px] pl-3 rounded-xl text-[13px]" />
+                          {errors.orgHeadEmail && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadEmail.message as string}</p>}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Mobile Number</label>
+                          <Input type="tel" {...register('orgHeadMobile')} placeholder="Mobile Number" error={!!errors.orgHeadMobile} className="h-[40px] pl-3 rounded-xl text-[13px]" />
+                          {errors.orgHeadMobile && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadMobile.message as string}</p>}
+                        </div>
+                      </div>
+
+                      {/* Aadhar Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Aadhar Card Number</label>
+                          <Input {...register('orgHeadAadharNumber')} placeholder="Enter Aadhar Number" error={!!errors.orgHeadAadharNumber} className="h-[40px] pl-3 rounded-xl text-[13px]" />
+                          {errors.orgHeadAadharNumber && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadAadharNumber.message as string}</p>}
+                        </div>
+                        <div className="flex flex-col gap-1 h-[40px]">
+                          <label className="cursor-pointer w-full h-full bg-white border border-[var(--gold)]/50 text-[var(--navy)] rounded-xl flex items-center justify-center font-bold text-[13px] hover:bg-[var(--gold)]/10 transition-colors">
+                            <Upload className="w-4 h-4 mr-2 text-[var(--gold)]" />
+                            {watch('orgHeadAadharFile') ? (watch('orgHeadAadharFile') as File).name : 'Upload Aadhar Card'}
+                            <input type="file" className="hidden" onChange={(e) => { if(e.target.files?.[0]) setValue('orgHeadAadharFile', e.target.files[0], {shouldValidate: true}) }} />
+                          </label>
+                          {errors.orgHeadAadharFile && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadAadharFile.message as string}</p>}
+                        </div>
+                      </div>
                     </div>
+                  </div>
+
+                  <div className="flex gap-3 mt-1">
+                    <Button type="button" variant="outline" onClick={() => setStep(6)} className="flex-1 h-[45px] rounded-xl font-bold shadow-sm">
+                      Back
+                    </Button>
+                    <Button type="submit" variant="gold" isLoading={isSubmitting} className="flex-1 h-[45px] rounded-xl font-bold shadow-md">
+                      Save & Continue
+                    </Button>
                   </div>
                 </div>
               )}
+
+              {step === 8 && (
+                <div className="flex flex-col gap-3">
+                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)]">
+                    <h3 className="text-base font-bold text-[var(--navy)] border-b border-[var(--border)] pb-2 mb-3">Organization Head Details Preview</h3>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-[12px] mb-4">
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Full Name</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
+                          {`${getValues('orgHeadFirstName')} ${getValues('orgHeadMiddleName')} ${getValues('orgHeadLastName')}`.replace(/\s+/g, ' ').trim()}
+                        </span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Email</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadEmail')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Mobile</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadMobile')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Aadhar Number</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadAadharNumber')}</span>
+                        {getValues('orgHeadAadharFile') && (
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('orgHeadAadharFile') as File)?.name}>📄 {(getValues('orgHeadAadharFile') as File)?.name}</span>
+                            <button type="button" onClick={() => handleViewFile(getValues('orgHeadAadharFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 mt-1">
+                    <Button type="button" variant="outline" onClick={() => setStep(7)} className="flex-1 h-[45px] rounded-xl font-bold shadow-sm">
+                      Edit
+                    </Button>
+                    <Button type="button" variant="gold" onClick={() => setShowConfirmModal(true)} className="flex-1 h-[45px] rounded-xl font-bold shadow-md">
+                      Save & Continue
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {step === 9 && (
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-col items-center text-center mb-1 mt-[-10px]">
+                     <h3 className="text-xl md:text-2xl font-serif font-bold text-[var(--navy)] mb-1">Final Application Preview</h3>
+                     <p className="text-[var(--text-secondary)] font-medium text-sm">Please review all sections carefully before final submission.</p>
+                  </div>
+                  
+                  {/* Section 1: Org Details */}
+                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)] relative">
+                    <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-3">
+                      <h3 className="text-base font-bold text-[var(--navy)]">Organization Details</h3>
+                      <button type="button" onClick={() => setStep(3)} className="text-[12px] font-bold text-[var(--gold)] hover:underline">Edit Section</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[12px]">
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Email</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationEmail')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Name</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationName')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Mobile</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationMobile')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Type</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
+                           {ORGANIZATION_TYPE_OPTIONS.find(o => o.value === getValues('organizationType'))?.label}
+                        </span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Address</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('address')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">District</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('district')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">City/Village</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('city')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Pin Code</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('pincode')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">State</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
+                          {State.getStateByCodeAndCountry(getValues('state'), getValues('country'))?.name || getValues('state')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Document Uploads */}
+                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)] relative">
+                    <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-3">
+                      <h3 className="text-base font-bold text-[var(--navy)]">Document Details</h3>
+                      <button type="button" onClick={() => setStep(5)} className="text-[12px] font-bold text-[var(--gold)] hover:underline">Edit Section</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[12px]">
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">PAN Number</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('panNumber')}</span>
+                        {getValues('panFile') && (
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('panFile') as File)?.name}>📄 {(getValues('panFile') as File)?.name}</span>
+                            <button type="button" onClick={() => handleViewFile(getValues('panFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">GST Number</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('gstNumber')}</span>
+                        {getValues('gstFile') && (
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('gstFile') as File)?.name}>📄 {(getValues('gstFile') as File)?.name}</span>
+                            <button type="button" onClick={() => handleViewFile(getValues('gstFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Registration Certificate</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('regCertNumber')}</span>
+                        {getValues('regCertFile') && (
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[300px]" title={(getValues('regCertFile') as File)?.name}>📄 {(getValues('regCertFile') as File)?.name}</span>
+                            <button type="button" onClick={() => handleViewFile(getValues('regCertFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {getValues('otherDocuments')?.length ? getValues('otherDocuments')?.map((doc, i) => (
+                        <div key={i} className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2 md:col-span-1">
+                          <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">{doc.name}</span>
+                          {doc.file && (
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(doc.file as File)?.name}>📄 {(doc.file as File)?.name}</span>
+                              <button type="button" onClick={() => handleViewFile(doc.file as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                                <Eye className="w-3 h-3" /> View
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )) : null}
+                    </div>
+                  </div>
+
+                  {/* Section 3: Head Details */}
+                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)] relative">
+                    <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-3">
+                      <h3 className="text-base font-bold text-[var(--navy)]">Organization Head Details</h3>
+                      <button type="button" onClick={() => setStep(7)} className="text-[12px] font-bold text-[var(--gold)] hover:underline">Edit Section</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[12px]">
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Full Name</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
+                          {`${getValues('orgHeadFirstName')} ${getValues('orgHeadMiddleName')} ${getValues('orgHeadLastName')}`.replace(/\s+/g, ' ').trim()}
+                        </span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Email</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadEmail')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Mobile</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadMobile')}</span>
+                      </div>
+                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
+                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Aadhar Number</span>
+                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadAadharNumber')}</span>
+                        {getValues('orgHeadAadharFile') && (
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[300px]" title={(getValues('orgHeadAadharFile') as File)?.name}>📄 {(getValues('orgHeadAadharFile') as File)?.name}</span>
+                            <button type="button" onClick={() => handleViewFile(getValues('orgHeadAadharFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
+                              <Eye className="w-3 h-3" /> View
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex mt-2">
+                    <Button type="button" variant="gold" onClick={() => setShowConfirmModal(true)} className="w-full h-[50px] rounded-xl font-bold shadow-md text-base">
+                      Submit Application
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {step === 10 && (
+                <div className="flex flex-col items-center justify-center py-10 text-center max-w-[500px] mx-auto">
+                  <div className="animate-success-pop flex items-center justify-center bg-[var(--gold)]/10 rounded-full w-24 h-24 mb-6 shadow-sm border border-[var(--gold)]/20">
+                    <CheckCircle2 className="w-12 h-12 text-[var(--gold)]" />
+                  </div>
+                  <div className="animate-fade-in-up">
+                    <h2 className="text-2xl font-serif font-bold text-[var(--navy)] mb-4 leading-tight">Thank you for your time and registration!</h2>
+                    <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed">
+                      Your registration information has been sent to the admin. The admin will verify and send back an email related to the login details. You will receive it within 24 hours.
+                    </p>
+                  </div>
+                </div>
+              )}
+
             </form>
           </div>
         </div>
       </div>
+      
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-3xl p-8 max-w-[400px] w-full shadow-2xl text-center border border-[var(--border)]">
+            <h3 className="text-xl font-bold text-[var(--navy)] mb-3">Are you sure?</h3>
+            <p className="text-[14px] text-[var(--text-secondary)] mb-8 leading-relaxed">
+              Are you sure all the entered data and documents are correct? If you're sure please click on the next button to move forward, or else click cancel.
+            </p>
+            <div className="flex gap-4">
+              <Button type="button" variant="outline" onClick={() => setShowConfirmModal(false)} className="flex-1 h-[45px] rounded-xl font-bold">
+                Cancel
+              </Button>
+              <Button type="button" variant="gold" onClick={submitDetails} className="flex-1 h-[45px] rounded-xl font-bold">
+                Next
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
     )
   }
 
