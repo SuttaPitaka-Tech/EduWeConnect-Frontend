@@ -10,7 +10,7 @@ export default function RegisterPage() {
       <div
         className="absolute inset-0 z-0 bg-no-repeat bg-center"
         style={{
-          backgroundImage: `url(${registerBg})`,
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url(${registerBg})`,
           backgroundSize: '100% 100%'
         }}
       />
