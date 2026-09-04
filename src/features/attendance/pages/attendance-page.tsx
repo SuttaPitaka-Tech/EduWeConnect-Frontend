@@ -89,11 +89,7 @@ export default function AttendancePage() {
 
   // Full-page initial loading
   if (isLoading) {
-    return (
-      <div className="flex h-64 w-full items-center justify-center">
-        <Spinner size={40} />
-      </div>
-    )
+    return <Spinner center size={40} />
   }
 
   if (isError) {

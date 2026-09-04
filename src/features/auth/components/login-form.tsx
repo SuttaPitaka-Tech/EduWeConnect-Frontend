@@ -175,7 +175,8 @@ export function LoginForm() {
             Don&apos;t have an account?{' '}
             <Link
               to="/register"
-              className="text-[var(--gold)] font-bold hover:underline underline-offset-2"
+              data-plain
+              className="text-[var(--gold)] font-bold hover:underline underline-offset-2 transition-all"
             >
               Register
             </Link>
@@ -185,8 +186,9 @@ export function LoginForm() {
           <div className="flex justify-center mt-1">
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium hover:underline"
-              style={{ color: 'var(--gold)' }}
+              data-plain
+              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[var(--gold)] hover:underline underline-offset-2 transition-all"
+              style={{ textShadow: 'none', filter: 'none' }}
             >
               <Home className="w-3.5 h-3.5" />
               Home

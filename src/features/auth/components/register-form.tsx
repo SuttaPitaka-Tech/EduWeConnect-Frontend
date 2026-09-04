@@ -1,21 +1,22 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { useForm, Controller, useFieldArray } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Mail, ArrowRight, Home, Building2, Phone, MapPin, CheckCircle2, Upload, Plus, Trash2, FileText, Eye } from 'lucide-react'
-import { Button, Input, Dropdown, Textarea } from '@/components/ui'
-import { registerSchema, type RegisterFormValues } from '@/features/auth'
-import { Country, State, City } from 'country-state-city'
-import { buddhaBg } from '@/assets/images'
+import { useNavigate, Link } from 'react-router-dom'
+import { Mail, ArrowRight, Home } from 'lucide-react'
+import { Button, Input } from '@/components/ui'
+import { z } from 'zod'
 
-const ORGANIZATION_TYPE_OPTIONS = [
-  { value: 'kinder_garden', label: 'Kinder Garden' },
-  { value: 'pre_school', label: 'Pre School (Nursery, LKG, UKG)' },
-  { value: 'school', label: 'School' },
-  { value: 'school_with_puc', label: 'School with Pre University College' },
-  { value: 'puc', label: 'Pre University College' },
-  { value: 'college', label: 'College/University' },
-]
+const registerEmailSchema = z.object({
+  organizationEmail: z
+    .string()
+    .trim()
+    .min(1, 'Organization email is required')
+    .regex(
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      'Enter a valid email containing "@" and "." (e.g. name@domain.com)',
+    ),
+})
+
+type RegisterEmailValues = z.infer<typeof registerEmailSchema>
 
 // ── SVG Logos ────────────────────────────────────────────────────────────────
 
@@ -23,9 +24,9 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.15v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.15C1.43 8.55 1 10.22 1 12s.43 3.45 1.15 4.93l3.69-2.84z" fill="#FBBC05" />
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.15 7.07l3.69 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
     </svg>
   )
 }
@@ -42,1062 +43,141 @@ function MicrosoftIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export function RegisterForm() {
-  const [step, setStep] = useState(1)
-  const [otp, setOtp] = useState(['', '', '', ''])
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const navigate = useNavigate()
 
   const {
     register,
-    control,
-    trigger,
-    getValues,
-    setValue,
-    watch,
     handleSubmit,
     clearErrors,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<RegisterEmailValues>({
+    resolver: zodResolver(registerEmailSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
     defaultValues: {
       organizationEmail: '',
-      organizationName: '',
-      organizationMobile: '',
-      organizationType: '',
-      address: '',
-      city: '',
-      district: '',
-      pincode: '',
-      state: '',
-      country: '',
-      panNumber: '',
-      panFile: null,
-      gstNumber: '',
-      gstFile: null,
-      regCertNumber: '',
-      regCertFile: null,
-      otherDocuments: [],
-      orgHeadEmail: '',
-      orgHeadMobile: '',
-      orgHeadFirstName: '',
-      orgHeadMiddleName: '',
-      orgHeadLastName: '',
-      orgHeadAadharNumber: '',
-      orgHeadAadharFile: null,
     },
   })
 
-  const { fields: otherDocs, append: appendOtherDoc, remove: removeOtherDoc } = useFieldArray({
-    control,
-    name: 'otherDocuments',
-  })
-
-  const selectedCountry = watch('country')
-  const selectedState = watch('state')
-
-  const countryOptions = useMemo(() => {
-    return Country.getAllCountries().map(c => ({ value: c.isoCode, label: c.name }))
-  }, [])
-
-  const stateOptions = useMemo(() => {
-    if (!selectedCountry) return []
-    return State.getStatesOfCountry(selectedCountry).map(s => ({ value: s.isoCode, label: s.name }))
-  }, [selectedCountry])
-
-  const cityOptions = useMemo(() => {
-    if (!selectedCountry || !selectedState) return []
-    return City.getCitiesOfState(selectedCountry, selectedState).map(c => ({ value: c.name, label: c.name }))
-  }, [selectedCountry, selectedState])
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) value = value[value.length - 1]
-    const newOtp = [...otp]
-    newOtp[index] = value
-    setOtp(newOtp)
-    
-    if (value && index < 3) {
-      inputRefs.current[index + 1]?.focus()
-    }
-  }
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus()
-    }
-  }
-
-  const submitDetails = () => {
-    setShowConfirmModal(false)
-    if (step === 4) {
-      clearErrors()
-      setStep(5)
-    } else if (step === 6) {
-      clearErrors()
-      setStep(7)
-    } else if (step === 8) {
-      setStep(9)
-    } else if (step === 9) {
-      const email = getValues('organizationEmail')
-      const name = getValues('organizationName')
-      
-      const newMockOrg = {
-        id: `org-${Date.now()}`,
-        email: email,
-        password: 'password123', // Default password for mocked organizations
-        role: 'organization',
-        organizationName: name,
-        firstName: getValues('orgHeadFirstName') || 'Org',
-        lastName: getValues('orgHeadLastName') || 'Head',
-      }
-      const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]')
-      localStorage.setItem('mockUsers', JSON.stringify([...existingUsers, newMockOrg]))
-
-      setStep(10)
-    }
-  }
-
-  const handleViewFile = (file: File | null | undefined) => {
-    if (!file) return
-    const url = URL.createObjectURL(file)
-    window.open(url, '_blank')
-  }
-
-  const onFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (step === 1) {
-      const isValid = await trigger('organizationEmail')
-      if (isValid) setStep(2)
-    } else if (step === 2) {
-      if (otp.join('').length === 4) {
-        setStep(3)
-      }
-    } else if (step === 3) {
-      const isValid = await trigger(['organizationName', 'organizationMobile', 'organizationType', 'address', 'city', 'district', 'pincode', 'state', 'country'])
-      if (isValid) {
-        setStep(4)
-      }
-    } else if (step === 5) {
-      const isValid = await trigger(['panNumber', 'panFile', 'gstNumber', 'gstFile', 'regCertNumber', 'regCertFile', 'otherDocuments'])
-      if (isValid) {
-        setStep(6)
-      }
-    } else if (step === 7) {
-      const isValid = await trigger(['orgHeadEmail', 'orgHeadMobile', 'orgHeadFirstName', 'orgHeadMiddleName', 'orgHeadLastName', 'orgHeadAadharNumber', 'orgHeadAadharFile'])
-      if (isValid) {
-        setStep(8)
-      }
-    }
-  }
-
-  if (step >= 3) {
-    return (
-      <>
-        <div 
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-start px-4 py-10 md:py-20 overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed" 
-          style={{ backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url(${buddhaBg})` }}
-        >
-          <div className={`w-full ${step === 9 ? 'max-w-[850px]' : 'max-w-[700px]'} transition-all duration-300 mt-auto mb-auto`}>
-          <div className="flex flex-col items-center text-center mb-4">
-            <h1 className="text-xl md:text-2xl font-serif font-bold text-[var(--navy)] mb-1">Organization Details</h1>
-            <p className="text-[var(--text-secondary)] font-medium text-sm">Please complete your organization profile.</p>
-          </div>
-          
-          <div
-            className="rounded-3xl p-5 md:p-7 shadow-2xl border border-[var(--border)]"
-            style={{
-              background: 'linear-gradient(145deg, rgba(255,253,248,0.95) 0%, rgba(247,241,227,0.9) 100%)',
-              backdropFilter: 'blur(24px)',
-            }}
-          >
-            <form className="flex flex-col gap-3" onSubmit={onFormSubmit}>
-              {step === 3 && (
-                <>
-                  {/* ── Email (Readonly) ── */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">
-                      Organization Email
-                    </label>
-                    <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                        <Mail className="h-[14px] w-[14px] text-[var(--gold)]" strokeWidth={1.75} />
-                      </div>
-                      <Input
-                        {...register('organizationEmail')}
-                        type="email"
-                        readOnly
-                        className="pl-9 h-[40px] rounded-xl text-[13px] opacity-70 cursor-not-allowed bg-white/50"
-                        title="You cannot edit this email"
-                      />
-                    </div>
-                  </div>
-
-                  {/* ── Organization Name & Mobile ── */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Organization Name</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                          <Building2 className="h-[14px] w-[14px] text-[var(--gold)]" strokeWidth={1.75} />
-                        </div>
-                        <Input {...register('organizationName')} placeholder="Name" error={!!errors.organizationName} className="pl-9 h-[40px] rounded-xl text-[13px]" />
-                      </div>
-                      {errors.organizationName && <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationName.message}</p>}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Mobile Number</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-                          <Phone className="h-[14px] w-[14px] text-[var(--gold)]" strokeWidth={1.75} />
-                        </div>
-                        <Input {...register('organizationMobile')} type="tel" placeholder="Mobile Number" error={!!errors.organizationMobile} className="pl-9 h-[40px] rounded-xl text-[13px]" />
-                      </div>
-                      {errors.organizationMobile && <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationMobile.message}</p>}
-                    </div>
-                  </div>
-
-                  {/* ── Organization Type ── */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Organization Type</label>
-                    <Controller
-                      name="organizationType"
-                      control={control}
-                      render={({ field }) => (
-                        <Dropdown
-                          value={field.value}
-                          onChange={field.onChange}
-                          options={ORGANIZATION_TYPE_OPTIONS}
-                          placeholder="Select organization type"
-                          invalid={!!errors.organizationType}
-                          className="h-[40px] rounded-xl text-[13px]"
-                        />
-                      )}
-                    />
-                    {errors.organizationType && <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationType.message}</p>}
-                  </div>
-
-                  {/* ── Address ── */}
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Address</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-start pt-3 pointer-events-none z-10">
-                          <MapPin className="h-[14px] w-[14px] text-[var(--gold)]" strokeWidth={1.75} />
-                        </div>
-                      <Textarea {...register('address')} placeholder="Full Address" error={!!errors.address} className="pl-9 min-h-[60px] rounded-xl text-[13px] py-2 resize-y" />
-                    </div>
-                    {errors.address && <p className="text-[11px] text-red-500 mt-0.5">{errors.address.message}</p>}
-                  </div>
-
-                  {/* ── Country & State ── */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Country</label>
-                      <Controller
-                        name="country"
-                        control={control}
-                        render={({ field }) => (
-                          <Dropdown
-                            value={field.value}
-                            onChange={(val) => { field.onChange(val); setValue('state', ''); setValue('city', ''); }}
-                            options={countryOptions}
-                            placeholder="Select country"
-                            invalid={!!errors.country}
-                            className="h-[40px] rounded-xl text-[13px]"
-                          />
-                        )}
-                      />
-                      {errors.country && <p className="text-[11px] text-red-500 mt-0.5">{errors.country.message}</p>}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">State</label>
-                      <Controller
-                        name="state"
-                        control={control}
-                        render={({ field }) => (
-                          <Dropdown
-                            value={field.value}
-                            onChange={(val) => { field.onChange(val); setValue('city', ''); }}
-                            options={stateOptions}
-                            placeholder="Select state"
-                            invalid={!!errors.state}
-                            className="h-[40px] rounded-xl text-[13px]"
-                            disabled={!selectedCountry}
-                          />
-                        )}
-                      />
-                      {errors.state && <p className="text-[11px] text-red-500 mt-0.5">{errors.state.message}</p>}
-                    </div>
-                  </div>
-
-                  {/* ── District & City ── */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">District</label>
-                      <Input {...register('district')} placeholder="Enter district" error={!!errors.district} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                      {errors.district && <p className="text-[11px] text-red-500 mt-0.5">{errors.district.message}</p>}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">City/Village</label>
-                      <Controller
-                        name="city"
-                        control={control}
-                        render={({ field }) => (
-                          <Dropdown
-                            value={field.value}
-                            onChange={field.onChange}
-                            options={cityOptions}
-                            placeholder="Select city"
-                            invalid={!!errors.city}
-                            className="h-[40px] rounded-xl text-[13px]"
-                            disabled={!selectedState}
-                          />
-                        )}
-                      />
-                      {errors.city && <p className="text-[11px] text-red-500 mt-0.5">{errors.city.message}</p>}
-                    </div>
-                  </div>
-
-                  {/* ── Pin Code ── */}
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Pin Code</label>
-                      <Input {...register('pincode')} placeholder="Enter pin code" error={!!errors.pincode} className="h-[40px] pl-3 w-1/2 rounded-xl text-[13px]" />
-                      {errors.pincode && <p className="text-[11px] text-red-500 mt-0.5">{errors.pincode.message}</p>}
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="gold"
-                    isLoading={isSubmitting}
-                    className="w-full h-[45px] rounded-xl font-bold text-[14px] mt-1 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.008] active:scale-[0.99] transition-all group"
-                  >
-                    Next
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </>
-              )}
-
-              {step === 4 && (
-                <div className="flex flex-col gap-3">
-                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)]">
-                    <h3 className="text-base font-bold text-[var(--navy)] border-b border-[var(--border)] pb-2 mb-3">Preview Details</h3>
-                    <div className="grid grid-cols-2 gap-2 text-[12px]">
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Email</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationEmail')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Name</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationName')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Mobile</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationMobile')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Type</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
-                           {ORGANIZATION_TYPE_OPTIONS.find(o => o.value === getValues('organizationType'))?.label}
-                        </span>
-                      </div>
-                      <div className="flex flex-col col-span-2 p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Address</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('address')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">District</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('district')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">City/Village</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('city')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Pin Code</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('pincode')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">State</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
-                          {State.getStateByCodeAndCountry(getValues('state'), getValues('country'))?.name || getValues('state')}
-                        </span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2 md:col-span-1">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Country</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
-                          {Country.getCountryByCode(getValues('country'))?.name || getValues('country')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={() => setStep(3)} className="flex-1 h-[45px] rounded-xl font-bold shadow-sm">
-                      Edit
-                    </Button>
-                    <Button type="button" variant="gold" onClick={() => setShowConfirmModal(true)} className="flex-1 h-[45px] rounded-xl font-bold shadow-md">
-                      Confirm & Save
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {step === 5 && (
-                <div className="flex flex-col gap-4">
-                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)]">
-                    <h3 className="text-base font-bold text-[var(--navy)] border-b border-[var(--border)] pb-2 mb-4">Document Uploads</h3>
-                    
-                    <div className="flex flex-col gap-4">
-                      {/* PAN */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Organization PAN Card Number</label>
-                          <Input {...register('panNumber')} placeholder="Enter PAN Number" error={!!errors.panNumber} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                          {errors.panNumber && <p className="text-[11px] text-red-500 mt-0.5">{errors.panNumber.message as string}</p>}
-                        </div>
-                        <div className="flex flex-col gap-1 h-[40px]">
-                          <label className="cursor-pointer w-full h-full bg-white border border-[var(--gold)]/50 text-[var(--navy)] rounded-xl flex items-center justify-center font-bold text-[13px] hover:bg-[var(--gold)]/10 transition-colors">
-                            <Upload className="w-4 h-4 mr-2 text-[var(--gold)]" />
-                            {watch('panFile') ? (watch('panFile') as File).name : 'Upload Organization PAN Card'}
-                            <input type="file" className="hidden" onChange={(e) => { if(e.target.files?.[0]) setValue('panFile', e.target.files[0], {shouldValidate: true}) }} />
-                          </label>
-                          {errors.panFile && <p className="text-[11px] text-red-500 mt-0.5">{errors.panFile.message as string}</p>}
-                        </div>
-                      </div>
-
-                      {/* GST */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Organization GST Number</label>
-                          <Input {...register('gstNumber')} placeholder="Enter GST Number" error={!!errors.gstNumber} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                          {errors.gstNumber && <p className="text-[11px] text-red-500 mt-0.5">{errors.gstNumber.message as string}</p>}
-                        </div>
-                        <div className="flex flex-col gap-1 h-[40px]">
-                          <label className="cursor-pointer w-full h-full bg-white border border-[var(--gold)]/50 text-[var(--navy)] rounded-xl flex items-center justify-center font-bold text-[13px] hover:bg-[var(--gold)]/10 transition-colors">
-                            <Upload className="w-4 h-4 mr-2 text-[var(--gold)]" />
-                            {watch('gstFile') ? (watch('gstFile') as File).name : 'Upload Organization GST'}
-                            <input type="file" className="hidden" onChange={(e) => { if(e.target.files?.[0]) setValue('gstFile', e.target.files[0], {shouldValidate: true}) }} />
-                          </label>
-                          {errors.gstFile && <p className="text-[11px] text-red-500 mt-0.5">{errors.gstFile.message as string}</p>}
-                        </div>
-                      </div>
-
-                      {/* Registration Certificate */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Registration Certificate Number</label>
-                          <Input {...register('regCertNumber')} placeholder="Enter Registration Number" error={!!errors.regCertNumber} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                          {errors.regCertNumber && <p className="text-[11px] text-red-500 mt-0.5">{errors.regCertNumber.message as string}</p>}
-                        </div>
-                        <div className="flex flex-col gap-1 h-[40px]">
-                          <label className="cursor-pointer w-full h-full bg-white border border-[var(--gold)]/50 text-[var(--navy)] rounded-xl flex items-center justify-center font-bold text-[13px] hover:bg-[var(--gold)]/10 transition-colors">
-                            <Upload className="w-4 h-4 mr-2 text-[var(--gold)]" />
-                            {watch('regCertFile') ? (watch('regCertFile') as File).name : 'Upload Registration Certificate'}
-                            <input type="file" className="hidden" onChange={(e) => { if(e.target.files?.[0]) setValue('regCertFile', e.target.files[0], {shouldValidate: true}) }} />
-                          </label>
-                          {errors.regCertFile && <p className="text-[11px] text-red-500 mt-0.5">{errors.regCertFile.message as string}</p>}
-                        </div>
-                      </div>
-                      
-                      {/* Divider */}
-                      <div className="h-px w-full bg-[var(--border)] my-2"></div>
-                      
-                      {/* Other Documents */}
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between">
-                          <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">Other Documents (Optional)</label>
-                          <Button type="button" variant="ghost" onClick={() => appendOtherDoc({ name: '', file: null })} className="h-[30px] text-[12px] text-[var(--gold)] px-2 hover:bg-[var(--gold)]/10">
-                            <Plus className="w-3.5 h-3.5 mr-1" /> Add Document
-                          </Button>
-                        </div>
-                        
-                        {otherDocs.map((item, index) => (
-                          <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start border border-[var(--border)] p-3 rounded-xl bg-white/40">
-                            <div className="md:col-span-5 flex flex-col gap-1">
-                              <Input {...register(`otherDocuments.${index}.name` as const)} placeholder="Document Name" error={!!errors.otherDocuments?.[index]?.name} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                              {errors.otherDocuments?.[index]?.name && <p className="text-[11px] text-red-500 mt-0.5">{errors.otherDocuments[index]?.name?.message as string}</p>}
-                            </div>
-                            <div className="md:col-span-6 flex flex-col gap-1 h-[40px]">
-                              <label className="cursor-pointer w-full h-full bg-white border border-[var(--gold)]/50 text-[var(--navy)] rounded-xl flex items-center justify-center font-bold text-[13px] hover:bg-[var(--gold)]/10 transition-colors">
-                                <Upload className="w-4 h-4 mr-2 text-[var(--gold)]" />
-                                {watch(`otherDocuments.${index}.file` as const) ? (watch(`otherDocuments.${index}.file` as const) as File).name : 'Upload Document'}
-                                <input type="file" className="hidden" onChange={(e) => { if(e.target.files?.[0]) setValue(`otherDocuments.${index}.file` as const, e.target.files[0], {shouldValidate: true}) }} />
-                              </label>
-                              {errors.otherDocuments?.[index]?.file && <p className="text-[11px] text-red-500 mt-0.5">{errors.otherDocuments[index]?.file?.message as string}</p>}
-                            </div>
-                            <div className="md:col-span-1 flex items-center justify-center h-[40px]">
-                              <button type="button" onClick={() => removeOtherDoc(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 mt-1">
-                    <Button type="button" variant="outline" onClick={() => setStep(4)} className="flex-1 h-[45px] rounded-xl font-bold shadow-sm">
-                      Back
-                    </Button>
-                    <Button type="submit" variant="gold" isLoading={isSubmitting} className="flex-1 h-[45px] rounded-xl font-bold shadow-md">
-                      Save & Continue
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {step === 6 && (
-                <div className="flex flex-col gap-3">
-                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)]">
-                    <h3 className="text-base font-bold text-[var(--navy)] border-b border-[var(--border)] pb-2 mb-3">Final Preview</h3>
-                    
-                    {/* Organization Details (from Step 4) */}
-                    <div className="grid grid-cols-2 gap-2 text-[12px] mb-4">
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Email</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationEmail')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Name</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationName')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Mobile</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationMobile')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Type</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
-                           {ORGANIZATION_TYPE_OPTIONS.find(o => o.value === getValues('organizationType'))?.label}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <h4 className="text-sm font-bold text-[var(--navy)] border-b border-[var(--border)] pb-2 mb-3 mt-2">Document Details</h4>
-                    <div className="grid grid-cols-2 gap-2 text-[12px]">
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">PAN Number</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('panNumber')}</span>
-                        {getValues('panFile') && (
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('panFile') as File)?.name}>📄 {(getValues('panFile') as File)?.name}</span>
-                            <button type="button" onClick={() => handleViewFile(getValues('panFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">GST Number</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('gstNumber')}</span>
-                        {getValues('gstFile') && (
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('gstFile') as File)?.name}>📄 {(getValues('gstFile') as File)?.name}</span>
-                            <button type="button" onClick={() => handleViewFile(getValues('gstFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Registration Certificate</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('regCertNumber')}</span>
-                        {getValues('regCertFile') && (
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[300px]" title={(getValues('regCertFile') as File)?.name}>📄 {(getValues('regCertFile') as File)?.name}</span>
-                            <button type="button" onClick={() => handleViewFile(getValues('regCertFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {getValues('otherDocuments')?.length ? getValues('otherDocuments')?.map((doc, i) => (
-                        <div key={i} className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2 md:col-span-1">
-                          <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">{doc.name}</span>
-                          {doc.file && (
-                            <div className="flex items-center justify-between mt-1">
-                              <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(doc.file as File)?.name}>📄 {(doc.file as File)?.name}</span>
-                              <button type="button" onClick={() => handleViewFile(doc.file as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                                <Eye className="w-3 h-3" /> View
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )) : null}
-                    </div>
-
-                  </div>
-
-                  <div className="flex gap-3 mt-1">
-                    <Button type="button" variant="outline" onClick={() => setStep(5)} className="flex-1 h-[45px] rounded-xl font-bold shadow-sm">
-                      Edit
-                    </Button>
-                    <Button type="button" variant="gold" onClick={() => setShowConfirmModal(true)} className="flex-1 h-[45px] rounded-xl font-bold shadow-md">
-                      Save & Continue
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {step === 7 && (
-                <div className="flex flex-col gap-4">
-                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)]">
-                    <h3 className="text-base font-bold text-[var(--navy)] border-b border-[var(--border)] pb-2 mb-4">Organization Head Details</h3>
-                    
-                    <div className="flex flex-col gap-4">
-                      {/* Name Details */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">First Name</label>
-                          <Input {...register('orgHeadFirstName')} placeholder="First Name" error={!!errors.orgHeadFirstName} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                          {errors.orgHeadFirstName && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadFirstName.message as string}</p>}
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Middle Name</label>
-                          <Input {...register('orgHeadMiddleName')} placeholder="Middle Name" className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Last Name</label>
-                          <Input {...register('orgHeadLastName')} placeholder="Last Name" error={!!errors.orgHeadLastName} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                          {errors.orgHeadLastName && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadLastName.message as string}</p>}
-                        </div>
-                      </div>
-
-                      {/* Contact Details */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Email Address</label>
-                          <Input type="email" {...register('orgHeadEmail')} placeholder="head@organization.com" error={!!errors.orgHeadEmail} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                          {errors.orgHeadEmail && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadEmail.message as string}</p>}
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Mobile Number</label>
-                          <Input type="tel" {...register('orgHeadMobile')} placeholder="Mobile Number" error={!!errors.orgHeadMobile} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                          {errors.orgHeadMobile && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadMobile.message as string}</p>}
-                        </div>
-                      </div>
-
-                      {/* Aadhar Details */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider">Aadhar Card Number</label>
-                          <Input {...register('orgHeadAadharNumber')} placeholder="Enter Aadhar Number" error={!!errors.orgHeadAadharNumber} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                          {errors.orgHeadAadharNumber && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadAadharNumber.message as string}</p>}
-                        </div>
-                        <div className="flex flex-col gap-1 h-[40px]">
-                          <label className="cursor-pointer w-full h-full bg-white border border-[var(--gold)]/50 text-[var(--navy)] rounded-xl flex items-center justify-center font-bold text-[13px] hover:bg-[var(--gold)]/10 transition-colors">
-                            <Upload className="w-4 h-4 mr-2 text-[var(--gold)]" />
-                            {watch('orgHeadAadharFile') ? (watch('orgHeadAadharFile') as File).name : 'Upload Aadhar Card'}
-                            <input type="file" className="hidden" onChange={(e) => { if(e.target.files?.[0]) setValue('orgHeadAadharFile', e.target.files[0], {shouldValidate: true}) }} />
-                          </label>
-                          {errors.orgHeadAadharFile && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadAadharFile.message as string}</p>}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 mt-1">
-                    <Button type="button" variant="outline" onClick={() => setStep(6)} className="flex-1 h-[45px] rounded-xl font-bold shadow-sm">
-                      Back
-                    </Button>
-                    <Button type="submit" variant="gold" isLoading={isSubmitting} className="flex-1 h-[45px] rounded-xl font-bold shadow-md">
-                      Save & Continue
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {step === 8 && (
-                <div className="flex flex-col gap-3">
-                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)]">
-                    <h3 className="text-base font-bold text-[var(--navy)] border-b border-[var(--border)] pb-2 mb-3">Organization Head Details Preview</h3>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-[12px] mb-4">
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Full Name</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
-                          {`${getValues('orgHeadFirstName')} ${getValues('orgHeadMiddleName')} ${getValues('orgHeadLastName')}`.replace(/\s+/g, ' ').trim()}
-                        </span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Email</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadEmail')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Mobile</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadMobile')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Aadhar Number</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadAadharNumber')}</span>
-                        {getValues('orgHeadAadharFile') && (
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('orgHeadAadharFile') as File)?.name}>📄 {(getValues('orgHeadAadharFile') as File)?.name}</span>
-                            <button type="button" onClick={() => handleViewFile(getValues('orgHeadAadharFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 mt-1">
-                    <Button type="button" variant="outline" onClick={() => setStep(7)} className="flex-1 h-[45px] rounded-xl font-bold shadow-sm">
-                      Edit
-                    </Button>
-                    <Button type="button" variant="gold" onClick={() => setShowConfirmModal(true)} className="flex-1 h-[45px] rounded-xl font-bold shadow-md">
-                      Save & Continue
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {step === 9 && (
-                <div className="flex flex-col gap-5">
-                  <div className="flex flex-col items-center text-center mb-1 mt-[-10px]">
-                     <h3 className="text-xl md:text-2xl font-serif font-bold text-[var(--navy)] mb-1">Final Application Preview</h3>
-                     <p className="text-[var(--text-secondary)] font-medium text-sm">Please review all sections carefully before final submission.</p>
-                  </div>
-                  
-                  {/* Section 1: Org Details */}
-                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)] relative">
-                    <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-3">
-                      <h3 className="text-base font-bold text-[var(--navy)]">Organization Details</h3>
-                      <button type="button" onClick={() => setStep(3)} className="text-[12px] font-bold text-[var(--gold)] hover:underline">Edit Section</button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-[12px]">
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Email</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationEmail')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Name</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationName')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Mobile</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('organizationMobile')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Type</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
-                           {ORGANIZATION_TYPE_OPTIONS.find(o => o.value === getValues('organizationType'))?.label}
-                        </span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Address</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('address')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">District</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('district')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">City/Village</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('city')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Pin Code</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('pincode')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">State</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
-                          {State.getStateByCodeAndCountry(getValues('state'), getValues('country'))?.name || getValues('state')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 2: Document Uploads */}
-                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)] relative">
-                    <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-3">
-                      <h3 className="text-base font-bold text-[var(--navy)]">Document Details</h3>
-                      <button type="button" onClick={() => setStep(5)} className="text-[12px] font-bold text-[var(--gold)] hover:underline">Edit Section</button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-[12px]">
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">PAN Number</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('panNumber')}</span>
-                        {getValues('panFile') && (
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('panFile') as File)?.name}>📄 {(getValues('panFile') as File)?.name}</span>
-                            <button type="button" onClick={() => handleViewFile(getValues('panFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">GST Number</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('gstNumber')}</span>
-                        {getValues('gstFile') && (
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(getValues('gstFile') as File)?.name}>📄 {(getValues('gstFile') as File)?.name}</span>
-                            <button type="button" onClick={() => handleViewFile(getValues('gstFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Registration Certificate</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('regCertNumber')}</span>
-                        {getValues('regCertFile') && (
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[300px]" title={(getValues('regCertFile') as File)?.name}>📄 {(getValues('regCertFile') as File)?.name}</span>
-                            <button type="button" onClick={() => handleViewFile(getValues('regCertFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      {getValues('otherDocuments')?.length ? getValues('otherDocuments')?.map((doc, i) => (
-                        <div key={i} className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2 md:col-span-1">
-                          <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">{doc.name}</span>
-                          {doc.file && (
-                            <div className="flex items-center justify-between mt-1">
-                              <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[150px]" title={(doc.file as File)?.name}>📄 {(doc.file as File)?.name}</span>
-                              <button type="button" onClick={() => handleViewFile(doc.file as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                                <Eye className="w-3 h-3" /> View
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )) : null}
-                    </div>
-                  </div>
-
-                  {/* Section 3: Head Details */}
-                  <div className="bg-[var(--bg-secondary)]/50 rounded-2xl p-5 border border-[var(--border)] relative">
-                    <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 mb-3">
-                      <h3 className="text-base font-bold text-[var(--navy)]">Organization Head Details</h3>
-                      <button type="button" onClick={() => setStep(7)} className="text-[12px] font-bold text-[var(--gold)] hover:underline">Edit Section</button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-[12px]">
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Full Name</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">
-                          {`${getValues('orgHeadFirstName')} ${getValues('orgHeadMiddleName')} ${getValues('orgHeadLastName')}`.replace(/\s+/g, ' ').trim()}
-                        </span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Email</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadEmail')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Mobile</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadMobile')}</span>
-                      </div>
-                      <div className="flex flex-col p-2 border border-[var(--border)] rounded-xl bg-white/40 col-span-2">
-                        <span className="text-[10px] uppercase text-[var(--navy)] font-bold tracking-wider mb-0.5">Aadhar Number</span>
-                        <span className="font-normal text-[var(--navy)]/90 break-words whitespace-pre-wrap">{getValues('orgHeadAadharNumber')}</span>
-                        {getValues('orgHeadAadharFile') && (
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-[10px] text-[var(--gold)] font-medium truncate max-w-[300px]" title={(getValues('orgHeadAadharFile') as File)?.name}>📄 {(getValues('orgHeadAadharFile') as File)?.name}</span>
-                            <button type="button" onClick={() => handleViewFile(getValues('orgHeadAadharFile') as File)} className="flex items-center gap-1 text-[9px] font-bold text-[var(--navy)] hover:text-[var(--gold)] transition-colors bg-white/60 px-2 py-0.5 rounded border border-[var(--border)] shrink-0">
-                              <Eye className="w-3 h-3" /> View
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex mt-2">
-                    <Button type="button" variant="gold" onClick={() => setShowConfirmModal(true)} className="w-full h-[50px] rounded-xl font-bold shadow-md text-base">
-                      Submit Application
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {step === 10 && (
-                <div className="flex flex-col items-center justify-center py-10 text-center max-w-[500px] mx-auto">
-                  <div className="animate-success-pop flex items-center justify-center bg-[var(--gold)]/10 rounded-full w-24 h-24 mb-6 shadow-sm border border-[var(--gold)]/20">
-                    <CheckCircle2 className="w-12 h-12 text-[var(--gold)]" />
-                  </div>
-                  <div className="animate-fade-in-up">
-                    <h2 className="text-2xl font-serif font-bold text-[var(--navy)] mb-4 leading-tight">Thank you for your time and registration!</h2>
-                    <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed">
-                      Your registration information has been sent to the admin. The admin will verify and send back an email related to the login details. You will receive it within 24 hours.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-            </form>
-          </div>
-        </div>
-      </div>
-      
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-3xl p-8 max-w-[400px] w-full shadow-2xl text-center border border-[var(--border)]">
-            <h3 className="text-xl font-bold text-[var(--navy)] mb-3">Are you sure?</h3>
-            <p className="text-[14px] text-[var(--text-secondary)] mb-8 leading-relaxed">
-              Are you sure all the entered data and documents are correct? If you're sure please click on the next button to move forward, or else click cancel.
-            </p>
-            <div className="flex gap-4">
-              <Button type="button" variant="outline" onClick={() => setShowConfirmModal(false)} className="flex-1 h-[45px] rounded-xl font-bold">
-                Cancel
-              </Button>
-              <Button type="button" variant="gold" onClick={submitDetails} className="flex-1 h-[45px] rounded-xl font-bold">
-                Next
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-    )
+  const onSubmit = (values: RegisterEmailValues) => {
+    navigate('/otp', { state: { email: values.organizationEmail, flow: 'register' } })
   }
 
   return (
-    /**
-     * Card shell — frosted glass over the background image.
-     * bg-white/10 + backdrop-blur gives the glass look.
-     * A fine white inner border + drop shadow add depth.
-     */
     <div
-      className="relative rounded-3xl overflow-hidden"
+      className="rounded-3xl p-5 md:p-6 shadow-2xl border border-[var(--border)]"
       style={{
-        background: 'linear-gradient(145deg, rgba(255,253,248,0.92) 0%, rgba(247,241,227,0.88) 100%)',
+        background: 'linear-gradient(145deg, rgba(255,253,248,0.95) 0%, rgba(247,241,227,0.9) 100%)',
         backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        boxShadow: '0 32px 80px rgba(16,42,67,0.22), inset 0 1px 0 rgba(255,255,255,0.7)',
-        border: '1px solid rgba(255,255,255,0.55)',
       }}
     >
-      <div className="p-6 md:px-8 md:py-7">
-        <form className="flex flex-col gap-3.5" onSubmit={onFormSubmit}>
-
-          {step === 1 && (
-            <>
-              {/* ── Organization Email ─────────────────────────────────────────── */}
-              <div className="flex flex-col gap-1.5 mb-2">
-                <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
-                  Organization Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
-                    <Mail className="h-[15px] w-[15px] text-[var(--gold)]" strokeWidth={1.75} />
-                  </div>
-                  <Input
-                    {...register('organizationEmail')}
-                    type="email"
-                    placeholder="organization@domain.com"
-                    error={!!errors.organizationEmail}
-                    className="pl-10 h-[42px] rounded-xl text-[13px]"
-                    style={{
-                      background: 'rgba(255,255,255,0.7)',
-                      backdropFilter: 'blur(8px)',
-                    }}
-                  />
-                </div>
-                {errors.organizationEmail && (
-                  <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationEmail.message}</p>
-                )}
-              </div>
-
-              {/* ── Submit — gold gradient button ─────────────────────────────── */}
-              <Button
-                type="submit"
-                variant="gold"
-                isLoading={isSubmitting}
-                className="w-full h-[47px] rounded-xl font-bold text-[14.5px] mt-0.5 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.008] active:scale-[0.99] transition-all group"
-              >
-                Send OTP
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-
-              {/* ── Divider ───────────────────────────────────────────────────── */}
-              <div className="flex items-center gap-3 my-0.5 mt-2">
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
-                <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-widest shrink-0">
-                  or continue with
-                </span>
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
-              </div>
-
-              {/* ── Social Login — icon pill style ────────────────────────────── */}
-              <div className="grid grid-cols-2 gap-2.5">
-                {/* Google */}
-                <button
-                  type="button"
-                  className="flex items-center justify-center gap-2 h-[40px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.01] active:scale-[0.98]"
-                  style={{
-                    background: 'rgba(255,255,255,0.8)',
-                    border: '1px solid rgba(220,213,197,0.8)',
-                    boxShadow: '0 2px 8px rgba(16,42,67,0.06)',
-                    backdropFilter: 'blur(8px)',
-                  }}
-                >
-                  <GoogleIcon className="w-4 h-4 shrink-0" />
-                  <span>Google</span>
-                </button>
-
-                {/* Microsoft */}
-                <button
-                  type="button"
-                  className="flex items-center justify-center gap-2 h-[40px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.01] active:scale-[0.98]"
-                  style={{
-                    background: 'rgba(255,255,255,0.8)',
-                    border: '1px solid rgba(220,213,197,0.8)',
-                    boxShadow: '0 2px 8px rgba(16,42,67,0.06)',
-                    backdropFilter: 'blur(8px)',
-                  }}
-                >
-                  <MicrosoftIcon className="w-4 h-4 shrink-0" />
-                  <span>Microsoft</span>
-                </button>
-              </div>
-            </>
+      <form noValidate className="flex flex-col gap-2.5" onSubmit={handleSubmit(onSubmit)}>
+        {/* ORGANIZATION EMAIL */}
+        <div>
+          <label className="block text-[10.5px] font-bold tracking-wider text-[var(--navy)] uppercase mb-1">
+            Organization Email
+          </label>
+          <div className="relative">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--gold)]">
+              <Mail className="w-4 h-4" />
+            </div>
+            <Input
+              type="email"
+              placeholder="organization@domain.com"
+              {...register('organizationEmail', {
+                onChange: () => {
+                  if (errors.organizationEmail) clearErrors('organizationEmail')
+                },
+              })}
+              error={Boolean(errors.organizationEmail)}
+              className="pl-10 h-[42px] rounded-xl text-[13px]"
+              style={{
+                background: 'rgba(255,255,255,0.7)',
+                backdropFilter: 'blur(8px)',
+              }}
+            />
+          </div>
+          {errors.organizationEmail && (
+            <p className="text-[12px] font-medium text-red-500 mt-1">{errors.organizationEmail.message}</p>
           )}
-          
-          {step === 2 && (
-            <>
-              {/* ── OTP Fields ─────────────────────────────────────────── */}
-              <div className="flex flex-col items-center justify-center mb-2">
-                <p className="text-[13px] text-[var(--navy)]/80 text-center mb-4 font-medium">
-                  Please enter the 4-digit code sent to your email.
-                </p>
-                <div className="flex gap-3 justify-center mb-4">
-                  {otp.map((digit, index) => (
-                    <input
-                      key={index}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      ref={(el) => (inputRefs.current[index] = el)}
-                      onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      className="w-12 h-12 text-center text-xl font-bold rounded-xl border border-[var(--gold)]/30 shadow-sm focus:outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)] bg-white/70 backdrop-blur-md text-[var(--navy)]"
-                    />
-                  ))}
-                </div>
-              </div>
+        </div>
 
-              {/* ── Verify OTP Button ─────────────────────────────────────────────── */}
-              <Button
-                type="submit"
-                variant="gold"
-                isLoading={isSubmitting}
-                className="w-full h-[47px] rounded-xl font-bold text-[14.5px] mt-0.5 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.008] active:scale-[0.99] transition-all group"
-              >
-                Verify OTP
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </>
-          )}
+        {/* ── Submit — gold gradient button ─────────────────────────────── */}
+        <Button
+          type="submit"
+          variant="gold"
+          isLoading={isSubmitting}
+          className="w-full h-[47px] rounded-xl font-bold text-[14.5px] mt-0.5 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.008] active:scale-[0.99] transition-all group"
+        >
+          Send OTP
+          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+        </Button>
 
-        </form>
-      </div>
+        {/* ── Divider ───────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-3 my-0.5 mt-2">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+          <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-widest shrink-0">
+            or continue with
+          </span>
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent" />
+        </div>
+
+        {/* ── Social Login ──────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            className="flex items-center justify-center gap-2 h-[40px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.01] active:scale-[0.98]"
+            style={{
+              background: 'rgba(255,255,255,0.8)',
+              border: '1px solid rgba(220,213,197,0.8)',
+              boxShadow: '0 2px 8px rgba(16,42,67,0.06)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <GoogleIcon className="w-4 h-4 shrink-0" />
+            <span>Google</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center justify-center gap-2 h-[40px] rounded-xl text-[12px] font-bold text-[var(--navy)] transition-all hover:scale-[1.01] active:scale-[0.98]"
+            style={{
+              background: 'rgba(255,255,255,0.8)',
+              border: '1px solid rgba(220,213,197,0.8)',
+              boxShadow: '0 2px 8px rgba(16,42,67,0.06)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <MicrosoftIcon className="w-4 h-4 shrink-0" />
+            <span>Microsoft</span>
+          </button>
+        </div>
+
+        {/* Sign In link */}
+        <p className="text-center text-[12px] text-[var(--text-secondary)] font-medium mt-1">
+          Already have an account?{' '}
+          <Link
+            to="/login"
+            data-plain
+            className="text-[var(--gold)] font-bold hover:underline underline-offset-2 transition-all"
+          >
+            Sign In
+          </Link>
+        </p>
+
+        {/* Home link */}
+        <div className="flex justify-center mt-1">
+          <Link
+            to="/"
+            data-plain
+            className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[var(--gold)] hover:underline underline-offset-2 transition-all"
+            style={{ textShadow: 'none', filter: 'none' }}
+          >
+            <Home className="w-3.5 h-3.5" />
+            Home
+          </Link>
+        </div>
+      </form>
     </div>
   )
 }

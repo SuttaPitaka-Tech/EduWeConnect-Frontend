@@ -8,7 +8,7 @@
  */
 
 // ── Loading & Feedback ──────────────────────────────────────────
-export { Spinner }                               from './spinner'
+export { Spinner, PageSpinner }                  from './spinner'
 export { Toaster, toast }                        from './toaster'
 export { Alert }                                 from './alert'
 export { Skeleton, SkeletonRow, SkeletonCard }   from './skeleton'

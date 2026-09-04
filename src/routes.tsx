@@ -14,7 +14,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Suspense } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
-import { Spinner } from '@/components/ui'
+import { PageSpinner } from '@/components/ui'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import { ProtectedRoute } from '@/components/protected-route'
 import { GuestOnlyRoute } from '@/components/guest-only-route'
@@ -26,6 +26,7 @@ const LoginPage = lazyWithRetry(() => import('@/features/auth/pages/login-page')
 const RegisterPage = lazyWithRetry(() => import('@/features/auth/pages/register-page'))
 const ForgotPasswordPage = lazyWithRetry(() => import('@/features/auth/pages/forgot-password-page'))
 const OtpPage = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
+const RegisterDetailsPage = lazyWithRetry(() => import('@/features/auth/pages/register-details-page'))
 
 // ── Layouts ──────────────────────────────────────────────────────────────────
 const PublicLayout      = lazyWithRetry(() => import('@/layouts/public-layout'))
@@ -41,11 +42,7 @@ const SuperAdminDashboard = lazyWithRetry(() => import('@/features/superadmin/pa
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
-  return (
-    <div className="flex h-64 w-full items-center justify-center">
-      <Spinner size={36} />
-    </div>
-  )
+  return <PageSpinner />
 }
 
 function Lazy({ children }: { children: JSX.Element }) {
@@ -123,13 +120,25 @@ export function createAppRouter(queryClient: QueryClient) {
       path: '/login',
       element: (
         <AuthProvider>
-          <Lazy><LoginPage /></Lazy>
+          <GuestOnlyRoute><Lazy><LoginPage /></Lazy></GuestOnlyRoute>
         </AuthProvider>
       ),
     },
     {
       path: '/register',
-      element: <Lazy><RegisterPage /></Lazy>,
+      element: (
+        <AuthProvider>
+          <GuestOnlyRoute><Lazy><RegisterPage /></Lazy></GuestOnlyRoute>
+        </AuthProvider>
+      ),
+    },
+    {
+      path: '/register/details',
+      element: (
+        <AuthProvider>
+          <GuestOnlyRoute><Lazy><RegisterDetailsPage /></Lazy></GuestOnlyRoute>
+        </AuthProvider>
+      ),
     },
     {
       path: '/forgot-password',

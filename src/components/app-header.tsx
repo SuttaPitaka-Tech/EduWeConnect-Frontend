@@ -6,7 +6,7 @@ import {
 import { Button, InitialsAvatar, Separator } from '@/components/ui'
 import { eduLogo } from '@/assets/images'
 import { useAuth } from '@/contexts/auth-context'
-import type { UserRole } from '@/features/auth/enums/auth.enum'
+import { UserRole } from '@/features/auth/enums/auth.enum'
 
 // ── Role display labels ───────────────────────────────────────────────────────
 const ROLE_LABEL: Record<string, string> = {
@@ -51,7 +51,7 @@ export function AppHeader() {
       <div className="w-full px-3 md:px-5 h-[64px] flex items-center justify-between">
 
         {/* ── Left corner: Logo (Full left edge) ───────────────────────────── */}
-        {user?.role !== 'superadmin' ? (
+        {user?.role !== UserRole.SuperAdmin ? (
           <Link to="/app/attendance" className="flex items-center shrink-0 -ml-1">
             <img
               src={eduLogo}

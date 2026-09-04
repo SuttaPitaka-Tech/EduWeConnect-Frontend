@@ -10,7 +10,7 @@ export default function RegisterPage() {
       <div
         className="absolute inset-0 z-0 bg-no-repeat bg-center"
         style={{
-          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url(${registerBg})`,
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)), url(${registerBg})`,
           backgroundSize: '100% 100%'
         }}
       />
@@ -80,7 +80,7 @@ export default function RegisterPage() {
           </div>
 
           {/* RIGHT COLUMN: Form Card — thin container only */}
-          <div className="w-full max-w-[456px]">
+          <div className="w-full max-w-[456px] -mt-6 md:-mt-10">
 
             {/* Card Header */}
             <div className="flex flex-col items-center text-center mb-2">

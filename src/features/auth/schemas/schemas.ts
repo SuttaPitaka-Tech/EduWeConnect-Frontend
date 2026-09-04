@@ -36,9 +36,20 @@ export const resetPasswordSchema = z
 // ── Register ───────────────────────────────────────────────────────────────
 
 export const registerSchema = z.object({
-  organizationEmail: z.string().trim().email('Enter a valid organization email'),
+  organizationEmail: z
+    .string()
+    .trim()
+    .min(1, 'Organization email is required')
+    .regex(
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      'Enter a valid email containing "@" and "." (e.g. name@domain.com)',
+    ),
   organizationName: z.string().trim().min(2, 'Organization name is required'),
-  organizationMobile: z.string().trim().min(10, 'Enter a valid mobile number'),
+  organizationMobile: z
+    .string()
+    .trim()
+    .min(1, 'Mobile number is required')
+    .regex(/^[0-9]{10}$/, 'Mobile number must be exactly 10 digits'),
   organizationType: z.string().min(1, 'Select an organization type'),
   address: z.string().trim().min(3, 'Address is required'),
   city: z.string().trim().min(1, 'City/Village is required'),
@@ -62,8 +73,19 @@ export const registerSchema = z.object({
   ).optional(),
 
   // Organization Head Details
-  orgHeadEmail: z.string().trim().email('Enter a valid email'),
-  orgHeadMobile: z.string().trim().min(10, 'Enter a valid mobile number'),
+  orgHeadEmail: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .regex(
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      'Enter a valid email containing "@" and "." (e.g. name@domain.com)',
+    ),
+  orgHeadMobile: z
+    .string()
+    .trim()
+    .min(1, 'Mobile number is required')
+    .regex(/^[0-9]{10}$/, 'Mobile number must be exactly 10 digits'),
   orgHeadFirstName: z.string().trim().min(1, 'First name is required'),
   orgHeadMiddleName: z.string().trim().optional(),
   orgHeadLastName: z.string().trim().min(1, 'Last name is required'),
