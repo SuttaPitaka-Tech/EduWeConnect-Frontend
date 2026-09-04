@@ -4,6 +4,31 @@ import type { LoginResponse, MeResponse, AuthUser } from '../types/types'
 // ── Login ──────────────────────────────────────────────────────────────────
 
 export async function loginApi(email: string, password: string): Promise<LoginResponse> {
+  // Check mock users in localStorage first
+  const mockUsersStr = localStorage.getItem('mockUsers')
+  if (mockUsersStr) {
+    const mockUsers = JSON.parse(mockUsersStr)
+    const matchedUser = mockUsers.find((u: any) => u.email === email && u.password === password)
+    if (matchedUser) {
+      // Simulate successful login for mock user
+      return {
+        accessToken: `mock-token-${Date.now()}`,
+        nextPage: 'dashboard',
+        user: {
+          id: matchedUser.id || 'mock-id-123',
+          email: matchedUser.email,
+          firstName: matchedUser.firstName || 'Mock',
+          lastName: matchedUser.lastName || 'User',
+          role: matchedUser.role,
+          institutionId: matchedUser.role === 'organization' ? 'mock-inst' : null,
+          institutionName: matchedUser.role === 'organization' ? (matchedUser.organizationName || 'Mock Org') : null,
+          avatarUrl: null
+        }
+      } as unknown as LoginResponse
+    }
+  }
+
+  // Fallback to real API
   const { data } = await apiClient.post<LoginResponse>('/auth/login', { email, password })
   return data
 }

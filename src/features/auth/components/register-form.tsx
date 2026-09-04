@@ -137,6 +137,21 @@ export function RegisterForm() {
     } else if (step === 8) {
       setStep(9)
     } else if (step === 9) {
+      const email = getValues('organizationEmail')
+      const name = getValues('organizationName')
+      
+      const newMockOrg = {
+        id: `org-${Date.now()}`,
+        email: email,
+        password: 'password123', // Default password for mocked organizations
+        role: 'organization',
+        organizationName: name,
+        firstName: getValues('orgHeadFirstName') || 'Org',
+        lastName: getValues('orgHeadLastName') || 'Head',
+      }
+      const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]')
+      localStorage.setItem('mockUsers', JSON.stringify([...existingUsers, newMockOrg]))
+
       setStep(10)
     }
   }

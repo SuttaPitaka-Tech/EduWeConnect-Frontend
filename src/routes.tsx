@@ -18,22 +18,26 @@ import { Spinner } from '@/components/ui'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import { ProtectedRoute } from '@/components/protected-route'
 import { GuestOnlyRoute } from '@/components/guest-only-route'
-import { AuthProvider }   from '@/contexts/auth-context'
+import { AuthProvider } from '@/contexts/auth-context'
 
 // ── Pages ──────────────────────────────────────────────────────────────────
-const LandingPage        = lazyWithRetry(() => import('@/pages/landing-page'))
-const LoginPage          = lazyWithRetry(() => import('@/features/auth/pages/login-page'))
-const RegisterPage       = lazyWithRetry(() => import('@/features/auth/pages/register-page'))
+const LandingPage = lazyWithRetry(() => import('@/pages/landing-page'))
+const LoginPage = lazyWithRetry(() => import('@/features/auth/pages/login-page'))
+const RegisterPage = lazyWithRetry(() => import('@/features/auth/pages/register-page'))
 const ForgotPasswordPage = lazyWithRetry(() => import('@/features/auth/pages/forgot-password-page'))
-const OtpPage            = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
+const OtpPage = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
 
 // ── Layouts ──────────────────────────────────────────────────────────────────
-const PublicLayout    = lazyWithRetry(() => import('@/layouts/public-layout'))
-const DashboardLayout = lazyWithRetry(() => import('@/layouts/dashboard-layout'))
+const PublicLayout      = lazyWithRetry(() => import('@/layouts/public-layout'))
+const DashboardLayout   = lazyWithRetry(() => import('@/layouts/dashboard-layout'))
+const SuperAdminLayout  = lazyWithRetry(() => import('@/layouts/superadmin-layout'))
 
 // ── Attendance (fully implemented reference module) ──────────────────────────
 const AttendancePage = lazyWithRetry(() => import('@/features/attendance/pages/attendance-page'))
 const UiShowcasePage = lazyWithRetry(() => import('@/pages/ui-showcase-page'))
+
+// ── Superadmin ───────────────────────────────────────────────────────────────
+const SuperAdminDashboard = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-dashboard'))
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -96,6 +100,21 @@ export function createAppRouter(queryClient: QueryClient) {
         },
 
         // ── ADD NEW MODULES HERE as they are developed ───────────────────────
+      ],
+    },
+
+    // ── Superadmin App Shell ────────────────────────────────────────────────
+    {
+      path: '/app/superadmin',
+      element: (
+        <AuthProvider>
+          <ProtectedRoute>
+            <Lazy><SuperAdminLayout /></Lazy>
+          </ProtectedRoute>
+        </AuthProvider>
+      ),
+      children: [
+        { index: true, element: <Lazy><SuperAdminDashboard /></Lazy> },
       ],
     },
 

@@ -1,14 +1,54 @@
+import { useState } from 'react'
 import { registerBg, eduLogo, lotusLarge } from '@/assets/images'
-import { Users, UserCheck, Building } from 'lucide-react'
+import { Users, UserCheck, Building, X, ShieldAlert } from 'lucide-react'
 import { LoginForm } from '../components/login-form'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui'
 
 /**
  * LoginPage — same layout as RegisterPage.
  * Full-screen bg image + left branding column + right form card.
  */
 export default function LoginPage() {
+  const [isSuperAdminOpen, setIsSuperAdminOpen] = useState(false)
+  const [superEmail, setSuperEmail] = useState('')
+  const [superPassword, setSuperPassword] = useState('')
+
+  const handleSuperAdminRegister = (e: React.FormEvent) => {
+    e.preventDefault()
+    const newMockUser = {
+      id: `super-${Date.now()}`,
+      email: superEmail,
+      password: superPassword,
+      role: 'superadmin',
+      firstName: 'Super',
+      lastName: 'Admin'
+    }
+
+    const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]')
+    localStorage.setItem('mockUsers', JSON.stringify([...existingUsers, newMockUser]))
+
+    setSuperEmail('')
+    setSuperPassword('')
+    setIsSuperAdminOpen(false)
+    toast.success("Superadmin registered successfully! You can now log in.")
+  }
+
   return (
     <div className="relative flex flex-col min-h-screen w-full overflow-hidden bg-[var(--cream)]">
+      {/* Top Bar for Superadmin */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setIsSuperAdminOpen(true)}
+          className="bg-white/80 backdrop-blur-md border-[var(--gold)]/50 text-[var(--navy)] hover:bg-[var(--gold)]/10 font-semibold text-xs h-8"
+        >
+          <ShieldAlert className="w-3.5 h-3.5 mr-1.5 text-[var(--gold)]" />
+          Superadmin Register
+        </Button>
+      </div>
 
       {/* Background Image */}
       <div
@@ -104,6 +144,89 @@ export default function LoginPage() {
 
         </div>
       </div>
+
+      {/* Superadmin Register Modal */}
+      {isSuperAdminOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-[var(--navy)]/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsSuperAdminOpen(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up border border-[var(--gold)]/20">
+            {/* Header */}
+            <div className="bg-[var(--navy)] px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-[var(--gold)]" />
+                <h2 className="text-white font-bold text-lg">Superadmin Registration</h2>
+              </div>
+              <button 
+                onClick={() => setIsSuperAdminOpen(false)}
+                className="text-white/70 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <p className="text-[13px] text-[var(--text-secondary)] mb-5">
+                Register a new superadmin account. This action requires elevated privileges.
+              </p>
+
+              <form onSubmit={handleSuperAdminRegister} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
+                    Email Address
+                  </label>
+                  <Input 
+                    type="email" 
+                    required
+                    placeholder="superadmin@eduweconnect.com"
+                    value={superEmail}
+                    onChange={(e) => setSuperEmail(e.target.value)}
+                    className="h-10 text-[13px]"
+                  />
+                </div>
+                
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
+                    Password
+                  </label>
+                  <Input 
+                    type="password" 
+                    required
+                    placeholder="Enter secure password"
+                    value={superPassword}
+                    onChange={(e) => setSuperPassword(e.target.value)}
+                    className="h-10 text-[13px]"
+                  />
+                </div>
+
+                <div className="mt-2 flex justify-end gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsSuperAdminOpen(false)}
+                    className="text-[13px]"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    variant="gold"
+                    className="text-[13px] font-bold"
+                  >
+                    Register
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
