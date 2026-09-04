@@ -16,7 +16,7 @@ import { Toaster as SonnerToaster, toast } from 'sonner'
 export function Toaster() {
   return (
     <SonnerToaster
-      position="top-right"
+      position="bottom-right"
       expand={false}
       closeButton
       richColors={false}

@@ -51,13 +51,17 @@ export function AppHeader() {
       <div className="w-full px-3 md:px-5 h-[64px] flex items-center justify-between">
 
         {/* ── Left corner: Logo (Full left edge) ───────────────────────────── */}
-        <Link to="/app/attendance" className="flex items-center shrink-0 -ml-1">
-          <img
-            src={eduLogo}
-            alt="EduWeConnect"
-            className="h-[60px] w-auto object-contain"
-          />
-        </Link>
+        {user?.role !== 'superadmin' ? (
+          <Link to="/app/attendance" className="flex items-center shrink-0 -ml-1">
+            <img
+              src={eduLogo}
+              alt="EduWeConnect"
+              className="h-[60px] w-auto object-contain"
+            />
+          </Link>
+        ) : (
+          <div className="flex-1"></div>
+        )}
 
         {/* ── Right corner: User avatar + popover ──────────────────────────── */}
         <div className="relative flex items-center shrink-0">

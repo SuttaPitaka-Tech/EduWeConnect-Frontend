@@ -42,7 +42,11 @@ export function LoginForm() {
       if (result.nextPage === 'otp') {
         navigate('/otp', { state: { email: values.email } })
       } else {
-        navigate('/app/attendance', { replace: true })
+        if (result.user?.role === 'superadmin') {
+          navigate('/app/superadmin', { replace: true })
+        } else {
+          navigate('/app/attendance', { replace: true })
+        }
       }
     } catch {
       setServerError('Invalid credentials. Please check your email and password.')
