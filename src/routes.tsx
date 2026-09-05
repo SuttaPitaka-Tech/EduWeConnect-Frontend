@@ -14,32 +14,35 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Suspense } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
-import { Spinner } from '@/components/ui'
+import { PageSpinner } from '@/components/ui'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import { ProtectedRoute } from '@/components/protected-route'
 import { GuestOnlyRoute } from '@/components/guest-only-route'
-import { AuthProvider }   from '@/contexts/auth-context'
+import { AuthProvider } from '@/contexts/auth-context'
 
-// ── Auth pages ──────────────────────────────────────────────────────────────
-const LandingPage        = lazyWithRetry(() => import('@/pages/landing-page/landing-page'))
-const RegisterPage       = lazyWithRetry(() => import('@/pages/register-page/register-page'))
+// ── Pages ──────────────────────────────────────────────────────────────────
+const LandingPage = lazyWithRetry(() => import('@/pages/landing-page'))
+const LoginPage = lazyWithRetry(() => import('@/features/auth/pages/login-page'))
+const RegisterPage = lazyWithRetry(() => import('@/features/auth/pages/register-page'))
 const ForgotPasswordPage = lazyWithRetry(() => import('@/features/auth/pages/forgot-password-page'))
-const OtpPage            = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
+const OtpPage = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
+const RegisterDetailsPage = lazyWithRetry(() => import('@/features/auth/pages/register-details-page'))
 
 // ── Layouts ──────────────────────────────────────────────────────────────────
-const DashboardLayout = lazyWithRetry(() => import('@/layouts/dashboard-layout'))
+const PublicLayout      = lazyWithRetry(() => import('@/layouts/public-layout'))
+const DashboardLayout   = lazyWithRetry(() => import('@/layouts/dashboard-layout'))
+const SuperAdminLayout  = lazyWithRetry(() => import('@/layouts/superadmin-layout'))
 
 // ── Attendance (fully implemented reference module) ──────────────────────────
 const AttendancePage = lazyWithRetry(() => import('@/features/attendance/pages/attendance-page'))
 const UiShowcasePage = lazyWithRetry(() => import('@/pages/ui-showcase-page'))
 
+// ── Superadmin ───────────────────────────────────────────────────────────────
+const SuperAdminDashboard = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-dashboard'))
+
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
-  return (
-    <div className="flex h-64 w-full items-center justify-center">
-      <Spinner size={36} />
-    </div>
-  )
+  return <PageSpinner />
 }
 
 function Lazy({ children }: { children: JSX.Element }) {
@@ -50,14 +53,16 @@ function Lazy({ children }: { children: JSX.Element }) {
 export function createAppRouter(queryClient: QueryClient) {
   return createBrowserRouter([
 
-    // ── Public Landing Page ──────────────────────────────────────────────────
+    // ── Public pages (header + footer via PublicLayout) ──────────────────────
     {
-      path: '/',
       element: (
         <AuthProvider>
-          <GuestOnlyRoute><Lazy><LandingPage /></Lazy></GuestOnlyRoute>
+          <GuestOnlyRoute><Lazy><PublicLayout /></Lazy></GuestOnlyRoute>
         </AuthProvider>
       ),
+      children: [
+        { path: '/', element: <Lazy><LandingPage /></Lazy> },
+      ],
     },
 
     // ── Protected app shell ──────────────────────────────────────────────────
@@ -95,18 +100,45 @@ export function createAppRouter(queryClient: QueryClient) {
       ],
     },
 
-    // ── Guest-only auth routes ───────────────────────────────────────────────
+    // ── Superadmin App Shell ────────────────────────────────────────────────
+    {
+      path: '/app/superadmin',
+      element: (
+        <AuthProvider>
+          <ProtectedRoute>
+            <Lazy><SuperAdminLayout /></Lazy>
+          </ProtectedRoute>
+        </AuthProvider>
+      ),
+      children: [
+        { index: true, element: <Lazy><SuperAdminDashboard /></Lazy> },
+      ],
+    },
+
+    // ── Guest-only auth routes (no public header/footer) ──────────────────────
     {
       path: '/login',
       element: (
         <AuthProvider>
-          <GuestOnlyRoute><Lazy><LandingPage /></Lazy></GuestOnlyRoute>
+          <GuestOnlyRoute><Lazy><LoginPage /></Lazy></GuestOnlyRoute>
         </AuthProvider>
       ),
     },
     {
       path: '/register',
-      element: <Lazy><RegisterPage /></Lazy>,
+      element: (
+        <AuthProvider>
+          <GuestOnlyRoute><Lazy><RegisterPage /></Lazy></GuestOnlyRoute>
+        </AuthProvider>
+      ),
+    },
+    {
+      path: '/register/details',
+      element: (
+        <AuthProvider>
+          <GuestOnlyRoute><Lazy><RegisterDetailsPage /></Lazy></GuestOnlyRoute>
+        </AuthProvider>
+      ),
     },
     {
       path: '/forgot-password',
@@ -123,6 +155,31 @@ export function createAppRouter(queryClient: QueryClient) {
           <GuestOnlyRoute><Lazy><OtpPage /></Lazy></GuestOnlyRoute>
         </AuthProvider>
       ),
+    },
+
+    // ── Dev/Design Tools (no auth required) ─────────────────────────────────
+    {
+      path: '/ui-showcase',
+      element: (
+        <AuthProvider>
+          <Lazy><DashboardLayout /></Lazy>
+        </AuthProvider>
+      ),
+      children: [
+        { index: true, element: <Lazy><UiShowcasePage /></Lazy> },
+      ],
+    },
+    {
+      // Test route — view AppHeader/AppFooter without login
+      path: '/test/attendance',
+      element: (
+        <AuthProvider>
+          <Lazy><DashboardLayout /></Lazy>
+        </AuthProvider>
+      ),
+      children: [
+        { index: true, element: <Lazy><AttendancePage /></Lazy> },
+      ],
     },
 
     // Catch-all

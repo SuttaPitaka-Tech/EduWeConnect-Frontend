@@ -24,8 +24,9 @@ export function setupMockServer() {
   mock.onPost(/\/auth\/login$/).reply((config) => {
     try {
       const { email, password } = JSON.parse(config.data || '{}')
-      if (password !== 'password123') {
-        return [401, { message: 'Invalid email or password. Use password123' }]
+      const isValid = password === 'admin@123' || password === 'password123'
+      if (!isValid) {
+        return [401, { message: 'Invalid email/username or password. Use admin@123' }]
       }
       return [
         200,

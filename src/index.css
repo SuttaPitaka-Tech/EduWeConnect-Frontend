@@ -80,34 +80,63 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Input Focus: zero glow ring ── */
-input:focus,
-input:focus-visible,
-select:focus,
-select:focus-visible,
-textarea:focus,
-textarea:focus-visible {
+/* ── Form Control Border Standards (Unified across Input, Dropdown, Textarea, Select) ── */
+input:not([aria-invalid="true"]):focus,
+input:not([aria-invalid="true"]):focus-visible,
+select:not([aria-invalid="true"]):focus,
+select:not([aria-invalid="true"]):focus-visible,
+textarea:not([aria-invalid="true"]):focus,
+textarea:not([aria-invalid="true"]):focus-visible {
   outline: none !important;
   box-shadow: none !important;
   border-color: var(--navy) !important;
 }
 
-/* ── Button hover lift physics (Action buttons ONLY — NOT dropdowns/inputs) ── */
-button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):hover,
-[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):hover {
+/* Error state: Unified red border that stays red on focus/active */
+input[aria-invalid="true"],
+input[aria-invalid="true"]:focus,
+input[aria-invalid="true"]:focus-visible,
+select[aria-invalid="true"],
+select[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus-visible,
+textarea[aria-invalid="true"],
+textarea[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: #EF4444 !important;
+}
+
+/* ── Browser Autofill Override — use --warm-white instead of grey/blue ── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #FFFDF8 inset !important;
+  -webkit-text-fill-color: var(--navy) !important;
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: var(--navy);
+}
+
+/* ── Button hover lift physics (Action buttons ONLY — NOT dropdowns/inputs/plain icons/text buttons) ── */
+button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):not([data-plain]):not([data-text-btn]):not(.btn-text):hover,
+[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):not([data-plain]):not([data-text-btn]):not(.btn-text):hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(16, 42, 67, 0.15), 0 2px 4px rgba(16, 42, 67, 0.08);
   transition: transform 150ms ease-out, box-shadow 150ms ease-out;
 }
 
-button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):active,
-[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):active {
+button:not(:disabled):not([data-dropdown-trigger]):not([data-slot="select-trigger"]):not([data-plain]):not([data-text-btn]):not(.btn-text):active,
+[role="button"]:not([aria-disabled="true"]):not([data-dropdown-trigger]):not([data-plain]):not([data-text-btn]):not(.btn-text):active {
   transform: translateY(0);
   transition: transform 80ms ease-out;
 }
 
-/* Dropdown triggers stay 100% flat with zero movement */
-[data-dropdown-trigger] {
+/* Dropdown triggers stay flat; plain icon buttons and text-only hyperlink buttons suppress transform and shadow */
+[data-dropdown-trigger],
+[data-plain],
+[data-text-btn],
+button.btn-text {
   transform: none !important;
   box-shadow: none !important;
 }

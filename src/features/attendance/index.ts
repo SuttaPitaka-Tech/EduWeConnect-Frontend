@@ -17,6 +17,7 @@ export type {
   AttendanceFiltersProps,
   AttendanceStatsBarProps,
   CreateAttendanceModalProps,
+  AttendanceFormProps,
 } from './types/types'
 
 // Enums
@@ -50,7 +51,8 @@ export { useDeleteAttendanceMutation } from './mutations/delete-attendance'
 export { useAttendanceList } from './hooks/use-attendance-list'
 
 // Components (pages are NOT exported here — lazy-imported in routes.tsx)
-export { AttendanceTable }      from './components/attendance-table'
-export { AttendanceFilters }    from './components/attendance-filters'
-export { AttendanceStatsBar }   from './components/attendance-stats-bar'
-export { CreateAttendanceModal } from './components/create-attendance-modal'
+export { AttendanceTable }        from './components/attendance-table'
+export { AttendanceFilters }      from './components/attendance-filters'
+export { AttendanceStatsBar }     from './components/attendance-stats-bar'
+export { AttendanceForm }         from './components/attendance-form'
+export { CreateAttendanceModal }   from './components/create-attendance-modal'

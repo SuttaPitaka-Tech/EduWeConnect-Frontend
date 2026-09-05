@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/auth-context'
-import { Spinner } from '@/components/ui'
+import { PageSpinner } from '@/components/ui'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -11,11 +11,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isInitialized } = useAuth()
 
   if (!isInitialized) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Spinner size={40} />
-      </div>
-    )
+    return <PageSpinner size={40} />
   }
 
   if (!isAuthenticated) {

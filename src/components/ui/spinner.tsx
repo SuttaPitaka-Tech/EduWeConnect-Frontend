@@ -5,6 +5,8 @@ export interface SpinnerProps extends React.SVGAttributes<SVGSVGElement> {
   size?: number | string
   color?: string
   className?: string
+  fullPage?: boolean
+  center?: boolean
 }
 
 const SPOKES = [
@@ -26,8 +28,16 @@ const SPOKES = [
  * Signature Gold & Deep Gold Radial Flower Spinner
  * Uses Gold (#B8862C) and Light/Deep Gold (#D6A84F) with progressive opacity.
  */
-export function Spinner({ size = 20, color, className, style, ...props }: SpinnerProps) {
-  return (
+export function Spinner({
+  size = 20,
+  color,
+  className,
+  style,
+  fullPage,
+  center,
+  ...props
+}: SpinnerProps) {
+  const svg = (
     <svg
       className={cn('animate-spin shrink-0', className)}
       xmlns="http://www.w3.org/2000/svg"
@@ -54,4 +64,34 @@ export function Spinner({ size = 20, color, className, style, ...props }: Spinne
       ))}
     </svg>
   )
+
+  if (fullPage) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center">
+        {svg}
+      </div>
+    )
+  }
+
+  if (center) {
+    return (
+      <div className="flex flex-1 min-h-[60vh] w-full items-center justify-center">
+        {svg}
+      </div>
+    )
+  }
+
+  return svg
 }
+
+/**
+ * Full page centered spinner helper for route and page level loading states
+ */
+export function PageSpinner({ size = 36, ...props }: SpinnerProps) {
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center">
+      <Spinner size={size} {...props} />
+    </div>
+  )
+}
+

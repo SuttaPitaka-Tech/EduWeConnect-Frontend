@@ -1511,4 +1511,162 @@ npx vitest run                          # tests pass (min 80% coverage on mutati
 
 ---
 
+## SECTION 30: FORM MANAGEMENT (React Hook Form v7 — Full MNC Standard)
+
+> **CORE PRINCIPLE**: All forms in the application must strictly use **React Hook Form v7** with **Zod (`@hookform/resolvers/zod`)**.
+> Never manage form field values with `useState`.
+
+### 1. Mandatory `useForm` Configuration
+```tsx
+const methods = useForm<MarkAttendanceFormValues>({
+  resolver: zodResolver(markAttendanceFormSchema),
+  mode: 'onSubmit', // Default submission validation
+  defaultValues: {
+    classId: '',
+    date: new Date().toISOString().split('T')[0],
+    type: AttendanceType.STUDENT,
+    records: [{ memberId: '', status: AttendanceStatus.PRESENT, remarks: '' }],
+  }, // MANDATORY — never omit defaultValues (required for isDirty and useFieldArray)
+})
+```
+
+### 2. Controlled vs. Native Inputs
+- **Native HTML Inputs (`<Input>`, `<Textarea>`):** Use `register` directly for maximum performance without re-renders:
+  ```tsx
+  <Input {...register('classId')} />
+  ```
+- **Controlled Custom Primitives (`<Dropdown>`, `<MultiSelectDropdown>`, `<Checkbox>`, `<Switch>`):** MUST use `<Controller />` or `useController`:
+  ```tsx
+  <Controller
+    control={control}
+    name="type"
+    render={({ field }) => (
+      <Dropdown
+        value={field.value}
+        onChange={field.onChange}
+        options={TYPE_OPTIONS}
+      />
+    )}
+  />
+  ```
+
+### 3. Dynamic Lists with `useFieldArray`
+- Always pass a complete object to `append()` with initial values (never `append({})`):
+  ```tsx
+  const { fields, append, remove } = useFieldArray({ control, name: 'records' })
+  // Append new item
+  append({ memberId: '', status: AttendanceStatus.PRESENT, remarks: '' })
+  ```
+- Use safe indexed error access:
+  ```tsx
+  {errors.records?.[index]?.memberId && (
+    <p className="text-xs text-red-600">{errors.records[index]?.memberId?.message}</p>
+  )}
+  ```
+
+### 4. Server-Side Error Mapping (`setError`)
+When the backend returns field-level validation errors (HTTP 400/422), map them directly into RHF fields:
+```tsx
+onError: (error: any) => {
+  if (error.response?.data?.errors) {
+    Object.entries(error.response.data.errors).forEach(([field, msg]) => {
+      setError(field as any, { type: 'server', message: String(msg) })
+    })
+  } else {
+    setError('root.serverError' as any, {
+      type: 'server',
+      message: formatApiClientError(error, 'Submission failed.'),
+    })
+  }
+}
+```
+
+### 5. Post-Submission Reset & Clean State
+After a successful mutation, always call `reset()` to sync form state and reset `isDirty`:
+```tsx
+onSuccess: () => {
+  reset()
+  onOpenChange(false)
+}
+```
+
+### 6. Decoupled Form Architecture (MNC Standard: Pure Form vs. Containers)
+Always decouple the **Pure Form** from the **Overlay Container**:
+- **`<domain>-form.tsx`**: Contains `useForm`, inputs, field arrays, validation, and actions. 100% portable and reusable across desktop modals, mobile side sheets, and full pages.
+- **`create-<domain>-modal.tsx`**: A thin `<Dialog>` wrapper that renders `<DomainForm onSuccess={() => setOpen(false)} />`.
+- **`create-<domain>-drawer.tsx`**: A thin `<Sheet>` wrapper for mobile views reusing the exact same `<DomainForm />`.
+
+```tsx
+// ✅ Modal Container (Thin Wrapper)
+export function CreateAttendanceModal({ open, onOpenChange }: CreateAttendanceModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader><DialogTitle>Mark Attendance</DialogTitle></DialogHeader>
+        <AttendanceForm
+          onSuccess={() => onOpenChange(false)}
+          onCancel={() => onOpenChange(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+}
+```
+
+### 7. Form Validation Error UX & Auto-Scroll (MNC Standard)
+> **MANDATORY FORM VALIDATION RULES**:
+> 1. **Inline Error Display with Red Border**:
+>    - Validation errors must **NEVER** use browser-native tooltips. Always add `noValidate` to every `<form>`.
+>    - When a field has an error, the input element must display a red border (`error={!!errors[field]}` applying `border-red-400 focus:border-red-500`).
+>    - The error message must render directly beneath the input as inline red text (`<p className="text-[12px] font-medium text-red-500 mt-1">` or `<FormError message={...} />`).
+> 2. **Auto-Clear Error on Correction / Keystroke**:
+>    - Do not show validation errors while the user is typing for the first time (`mode: 'onSubmit'`, `reValidateMode: 'onSubmit'`).
+>    - When a user types or edits a field that currently has an error, the error message and red border must **automatically clear immediately** (`if (errors[field]) clearErrors(field)`).
+> 3. **Auto-Scroll to First Error Field on Submit**:
+>    - When form submission fails validation, the form container must **automatically scroll smoothly to the first erroneous field** and focus it so the user immediately sees what to fix.
+>    ```tsx
+>    const onError = (errors: FieldErrors) => {
+>      const firstErrorField = Object.keys(errors)[0]
+>      if (firstErrorField) {
+>        const el = document.querySelector(`[name="${firstErrorField}"]`)
+>        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+>        ;(el as HTMLElement)?.focus()
+>      }
+>    }
+> 4. **OTP / PIN Box Validation**:
+>    - When validating segmented OTP/PIN input boxes upon submission/verification, if empty or incomplete:
+>      - Display the validation message directly beneath the boxes as inline red text (`<p className="text-[12px] font-medium text-red-500 text-center mb-3">`).
+>      - All OTP input boxes must highlight in red borders (`border-red-500 focus:border-red-500 focus:ring-red-400` with `aria-invalid="true"`).
+>      - Automatically focus the first empty box.
+>    - When OTP is valid and verified:
+>      - Animate sequential green borders (`border-2 border-emerald-500`) box-by-box.
+>      - ONLY the border turns green — NEVER apply background tints inside the box and NEVER apply outer box-shadow or glow effects.
+>      - The action button maintains standard gold branding with loading spinner (`variant="gold"` with `isLoading`) — NEVER turn the button green.
+>      - Display a Sonner notification (`toast.success('OTP verified successfully')`) and smoothly transition to the next step.
+>    ```
+
+### 8. Unified Form Control Border Design Standard (MNC Standard)
+> **CORE RULE: ZERO DIVERGENT BORDER DESIGNS ACROSS THE ENTIRE APP**
+> Every form control (`<Input>`, `<Textarea>`, `<Dropdown>`, `<SearchDropdown>`, `<MultiSelectDropdown>`, `<select>`) MUST strictly follow the exact same 3-tier border system:
+>
+> | State | Token / Style | Tailwind / CSS Class | Description |
+> |---|---|---|---|
+> | **1. Default State** | `var(--border)` (`#DED5C5`) | `border border-[var(--border)]` | Soft, warm neutral border matching brand palette. Background: `var(--input-bg)` (`#FFFCF6`). |
+> | **2. Focus / Selected State** | `var(--navy)` (`#102A43`) | `focus:border-[var(--navy)] outline-none` | Crisp brand navy border on focus or open dropdown. **NEVER** use browser default blue ring or glow (`ring-0`, `outline: none`). |
+> | **3. Error State** | `#EF4444` / `border-red-500` | `border-red-400 focus:border-red-500` | Stays red even when clicked/focused. Must set `aria-invalid={error || undefined}`. |
+>
+> ❌ **STRICTLY BANNED:**
+> - NEVER use custom or different border colors per component (e.g., slate on one input, zinc on another).
+> - NEVER use browser default focus rings (blue halos).
+> - NEVER let a focused input override an error state back to navy or blue.
+
+### 9. Text & Hyperlink Buttons Hover Behavior Standard (MNC Standard)
+> **MANDATORY TEXT & HYPERLINK BUTTON RULES**:
+> For all text-only buttons or inline hyperlink buttons (e.g., "Edit email", "Sign In", "Register", "Home", "Forgot password?"):
+> 1. **Zero Lift & Shadow Pop-Up**: Must have `data-plain` (or `.btn-text`) so they are excluded from the global `translateY(-2px)` lift and box-shadow hover effects.
+> 2. **NO Box Borders (STRICTLY BANNED)**: Never place rectangular border boxes or outlined frames around text hyperlinks on hover.
+> 3. **Clean Inline Underline on Hover**: On hover, text hyperlinks must display a clean text underline (`hover:underline underline-offset-2 transition-all`), exactly like standard enterprise hyperlinks (e.g., "Forgot password?").
+
+---
+
 *Architecture validated against MNC enterprise standards — Google/Airbnb/Microsoft 2024–2026.*

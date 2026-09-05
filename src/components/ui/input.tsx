@@ -13,6 +13,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, error, style, ...props }, ref) => (
     <input
       ref={ref}
+      aria-invalid={error || undefined}
       className={cn(
         'flex h-8 w-full rounded-md border px-3 text-xs transition-colors',
         'placeholder:text-[var(--text-muted)]',

@@ -8,7 +8,7 @@
  */
 
 // ── Loading & Feedback ──────────────────────────────────────────
-export { Spinner }                               from './spinner'
+export { Spinner, PageSpinner }                  from './spinner'
 export { Toaster, toast }                        from './toaster'
 export { Alert }                                 from './alert'
 export { Skeleton, SkeletonRow, SkeletonCard }   from './skeleton'
@@ -30,6 +30,7 @@ export { RadioGroup }                            from './radio-group'
 // ── Layout & Surfaces ───────────────────────────────────────────
 export { Card, CardHeader, CardTitle, CardContent, CardFooter } from './card'
 export { Separator }                             from './separator'
+export { ScrollArea }                            from './scroll-area'
 export { Divider, StatCard, EmptyState }         from './utils-ui'
 
 // ── Data Display ─────────────────────────────────────────────────
