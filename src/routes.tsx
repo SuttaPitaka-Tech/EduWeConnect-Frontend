@@ -39,6 +39,7 @@ const UiShowcasePage = lazyWithRetry(() => import('@/pages/ui-showcase-page'))
 
 // ── Superadmin ───────────────────────────────────────────────────────────────
 const SuperAdminDashboard = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-dashboard'))
+const SuperAdminApprovals = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-approvals'))
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -111,7 +112,9 @@ export function createAppRouter(queryClient: QueryClient) {
         </AuthProvider>
       ),
       children: [
-        { index: true, element: <Lazy><SuperAdminDashboard /></Lazy> },
+        { index: true, element: <Navigate to="dashboard" replace /> },
+        { path: 'dashboard', element: <Lazy><SuperAdminDashboard /></Lazy> },
+        { path: 'approvals', element: <Lazy><SuperAdminApprovals /></Lazy> },
       ],
     },
 

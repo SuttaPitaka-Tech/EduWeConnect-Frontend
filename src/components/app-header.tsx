@@ -39,23 +39,23 @@ function roleBadgeStyle(role: UserRole): React.CSSProperties {
  * - Left:   EduWeConnect logo
  * - Right:  Notifications Drawer + User Avatar Popover
  */
-export function AppHeader() {
+export function AppHeader({ hideLogo = false }: { hideLogo?: boolean } = {}) {
   const { user, signOut } = useAuth()
   const [open, setOpen] = useState(false)
 
   const fullName = user ? `${user.firstName} ${user.lastName}` : 'Guest'
 
   return (
-    <header className="w-full bg-[var(--cream)] sticky top-0 z-50 shadow-sm border-b border-[var(--border)]/60">
+    <header className="w-full bg-[var(--navy)] sticky top-0 z-50 shadow-sm border-b border-[var(--gold)]/20">
       <div className="w-full px-3 md:px-5 h-[64px] flex items-center justify-between">
 
         {/* ── Left corner: Logo (Full left edge) ───────────────────────────── */}
-        {user?.role !== UserRole.SuperAdmin ? (
+        {!hideLogo && user?.role !== UserRole.SuperAdmin ? (
           <Link to="/app/attendance" className="flex items-center shrink-0 -ml-1">
             <img
               src={eduLogo}
               alt="EduWeConnect"
-              className="h-[60px] w-auto object-contain"
+              className="h-[60px] w-auto object-contain brightness-0 invert"
             />
           </Link>
         ) : (
