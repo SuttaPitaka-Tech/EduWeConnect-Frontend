@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Mail, Building2, CheckCircle2, Upload } from 'lucide-react'
-import { Button, Input, Dropdown, Textarea } from '@/components/ui'
+import { Button, Input, Dropdown } from '@/components/ui'
 import { registerSchema, type RegisterFormValues } from '@/features/auth'
 import { Country, State, City } from 'country-state-city'
 import { buddhaBg } from '@/assets/images'
@@ -132,45 +132,47 @@ export function OrgOnboardingWizard() {
   }
 
   return (
-    <div 
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-start px-4 py-10 md:py-20 overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed" 
-      style={{ backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.25)), url(${buddhaBg})` }}
-    >
-      <div className={`w-full ${step === 9 ? 'max-w-[850px]' : 'max-w-[700px]'} transition-all duration-300 mt-auto mb-auto`}>
-        <div className="flex flex-col items-center text-center mb-4">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-4 py-6 overflow-y-auto bg-[var(--cream)]">
+      {/* Background Image with blur */}
+      <div 
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed blur-[2px] scale-105 pointer-events-none"
+        style={{ backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.20)), url(${buddhaBg})` }}
+      />
+      <div className={`relative z-10 w-full ${step === 9 ? 'max-w-[850px]' : 'max-w-[680px]'} transition-all duration-300 my-auto`}>
+        <div className="flex flex-col items-center text-center mb-3 md:mb-4">
           <h1 className="text-xl md:text-2xl font-serif font-bold text-[var(--navy)] mb-1">Organization Details</h1>
-          <p className="text-[var(--text-secondary)] font-medium text-sm">Please complete your organization profile.</p>
+          <p className="text-[var(--text-secondary)] font-medium text-xs md:text-sm">Please complete your organization profile.</p>
         </div>
         
         <div
-          className="rounded-3xl p-5 md:p-7 shadow-2xl border border-[var(--border)]"
+          className="rounded-2xl p-5 sm:p-7 shadow-2xl border border-[var(--border)]"
           style={{
-            background: 'linear-gradient(145deg, rgba(255,253,248,0.95) 0%, rgba(247,241,227,0.9) 100%)',
+            background: 'linear-gradient(145deg, rgba(255,253,248,0.96) 0%, rgba(247,241,227,0.92) 100%)',
             backdropFilter: 'blur(24px)',
           }}
         >
           <form noValidate className="flex flex-col gap-3" onSubmit={onFormSubmit}>
             {step === 3 && (
               <>
-                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-2 mb-1">
+                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-2 mb-1.5">
                   <Building2 className="w-5 h-5 text-[var(--gold)]" />
-                  <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">Step 1: Organization Information</h3>
+                  <h3 className="text-xs md:text-[13px] font-bold text-[var(--navy)] uppercase tracking-wider">Step 1: Organization Information</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
                   <div>
                     <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Organization Name *</label>
-                    <Input {...register('organizationName')} placeholder="e.g. Nalanda University" error={!!errors.organizationName} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.organizationName && <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationName.message as string}</p>}
+                    <Input {...register('organizationName')} placeholder="e.g. Nalanda University" error={!!errors.organizationName} className="h-[40px] pl-3.5 rounded-xl text-[13px]" />
+                    {errors.organizationName && <p className="text-[10.5px] text-red-500 mt-1">{errors.organizationName.message as string}</p>}
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Organization Mobile *</label>
-                    <Input {...register('organizationMobile')} placeholder="10-digit Mobile Number" maxLength={10} error={!!errors.organizationMobile} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.organizationMobile && <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationMobile.message as string}</p>}
+                    <Input {...register('organizationMobile')} placeholder="10-digit Mobile Number" maxLength={10} error={!!errors.organizationMobile} className="h-[40px] pl-3.5 rounded-xl text-[13px]" />
+                    {errors.organizationMobile && <p className="text-[10.5px] text-red-500 mt-1">{errors.organizationMobile.message as string}</p>}
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div>
                     <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Organization Type *</label>
                     <Controller
                       name="organizationType"
@@ -186,13 +188,19 @@ export function OrgOnboardingWizard() {
                         />
                       )}
                     />
-                    {errors.organizationType && <p className="text-[11px] text-red-500 mt-0.5">{errors.organizationType.message as string}</p>}
+                    {errors.organizationType && <p className="text-[10.5px] text-red-500 mt-1">{errors.organizationType.message as string}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Pin Code *</label>
+                    <Input {...register('pincode')} placeholder="Pin Code" error={!!errors.pincode} className="h-[40px] pl-3.5 rounded-xl text-[13px]" />
+                    {errors.pincode && <p className="text-[10.5px] text-red-500 mt-1">{errors.pincode.message as string}</p>}
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Address *</label>
-                    <Textarea {...register('address')} placeholder="Full Street Address" error={!!errors.address} className="rounded-xl text-[13px] min-h-[60px]" />
-                    {errors.address && <p className="text-[11px] text-red-500 mt-0.5">{errors.address.message as string}</p>}
+                    <Input {...register('address')} placeholder="Full Street Address" error={!!errors.address} className="h-[40px] pl-3.5 rounded-xl text-[13px]" />
+                    {errors.address && <p className="text-[10.5px] text-red-500 mt-1">{errors.address.message as string}</p>}
                   </div>
 
                   <div>
@@ -215,7 +223,7 @@ export function OrgOnboardingWizard() {
                         />
                       )}
                     />
-                    {errors.country && <p className="text-[11px] text-red-500 mt-0.5">{errors.country.message as string}</p>}
+                    {errors.country && <p className="text-[10.5px] text-red-500 mt-1">{errors.country.message as string}</p>}
                   </div>
 
                   <div>
@@ -238,7 +246,7 @@ export function OrgOnboardingWizard() {
                         />
                       )}
                     />
-                    {errors.state && <p className="text-[11px] text-red-500 mt-0.5">{errors.state.message as string}</p>}
+                    {errors.state && <p className="text-[10.5px] text-red-500 mt-1">{errors.state.message as string}</p>}
                   </div>
 
                   <div>
@@ -258,24 +266,18 @@ export function OrgOnboardingWizard() {
                         />
                       )}
                     />
-                    {errors.city && <p className="text-[11px] text-red-500 mt-0.5">{errors.city.message as string}</p>}
+                    {errors.city && <p className="text-[10.5px] text-red-500 mt-1">{errors.city.message as string}</p>}
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">District *</label>
-                    <Input {...register('district')} placeholder="District" error={!!errors.district} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.district && <p className="text-[11px] text-red-500 mt-0.5">{errors.district.message as string}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Pin Code *</label>
-                    <Input {...register('pincode')} placeholder="Pin Code" error={!!errors.pincode} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.pincode && <p className="text-[11px] text-red-500 mt-0.5">{errors.pincode.message as string}</p>}
+                    <Input {...register('district')} placeholder="District" error={!!errors.district} className="h-[40px] pl-3.5 rounded-xl text-[13px]" />
+                    {errors.district && <p className="text-[10.5px] text-red-500 mt-1">{errors.district.message as string}</p>}
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-4">
-                  <Button type="submit" variant="gold" className="px-6 h-[42px] rounded-xl font-bold text-[13.5px]">
+                  <Button type="submit" variant="gold" className="px-6 h-[42px] rounded-xl font-bold text-xs md:text-sm">
                     Next: Documents
                   </Button>
                 </div>
@@ -284,13 +286,13 @@ export function OrgOnboardingWizard() {
 
             {/* Step 4: Confirm Org Details Modal */}
             {step === 4 && (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-2">
-                  <CheckCircle2 className="w-5 h-5 text-[var(--gold)]" />
-                  <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">Confirm Organization Details</h3>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--gold)]" />
+                  <h3 className="text-xs font-bold text-[var(--navy)] uppercase tracking-wider">Confirm Organization Details</h3>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-2 gap-2 text-xs">
                   <div><span className="font-bold text-[var(--text-secondary)]">Name:</span> <p className="font-semibold text-[var(--navy)]">{getValues('organizationName')}</p></div>
                   <div><span className="font-bold text-[var(--text-secondary)]">Mobile:</span> <p className="font-semibold text-[var(--navy)]">{getValues('organizationMobile')}</p></div>
                   <div><span className="font-bold text-[var(--text-secondary)]">Type:</span> <p className="font-semibold text-[var(--navy)]">{ORGANIZATION_TYPE_OPTIONS.find(o => o.value === getValues('organizationType'))?.label}</p></div>
@@ -300,11 +302,11 @@ export function OrgOnboardingWizard() {
                   <div><span className="font-bold text-[var(--text-secondary)]">Pin Code:</span> <p className="font-semibold text-[var(--navy)]">{getValues('pincode')}</p></div>
                 </div>
 
-                <div className="flex justify-between gap-3 mt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep(3)} className="px-4 h-[40px] rounded-xl text-xs">
+                <div className="flex justify-between gap-3 mt-3">
+                  <Button type="button" variant="outline" onClick={() => setStep(3)} className="px-4 h-[38px] rounded-lg text-xs">
                     Edit Details
                   </Button>
-                  <Button type="button" variant="gold" onClick={submitDetails} className="px-6 h-[40px] rounded-xl font-bold text-xs">
+                  <Button type="button" variant="gold" onClick={submitDetails} className="px-5 h-[38px] rounded-lg font-bold text-xs">
                     Confirm & Proceed
                   </Button>
                 </div>
@@ -314,69 +316,69 @@ export function OrgOnboardingWizard() {
             {/* Step 5: Document Uploads */}
             {step === 5 && (
               <>
-                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-2 mb-1">
-                  <Upload className="w-5 h-5 text-[var(--gold)]" />
-                  <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">Step 2: Upload Documents</h3>
+                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-1.5 mb-1">
+                  <Upload className="w-4 h-4 text-[var(--gold)]" />
+                  <h3 className="text-xs font-bold text-[var(--navy)] uppercase tracking-wider">Step 2: Upload Documents</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">PAN Number *</label>
-                    <Input {...register('panNumber')} placeholder="PAN Number" error={!!errors.panNumber} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.panNumber && <p className="text-[11px] text-red-500 mt-0.5">{errors.panNumber.message as string}</p>}
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">PAN Number *</label>
+                    <Input {...register('panNumber')} placeholder="PAN Number" error={!!errors.panNumber} className="h-[36px] pl-3 rounded-lg text-xs" />
+                    {errors.panNumber && <p className="text-[10px] text-red-500 mt-0.5">{errors.panNumber.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Upload PAN Card *</label>
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">Upload PAN Card *</label>
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={(e) => setValue('panFile', e.target.files?.[0] || null)}
-                      className="text-xs file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[var(--gold)]/10 file:text-[var(--gold)] hover:file:bg-[var(--gold)]/20"
+                      className="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--gold)]/10 file:text-[var(--gold)] hover:file:bg-[var(--gold)]/20"
                     />
-                    {errors.panFile && <p className="text-[11px] text-red-500 mt-0.5">{errors.panFile.message as string}</p>}
+                    {errors.panFile && <p className="text-[10px] text-red-500 mt-0.5">{errors.panFile.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">GST Number *</label>
-                    <Input {...register('gstNumber')} placeholder="GST Number" error={!!errors.gstNumber} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.gstNumber && <p className="text-[11px] text-red-500 mt-0.5">{errors.gstNumber.message as string}</p>}
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">GST Number *</label>
+                    <Input {...register('gstNumber')} placeholder="GST Number" error={!!errors.gstNumber} className="h-[36px] pl-3 rounded-lg text-xs" />
+                    {errors.gstNumber && <p className="text-[10px] text-red-500 mt-0.5">{errors.gstNumber.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Upload GST Certificate *</label>
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">Upload GST Certificate *</label>
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={(e) => setValue('gstFile', e.target.files?.[0] || null)}
-                      className="text-xs file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[var(--gold)]/10 file:text-[var(--gold)] hover:file:bg-[var(--gold)]/20"
+                      className="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--gold)]/10 file:text-[var(--gold)] hover:file:bg-[var(--gold)]/20"
                     />
-                    {errors.gstFile && <p className="text-[11px] text-red-500 mt-0.5">{errors.gstFile.message as string}</p>}
+                    {errors.gstFile && <p className="text-[10px] text-red-500 mt-0.5">{errors.gstFile.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Registration Certificate Number *</label>
-                    <Input {...register('regCertNumber')} placeholder="Certificate Number" error={!!errors.regCertNumber} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.regCertNumber && <p className="text-[11px] text-red-500 mt-0.5">{errors.regCertNumber.message as string}</p>}
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">Registration Certificate Number *</label>
+                    <Input {...register('regCertNumber')} placeholder="Certificate Number" error={!!errors.regCertNumber} className="h-[36px] pl-3 rounded-lg text-xs" />
+                    {errors.regCertNumber && <p className="text-[10px] text-red-500 mt-0.5">{errors.regCertNumber.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Upload Registration Certificate *</label>
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">Upload Registration Certificate *</label>
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={(e) => setValue('regCertFile', e.target.files?.[0] || null)}
-                      className="text-xs file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[var(--gold)]/10 file:text-[var(--gold)] hover:file:bg-[var(--gold)]/20"
+                      className="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--gold)]/10 file:text-[var(--gold)] hover:file:bg-[var(--gold)]/20"
                     />
-                    {errors.regCertFile && <p className="text-[11px] text-red-500 mt-0.5">{errors.regCertFile.message as string}</p>}
+                    {errors.regCertFile && <p className="text-[10px] text-red-500 mt-0.5">{errors.regCertFile.message as string}</p>}
                   </div>
                 </div>
 
-                <div className="flex justify-between gap-3 mt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep(3)} className="px-4 h-[42px] rounded-xl text-xs">
+                <div className="flex justify-between gap-3 mt-3">
+                  <Button type="button" variant="outline" onClick={() => setStep(3)} className="px-4 h-[38px] rounded-lg text-xs">
                     Back
                   </Button>
-                  <Button type="submit" variant="gold" className="px-6 h-[42px] rounded-xl font-bold text-[13.5px]">
+                  <Button type="submit" variant="gold" className="px-5 h-[38px] rounded-lg font-bold text-xs">
                     Next: Organization Head
                   </Button>
                 </div>
@@ -385,23 +387,23 @@ export function OrgOnboardingWizard() {
 
             {/* Step 6: Confirm Documents */}
             {step === 6 && (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-2">
-                  <CheckCircle2 className="w-5 h-5 text-[var(--gold)]" />
-                  <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">Confirm Uploaded Documents</h3>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--gold)]" />
+                  <h3 className="text-xs font-bold text-[var(--navy)] uppercase tracking-wider">Confirm Uploaded Documents</h3>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-2 gap-2 text-xs">
                   <div><span className="font-bold text-[var(--text-secondary)]">PAN Number:</span> <p className="font-semibold text-[var(--navy)]">{getValues('panNumber')}</p></div>
                   <div><span className="font-bold text-[var(--text-secondary)]">GST Number:</span> <p className="font-semibold text-[var(--navy)]">{getValues('gstNumber')}</p></div>
                   <div><span className="font-bold text-[var(--text-secondary)]">Reg Cert:</span> <p className="font-semibold text-[var(--navy)]">{getValues('regCertNumber')}</p></div>
                 </div>
 
-                <div className="flex justify-between gap-3 mt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep(5)} className="px-4 h-[40px] rounded-xl text-xs">
+                <div className="flex justify-between gap-3 mt-3">
+                  <Button type="button" variant="outline" onClick={() => setStep(5)} className="px-4 h-[38px] rounded-lg text-xs">
                     Edit Documents
                   </Button>
-                  <Button type="button" variant="gold" onClick={submitDetails} className="px-6 h-[40px] rounded-xl font-bold text-xs">
+                  <Button type="button" variant="gold" onClick={submitDetails} className="px-5 h-[38px] rounded-lg font-bold text-xs">
                     Confirm & Proceed
                   </Button>
                 </div>
@@ -411,59 +413,59 @@ export function OrgOnboardingWizard() {
             {/* Step 7: Organization Head Details */}
             {step === 7 && (
               <>
-                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-2 mb-1">
-                  <Mail className="w-5 h-5 text-[var(--gold)]" />
-                  <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">Step 3: Head of Organization</h3>
+                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-1.5 mb-1">
+                  <Mail className="w-4 h-4 text-[var(--gold)]" />
+                  <h3 className="text-xs font-bold text-[var(--navy)] uppercase tracking-wider">Step 3: Head of Organization</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">First Name *</label>
-                    <Input {...register('orgHeadFirstName')} placeholder="First Name" error={!!errors.orgHeadFirstName} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.orgHeadFirstName && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadFirstName.message as string}</p>}
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">First Name *</label>
+                    <Input {...register('orgHeadFirstName')} placeholder="First Name" error={!!errors.orgHeadFirstName} className="h-[36px] pl-3 rounded-lg text-xs" />
+                    {errors.orgHeadFirstName && <p className="text-[10px] text-red-500 mt-0.5">{errors.orgHeadFirstName.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Last Name *</label>
-                    <Input {...register('orgHeadLastName')} placeholder="Last Name" error={!!errors.orgHeadLastName} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.orgHeadLastName && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadLastName.message as string}</p>}
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">Last Name *</label>
+                    <Input {...register('orgHeadLastName')} placeholder="Last Name" error={!!errors.orgHeadLastName} className="h-[36px] pl-3 rounded-lg text-xs" />
+                    {errors.orgHeadLastName && <p className="text-[10px] text-red-500 mt-0.5">{errors.orgHeadLastName.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Email *</label>
-                    <Input {...register('orgHeadEmail')} placeholder="head@domain.com" error={!!errors.orgHeadEmail} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.orgHeadEmail && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadEmail.message as string}</p>}
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">Email *</label>
+                    <Input {...register('orgHeadEmail')} placeholder="head@domain.com" error={!!errors.orgHeadEmail} className="h-[36px] pl-3 rounded-lg text-xs" />
+                    {errors.orgHeadEmail && <p className="text-[10px] text-red-500 mt-0.5">{errors.orgHeadEmail.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Mobile *</label>
-                    <Input {...register('orgHeadMobile')} placeholder="10-digit Mobile" maxLength={10} error={!!errors.orgHeadMobile} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.orgHeadMobile && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadMobile.message as string}</p>}
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">Mobile *</label>
+                    <Input {...register('orgHeadMobile')} placeholder="10-digit Mobile" maxLength={10} error={!!errors.orgHeadMobile} className="h-[36px] pl-3 rounded-lg text-xs" />
+                    {errors.orgHeadMobile && <p className="text-[10px] text-red-500 mt-0.5">{errors.orgHeadMobile.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Aadhar Number *</label>
-                    <Input {...register('orgHeadAadharNumber')} placeholder="12-digit Aadhar" maxLength={12} error={!!errors.orgHeadAadharNumber} className="h-[40px] pl-3 rounded-xl text-[13px]" />
-                    {errors.orgHeadAadharNumber && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadAadharNumber.message as string}</p>}
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">Aadhar Number *</label>
+                    <Input {...register('orgHeadAadharNumber')} placeholder="12-digit Aadhar" maxLength={12} error={!!errors.orgHeadAadharNumber} className="h-[36px] pl-3 rounded-lg text-xs" />
+                    {errors.orgHeadAadharNumber && <p className="text-[10px] text-red-500 mt-0.5">{errors.orgHeadAadharNumber.message as string}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-[var(--navy)] uppercase mb-1">Upload Aadhar Card *</label>
+                    <label className="block text-[10.5px] font-bold text-[var(--navy)] uppercase mb-0.5">Upload Aadhar Card *</label>
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={(e) => setValue('orgHeadAadharFile', e.target.files?.[0] || null)}
-                      className="text-xs file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[var(--gold)]/10 file:text-[var(--gold)] hover:file:bg-[var(--gold)]/20"
+                      className="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[var(--gold)]/10 file:text-[var(--gold)] hover:file:bg-[var(--gold)]/20"
                     />
-                    {errors.orgHeadAadharFile && <p className="text-[11px] text-red-500 mt-0.5">{errors.orgHeadAadharFile.message as string}</p>}
+                    {errors.orgHeadAadharFile && <p className="text-[10px] text-red-500 mt-0.5">{errors.orgHeadAadharFile.message as string}</p>}
                   </div>
                 </div>
 
-                <div className="flex justify-between gap-3 mt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep(5)} className="px-4 h-[42px] rounded-xl text-xs">
+                <div className="flex justify-between gap-3 mt-3">
+                  <Button type="button" variant="outline" onClick={() => setStep(5)} className="px-4 h-[38px] rounded-lg text-xs">
                     Back
                   </Button>
-                  <Button type="submit" variant="gold" className="px-6 h-[42px] rounded-xl font-bold text-[13.5px]">
+                  <Button type="submit" variant="gold" className="px-5 h-[38px] rounded-lg font-bold text-xs">
                     Review & Submit
                   </Button>
                 </div>
@@ -472,24 +474,24 @@ export function OrgOnboardingWizard() {
 
             {/* Step 8: Confirm Head Details */}
             {step === 8 && (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-2">
-                  <CheckCircle2 className="w-5 h-5 text-[var(--gold)]" />
-                  <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">Confirm Head Details</h3>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--gold)]" />
+                  <h3 className="text-xs font-bold text-[var(--navy)] uppercase tracking-wider">Confirm Head Details</h3>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-2 gap-2 text-xs">
                   <div><span className="font-bold text-[var(--text-secondary)]">Name:</span> <p className="font-semibold text-[var(--navy)]">{`${getValues('orgHeadFirstName')} ${getValues('orgHeadLastName')}`}</p></div>
                   <div><span className="font-bold text-[var(--text-secondary)]">Email:</span> <p className="font-semibold text-[var(--navy)]">{getValues('orgHeadEmail')}</p></div>
                   <div><span className="font-bold text-[var(--text-secondary)]">Mobile:</span> <p className="font-semibold text-[var(--navy)]">{getValues('orgHeadMobile')}</p></div>
                   <div><span className="font-bold text-[var(--text-secondary)]">Aadhar:</span> <p className="font-semibold text-[var(--navy)]">{getValues('orgHeadAadharNumber')}</p></div>
                 </div>
 
-                <div className="flex justify-between gap-3 mt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep(7)} className="px-4 h-[40px] rounded-xl text-xs">
+                <div className="flex justify-between gap-3 mt-3">
+                  <Button type="button" variant="outline" onClick={() => setStep(7)} className="px-4 h-[38px] rounded-lg text-xs">
                     Edit Head Details
                   </Button>
-                  <Button type="button" variant="gold" onClick={submitDetails} className="px-6 h-[40px] rounded-xl font-bold text-xs">
+                  <Button type="button" variant="gold" onClick={submitDetails} className="px-5 h-[38px] rounded-lg font-bold text-xs">
                     Proceed to Review
                   </Button>
                 </div>
@@ -498,37 +500,37 @@ export function OrgOnboardingWizard() {
 
             {/* Step 9: Final Review */}
             {step === 9 && (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-2">
-                  <CheckCircle2 className="w-5 h-5 text-[var(--gold)]" />
-                  <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">Final Application Review</h3>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 pb-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[var(--gold)]" />
+                  <h3 className="text-xs font-bold text-[var(--navy)] uppercase tracking-wider">Final Application Review</h3>
                 </div>
 
-                <div className="space-y-3 text-xs">
-                  <div className="bg-white/60 p-3 rounded-xl">
-                    <h4 className="font-bold text-[var(--gold)] mb-1">Organization</h4>
+                <div className="space-y-2 text-xs">
+                  <div className="bg-white/60 p-2.5 rounded-lg">
+                    <h4 className="font-bold text-[var(--gold)] mb-0.5">Organization</h4>
                     <p className="font-semibold text-[var(--navy)]">{getValues('organizationName')} ({ORGANIZATION_TYPE_OPTIONS.find(o => o.value === getValues('organizationType'))?.label})</p>
                     <p className="text-[var(--text-secondary)]">{getValues('address')}, {getValues('city')}, {getValues('state')} - {getValues('pincode')}</p>
                   </div>
 
-                  <div className="bg-white/60 p-3 rounded-xl">
-                    <h4 className="font-bold text-[var(--gold)] mb-1">Documents</h4>
+                  <div className="bg-white/60 p-2.5 rounded-lg">
+                    <h4 className="font-bold text-[var(--gold)] mb-0.5">Documents</h4>
                     <p className="font-semibold text-[var(--navy)]">PAN: {getValues('panNumber')} | GST: {getValues('gstNumber')}</p>
                     <p className="text-[var(--text-secondary)]">Registration Cert: {getValues('regCertNumber')}</p>
                   </div>
 
-                  <div className="bg-white/60 p-3 rounded-xl">
-                    <h4 className="font-bold text-[var(--gold)] mb-1">Head of Organization</h4>
+                  <div className="bg-white/60 p-2.5 rounded-lg">
+                    <h4 className="font-bold text-[var(--gold)] mb-0.5">Head of Organization</h4>
                     <p className="font-semibold text-[var(--navy)]">{`${getValues('orgHeadFirstName')} ${getValues('orgHeadLastName')}`}</p>
                     <p className="text-[var(--text-secondary)]">{getValues('orgHeadEmail')} | {getValues('orgHeadMobile')}</p>
                   </div>
                 </div>
 
-                <div className="flex justify-between gap-3 mt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep(7)} className="px-4 h-[42px] rounded-xl text-xs">
+                <div className="flex justify-between gap-3 mt-3">
+                  <Button type="button" variant="outline" onClick={() => setStep(7)} className="px-4 h-[38px] rounded-lg text-xs">
                     Back
                   </Button>
-                  <Button type="button" variant="gold" onClick={submitDetails} className="px-6 h-[42px] rounded-xl font-bold text-xs">
+                  <Button type="button" variant="gold" onClick={submitDetails} className="px-5 h-[38px] rounded-lg font-bold text-xs">
                     Submit Registration
                   </Button>
                 </div>
