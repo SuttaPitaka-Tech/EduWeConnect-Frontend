@@ -164,7 +164,7 @@ export function LoginForm() {
           {/* Submit */}
           <Button
             type="submit"
-            variant="gold"
+            variant="primary"
             isLoading={isLoading}
             className="w-full h-[50px] rounded-xl font-bold text-[15px] mt-1 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all group"
           >
