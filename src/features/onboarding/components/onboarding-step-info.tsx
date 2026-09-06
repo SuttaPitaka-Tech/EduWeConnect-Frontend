@@ -1,13 +1,19 @@
-import { useMemo } from 'react'
-import { useFormContext, Controller } from 'react-hook-form'
-import { Building2, Lock, ArrowRight } from 'lucide-react'
-import { Button, Input, Dropdown, SearchDropdown, Textarea } from '@/components/ui'
-import { Country, State, City } from 'country-state-city'
-import { ORGANIZATION_TYPE_OPTIONS } from '../constants/constants'
-import type { RegisterFormValues } from '../types/types'
+import { useMemo } from "react";
+import { useFormContext, Controller } from "react-hook-form";
+import { Building2, Lock, ArrowRight } from "lucide-react";
+import {
+  Button,
+  Input,
+  Dropdown,
+  SearchDropdown,
+  Textarea,
+} from "@/components/ui";
+import { Country, State, City } from "country-state-city";
+import { ORGANIZATION_TYPE_OPTIONS } from "../constants/constants";
+import type { RegisterFormValues } from "../types/types";
 
 interface OnboardingStepInfoProps {
-  onNext: () => void
+  onNext: () => void;
 }
 
 export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
@@ -18,24 +24,32 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
     watch,
     trigger,
     formState: { errors },
-  } = useFormContext<RegisterFormValues>()
+  } = useFormContext<RegisterFormValues>();
 
-  const selectedCountry = watch('country')
-  const selectedState = watch('state')
+  const selectedCountry = watch("country");
+  const selectedState = watch("state");
 
   const countryOptions = useMemo(() => {
-    return Country.getAllCountries().map((c: any) => ({ value: c.isoCode, label: c.name }))
-  }, [])
+    return Country.getAllCountries().map((c: any) => ({
+      value: c.isoCode,
+      label: c.name,
+    }));
+  }, []);
 
   const stateOptions = useMemo(() => {
-    if (!selectedCountry) return []
-    return State.getStatesOfCountry(selectedCountry).map((s: any) => ({ value: s.isoCode, label: s.name }))
-  }, [selectedCountry])
+    if (!selectedCountry) return [];
+    return State.getStatesOfCountry(selectedCountry).map((s: any) => ({
+      value: s.isoCode,
+      label: s.name,
+    }));
+  }, [selectedCountry]);
 
   const cityOptions = useMemo(() => {
-    if (!selectedCountry || !selectedState) return []
-    return City.getCitiesOfState(selectedCountry, selectedState).map((c: any) => ({ value: c.name, label: c.name }))
-  }, [selectedCountry, selectedState])
+    if (!selectedCountry || !selectedState) return [];
+    return City.getCitiesOfState(selectedCountry, selectedState).map(
+      (c: any) => ({ value: c.name, label: c.name }),
+    );
+  }, [selectedCountry, selectedState]);
 
   return (
     <div className="space-y-3.5 animate-fadeIn">
@@ -47,18 +61,18 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {/* Organization Email (Locked) */}
-        <div className="md:col-span-2">
+        {/* Row 1: Organization Email (Locked) & Organization Name */}
+        <div>
           <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
             Organization Email *
           </label>
           <div className="relative">
             <Input
-              {...register('organizationEmail')}
+              {...register("organizationEmail")}
               type="email"
               readOnly
               placeholder="organization@domain.com"
-              className="h-[40px] pl-3 pr-9 rounded-xl text-[13px] font-semibold select-none"
+              className="h-[40px] pl-3 pr-9 rounded-xl text-[13px] font-semibold select-none bg-[var(--cream)] cursor-not-allowed"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--gold)] opacity-75">
               <Lock className="w-4 h-4" />
@@ -71,16 +85,15 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
           )}
         </div>
 
-        {/* Organization Name */}
         <div>
           <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
             Organization Name *
           </label>
-          <Input 
-            {...register('organizationName')} 
-            placeholder="e.g. Nalanda University" 
-            error={!!errors.organizationName} 
-            className="h-[40px] pl-3 rounded-xl text-[13px]" 
+          <Input
+            {...register("organizationName")}
+            placeholder="e.g. Nalanda University"
+            error={!!errors.organizationName}
+            className="h-[40px] pl-3 rounded-xl text-[13px]"
           />
           {errors.organizationName && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">
@@ -89,34 +102,8 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
           )}
         </div>
 
-        {/* Organization Mobile */}
+        {/* Row 2: Organization Type & Organization Mobile */}
         <div>
-          <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
-            Organization Mobile *
-          </label>
-          <Input 
-            {...register('organizationMobile')} 
-            type="tel"
-            inputMode="numeric"
-            placeholder="10-digit Mobile Number" 
-            maxLength={10} 
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '').slice(0, 10)
-              setValue('organizationMobile', val, { shouldValidate: !!errors.organizationMobile, shouldDirty: true })
-            }}
-            onBlur={() => trigger('organizationMobile')}
-            error={!!errors.organizationMobile} 
-            className="h-[40px] pl-3 rounded-xl text-[13px]" 
-          />
-          {errors.organizationMobile && (
-            <p className="text-[11px] font-medium text-red-500 mt-0.5">
-              {errors.organizationMobile.message as string}
-            </p>
-          )}
-        </div>
-
-        {/* Organization Type */}
-        <div className="md:col-span-2">
           <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
             Organization Type *
           </label>
@@ -141,16 +128,44 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
           )}
         </div>
 
-        {/* Address */}
+        <div>
+          <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
+            Organization Mobile *
+          </label>
+          <Input
+            {...register("organizationMobile")}
+            type="tel"
+            inputMode="numeric"
+            placeholder="10-digit Mobile Number"
+            maxLength={10}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+              setValue("organizationMobile", val, {
+                shouldValidate: !!errors.organizationMobile,
+                shouldDirty: true,
+              });
+            }}
+            onBlur={() => trigger("organizationMobile")}
+            error={!!errors.organizationMobile}
+            className="h-[40px] pl-3 rounded-xl text-[13px]"
+          />
+          {errors.organizationMobile && (
+            <p className="text-[11px] font-medium text-red-500 mt-0.5">
+              {errors.organizationMobile.message as string}
+            </p>
+          )}
+        </div>
+
+        {/* Row 3: Address (Full Width) */}
         <div className="md:col-span-2">
           <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
             Address *
           </label>
-          <Textarea 
-            {...register('address')} 
-            placeholder="Full Street Address" 
-            error={!!errors.address} 
-            className="rounded-xl text-[13px] min-h-[60px]" 
+          <Textarea
+            {...register("address")}
+            placeholder="Full Street Address"
+            error={!!errors.address}
+            className="rounded-xl text-[13px] min-h-[60px]"
           />
           {errors.address && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">
@@ -172,9 +187,9 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
                 options={countryOptions}
                 value={field.value}
                 onChange={(val) => {
-                  field.onChange(val)
-                  setValue('state', '')
-                  setValue('city', '')
+                  field.onChange(val);
+                  setValue("state", "");
+                  setValue("city", "");
                 }}
                 placeholder="Select Country"
                 searchPlaceholder="Search Country..."
@@ -203,10 +218,12 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
                 options={stateOptions}
                 value={field.value}
                 onChange={(val) => {
-                  field.onChange(val)
-                  setValue('city', '')
+                  field.onChange(val);
+                  setValue("city", "");
                 }}
-                placeholder={selectedCountry ? 'Select State' : 'Select Country First'}
+                placeholder={
+                  selectedCountry ? "Select State" : "Select Country First"
+                }
                 searchPlaceholder="Search State..."
                 disabled={!selectedCountry}
                 invalid={!!errors.state}
@@ -234,7 +251,9 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
                 options={cityOptions}
                 value={field.value}
                 onChange={field.onChange}
-                placeholder={selectedState ? 'Select City' : 'Select State First'}
+                placeholder={
+                  selectedState ? "Select City" : "Select State First"
+                }
                 searchPlaceholder="Search City..."
                 disabled={!selectedState}
                 invalid={!!errors.city}
@@ -254,11 +273,11 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
           <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
             District *
           </label>
-          <Input 
-            {...register('district')} 
-            placeholder="District Name" 
-            error={!!errors.district} 
-            className="h-[40px] pl-3 rounded-xl text-[13px]" 
+          <Input
+            {...register("district")}
+            placeholder="District Name"
+            error={!!errors.district}
+            className="h-[40px] pl-3 rounded-xl text-[13px]"
           />
           {errors.district && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">
@@ -272,19 +291,22 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
           <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
             Pin Code *
           </label>
-          <Input 
-            {...register('pincode')} 
+          <Input
+            {...register("pincode")}
             type="tel"
             inputMode="numeric"
-            placeholder="6-digit Pin Code" 
-            maxLength={6} 
+            placeholder="6-digit Pin Code"
+            maxLength={6}
             onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '').slice(0, 6)
-              setValue('pincode', val, { shouldValidate: !!errors.pincode, shouldDirty: true })
+              const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+              setValue("pincode", val, {
+                shouldValidate: !!errors.pincode,
+                shouldDirty: true,
+              });
             }}
-            onBlur={() => trigger('pincode')}
-            error={!!errors.pincode} 
-            className="h-[40px] pl-3 rounded-xl text-[13px]" 
+            onBlur={() => trigger("pincode")}
+            error={!!errors.pincode}
+            className="h-[40px] pl-3 rounded-xl text-[13px]"
           />
           {errors.pincode && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">
@@ -296,9 +318,9 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
 
       {/* Step 1 Actions */}
       <div className="flex justify-end items-center pt-3 border-t border-[var(--gold)]/20 mt-4">
-        <Button 
-          type="button" 
-          variant="gold" 
+        <Button
+          type="button"
+          variant="gold"
           onClick={onNext}
           className="px-7 h-[42px] rounded-xl font-bold text-[13.5px] flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all"
         >
@@ -306,5 +328,5 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }

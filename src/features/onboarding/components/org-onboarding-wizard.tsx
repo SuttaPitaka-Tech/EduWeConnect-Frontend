@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { useForm, FormProvider } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { ShieldCheck } from 'lucide-react'
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ShieldCheck } from "lucide-react";
 import {
   Button,
   Dialog,
@@ -10,155 +10,163 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
-} from '@/components/ui'
-import { buddhaBg } from '@/assets/images'
-import { registerSchema } from '../schemas/schemas'
-import type { RegisterFormValues, PreviewDoc } from '../types/types'
-import { OnboardingStepInfo } from './onboarding-step-info'
-import { OnboardingStepDocsHead } from './onboarding-step-docs-head'
-import { OnboardingStepReview } from './onboarding-step-review'
-import { OnboardingStepSuccess } from './onboarding-step-success'
-import { OnboardingPreviewModal } from './onboarding-preview-modal'
-import { OnboardingStepper } from './onboarding-stepper'
+  DialogFooter,
+} from "@/components/ui";
+import { buddhaBg } from "@/assets/images";
+import { registerSchema } from "../schemas/schemas";
+import type { RegisterFormValues, PreviewDoc } from "../types/types";
+import { OnboardingStepInfo } from "./onboarding-step-info";
+import { OnboardingStepDocsHead } from "./onboarding-step-docs-head";
+import { OnboardingStepReview } from "./onboarding-step-review";
+import { OnboardingStepSuccess } from "./onboarding-step-success";
+import { OnboardingPreviewModal } from "./onboarding-preview-modal";
+import { OnboardingStepper } from "./onboarding-stepper";
 
 export function OrgOnboardingWizard() {
-  const location = useLocation()
-  const initialEmail = (location.state as { email?: string })?.email || localStorage.getItem('registeredOrgEmail') || ''
+  const location = useLocation();
+  const initialEmail =
+    (location.state as { email?: string })?.email ||
+    localStorage.getItem("registeredOrgEmail") ||
+    "";
 
   // Steps: 1: Org Info, 2: Docs & Head, 3: Review, 4: Success
-  const [step, setStep] = useState<number>(1)
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false)
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-  const [previewDoc, setPreviewDoc] = useState<PreviewDoc | null>(null)
-  const [previewingKey, setPreviewingKey] = useState<string | null>(null)
-  const [downloadingKey, setDownloadingKey] = useState<string | null>(null)
+  const [step, setStep] = useState<number>(1);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [previewDoc, setPreviewDoc] = useState<PreviewDoc | null>(null);
+  const [previewingKey, setPreviewingKey] = useState<string | null>(null);
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
 
   const methods = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    mode: 'onTouched',
-    reValidateMode: 'onChange',
+    mode: "onTouched",
+    reValidateMode: "onChange",
     defaultValues: {
       organizationEmail: initialEmail,
-      organizationName: '',
-      organizationMobile: '',
-      organizationType: '',
-      address: '',
-      city: '',
-      district: '',
-      pincode: '',
-      state: '',
-      country: '',
-      panNumber: '',
+      organizationName: "",
+      organizationMobile: "",
+      organizationType: "",
+      address: "",
+      city: "",
+      district: "",
+      pincode: "",
+      state: "",
+      country: "",
+      panNumber: "",
       panFile: null,
-      gstNumber: '',
+      gstNumber: "",
       gstFile: null,
-      regCertNumber: '',
+      regCertNumber: "",
       regCertFile: null,
       otherDocuments: [],
-      orgHeadEmail: '',
-      orgHeadMobile: '',
-      orgHeadFirstName: '',
-      orgHeadMiddleName: '',
-      orgHeadLastName: '',
-      orgHeadAadharNumber: '',
+      orgHeadEmail: "",
+      orgHeadMobile: "",
+      orgHeadFirstName: "",
+      orgHeadMiddleName: "",
+      orgHeadLastName: "",
+      orgHeadAadharNumber: "",
       orgHeadAadharFile: null,
     },
-  })
+  });
 
-  const { trigger, getValues } = methods
+  const { trigger, getValues } = methods;
 
   const handleDownloadFile = (file: File) => {
-    const url = URL.createObjectURL(file)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = file.name
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
-  }
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   const handlePreviewDocument = (file: File, title: string, key?: string) => {
-    if (key) setPreviewingKey(key)
+    if (key) setPreviewingKey(key);
     setTimeout(() => {
-      setPreviewDoc({ title, file })
-      if (key) setPreviewingKey(null)
-    }, 300)
-  }
+      setPreviewDoc({ title, file });
+      if (key) setPreviewingKey(null);
+    }, 300);
+  };
 
   const handleDownloadFileWithSpinner = (file: File, key: string) => {
-    setDownloadingKey(key)
+    setDownloadingKey(key);
     setTimeout(() => {
-      handleDownloadFile(file)
-      setDownloadingKey(null)
-    }, 350)
-  }
+      handleDownloadFile(file);
+      setDownloadingKey(null);
+    }, 350);
+  };
 
   const handleNextFromStep1 = async () => {
     const isValid = await trigger([
-      'organizationEmail',
-      'organizationName',
-      'organizationMobile',
-      'organizationType',
-      'address',
-      'city',
-      'district',
-      'pincode',
-      'state',
-      'country'
-    ])
+      "organizationEmail",
+      "organizationName",
+      "organizationMobile",
+      "organizationType",
+      "address",
+      "city",
+      "district",
+      "pincode",
+      "state",
+      "country",
+    ]);
     if (isValid) {
-      setStep(2)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }
+  };
 
   const handleNextFromStep2 = async () => {
     const isValid = await trigger([
-      'panNumber',
-      'panFile',
-      'gstNumber',
-      'gstFile',
-      'regCertNumber',
-      'regCertFile',
-      'orgHeadEmail',
-      'orgHeadMobile',
-      'orgHeadFirstName',
-      'orgHeadLastName',
-      'orgHeadAadharNumber',
-      'orgHeadAadharFile'
-    ])
+      "panNumber",
+      "panFile",
+      "gstNumber",
+      "gstFile",
+      "regCertNumber",
+      "regCertFile",
+      "orgHeadEmail",
+      "orgHeadMobile",
+      "orgHeadFirstName",
+      "orgHeadLastName",
+      "orgHeadAadharNumber",
+      "orgHeadAadharFile",
+    ]);
     if (isValid) {
-      setStep(3)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setStep(3);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }
+  };
 
   const handleFinalSubmit = () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     setTimeout(() => {
-      const email = getValues('organizationEmail')
-      const name = getValues('organizationName')
-      
+      const email = getValues("organizationEmail");
+      const name = getValues("organizationName");
+
       const newMockOrg = {
         id: `org-${Date.now()}`,
         email: email,
-        password: 'password123',
-        role: 'organization',
+        password: "password123",
+        role: "organization",
         organizationName: name,
-        firstName: getValues('orgHeadFirstName') || 'Org',
-        lastName: getValues('orgHeadLastName') || 'Head',
-      }
-      const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]')
-      localStorage.setItem('mockUsers', JSON.stringify([...existingUsers, newMockOrg]))
+        firstName: getValues("orgHeadFirstName") || "Org",
+        lastName: getValues("orgHeadLastName") || "Head",
+      };
+      const existingUsers = JSON.parse(
+        localStorage.getItem("mockUsers") || "[]",
+      );
+      localStorage.setItem(
+        "mockUsers",
+        JSON.stringify([...existingUsers, newMockOrg]),
+      );
 
-      setIsSubmitting(false)
-      setIsConfirmModalOpen(false)
-      setStep(4)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }, 1200)
-  }
+      setIsSubmitting(false);
+      setIsConfirmModalOpen(false);
+      setStep(4);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 1200);
+  };
 
   return (
     <FormProvider {...methods}>
@@ -187,22 +195,24 @@ export function OrgOnboardingWizard() {
             <OnboardingStepper
               currentStep={step}
               onStepClick={(targetStep) => {
-                if (targetStep < step) setStep(targetStep)
+                if (targetStep < step) setStep(targetStep);
               }}
             />
           )}
 
           {/* Form Step Router */}
-          <form noValidate onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-4">
-            {step === 1 && (
-              <OnboardingStepInfo onNext={handleNextFromStep1} />
-            )}
+          <form
+            noValidate
+            onSubmit={(e) => e.preventDefault()}
+            className="flex flex-col gap-4"
+          >
+            {step === 1 && <OnboardingStepInfo onNext={handleNextFromStep1} />}
 
             {step === 2 && (
               <OnboardingStepDocsHead
                 onBack={() => {
-                  setStep(1)
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                  setStep(1);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 onNext={handleNextFromStep2}
                 onPreviewDoc={handlePreviewDocument}
@@ -212,12 +222,12 @@ export function OrgOnboardingWizard() {
             {step === 3 && (
               <OnboardingStepReview
                 onBack={() => {
-                  setStep(2)
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                  setStep(2);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 onEditSection={(sectionStep) => {
-                  setStep(sectionStep)
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                  setStep(sectionStep);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 onSubmitClick={() => setIsConfirmModalOpen(true)}
                 onPreviewDoc={handlePreviewDocument}
@@ -227,19 +237,23 @@ export function OrgOnboardingWizard() {
               />
             )}
 
-            {step === 4 && (
-              <OnboardingStepSuccess />
-            )}
+            {step === 4 && <OnboardingStepSuccess />}
           </form>
         </div>
       </div>
 
       {/* Document Preview Modal */}
-      <OnboardingPreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
+      <OnboardingPreviewModal
+        doc={previewDoc}
+        onClose={() => setPreviewDoc(null)}
+      />
 
       {/* Final Confirmation Modal */}
       <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
-        <DialogContent maxWidth="max-w-lg" className="rounded-3xl p-6 border border-[var(--border)]">
+        <DialogContent
+          maxWidth="max-w-lg"
+          className="rounded-3xl p-6 border border-[var(--border)]"
+        >
           <DialogHeader className="flex flex-col items-center text-center pb-2 border-b border-[var(--border)]/60">
             <div className="w-12 h-12 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center mb-2">
               <ShieldCheck className="w-6 h-6" />
@@ -248,26 +262,43 @@ export function OrgOnboardingWizard() {
               Confirm Final Submission
             </DialogTitle>
             <DialogDescription className="text-xs text-[var(--text-secondary)] mt-1">
-              Please verify that all statutory details and documents provided are accurate.
+              Please verify that all statutory details and documents provided
+              are accurate.
             </DialogDescription>
           </DialogHeader>
 
           <div className="my-4 bg-[var(--warm-white)] border border-[var(--border)] rounded-2xl p-4 text-xs space-y-2">
             <div className="flex justify-between border-b border-[var(--border)]/40 pb-1.5">
-              <span className="font-semibold text-[var(--text-muted)]">Organization:</span>
-              <span className="font-bold text-[var(--navy)]">{getValues('organizationName')}</span>
+              <span className="font-semibold text-[var(--text-muted)]">
+                Organization:
+              </span>
+              <span className="font-bold text-[var(--navy)]">
+                {getValues("organizationName")}
+              </span>
             </div>
             <div className="flex justify-between border-b border-[var(--border)]/40 pb-1.5">
-              <span className="font-semibold text-[var(--text-muted)]">Official Email:</span>
-              <span className="font-semibold text-[var(--navy)]">{getValues('organizationEmail')}</span>
+              <span className="font-semibold text-[var(--text-muted)]">
+                Official Email:
+              </span>
+              <span className="font-semibold text-[var(--navy)]">
+                {getValues("organizationEmail")}
+              </span>
             </div>
             <div className="flex justify-between border-b border-[var(--border)]/40 pb-1.5">
-              <span className="font-semibold text-[var(--text-muted)]">Authorized Head:</span>
-              <span className="font-semibold text-[var(--navy)]">{`${getValues('orgHeadFirstName')} ${getValues('orgHeadLastName')}`.trim()}</span>
+              <span className="font-semibold text-[var(--text-muted)]">
+                Authorized Head:
+              </span>
+              <span className="font-semibold text-[var(--navy)]">
+                {`${getValues("orgHeadFirstName")} ${getValues("orgHeadLastName")}`.trim()}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="font-semibold text-[var(--text-muted)]">Documents Attached:</span>
-              <span className="font-bold text-emerald-600">PAN, GST, Reg Cert & Aadhar</span>
+              <span className="font-semibold text-[var(--text-muted)]">
+                Documents Attached:
+              </span>
+              <span className="font-bold text-emerald-600">
+                PAN, GST, Reg Cert & Aadhar
+              </span>
             </div>
           </div>
 
@@ -293,5 +324,5 @@ export function OrgOnboardingWizard() {
         </DialogContent>
       </Dialog>
     </FormProvider>
-  )
+  );
 }

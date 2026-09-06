@@ -1,33 +1,33 @@
-import * as React from 'react'
-import { ChevronDown, Check, Plus, X, Search } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Spinner } from './spinner'
-import type { DropdownOption, DropdownFooterAction } from './dropdown'
+import * as React from "react";
+import { ChevronDown, Check, Plus, X, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Spinner } from "./spinner";
+import type { DropdownOption, DropdownFooterAction } from "./dropdown";
 
 export interface MultiSelectDropdownProps {
-  value?: string[]
-  onChange?: (value: string[]) => void
-  options: readonly DropdownOption[]
-  placeholder?: string
-  searchPlaceholder?: string
-  disabled?: boolean
-  isLoading?: boolean
-  invalid?: boolean
-  className?: string
-  contentClassName?: string
-  clearable?: boolean
-  maxDisplayTags?: number
-  footerAction?: DropdownFooterAction
-  onOpenChange?: (open: boolean) => void
-  onOpen?: () => void
+  value?: string[];
+  onChange?: (value: string[]) => void;
+  options: readonly DropdownOption[];
+  placeholder?: string;
+  searchPlaceholder?: string;
+  disabled?: boolean;
+  isLoading?: boolean;
+  invalid?: boolean;
+  className?: string;
+  contentClassName?: string;
+  clearable?: boolean;
+  maxDisplayTags?: number;
+  footerAction?: DropdownFooterAction;
+  onOpenChange?: (open: boolean) => void;
+  onOpen?: () => void;
 }
 
 export function MultiSelectDropdown({
   value = [],
   onChange,
   options,
-  placeholder = 'Select options...',
-  searchPlaceholder = 'Search options...',
+  placeholder = "Select options...",
+  searchPlaceholder = "Search options...",
   disabled = false,
   isLoading = false,
   invalid = false,
@@ -39,69 +39,74 @@ export function MultiSelectDropdown({
   onOpenChange,
   onOpen,
 }: MultiSelectDropdownProps) {
-  const [open, setOpen] = React.useState(false)
-  const [query, setQuery] = React.useState('')
-  const containerRef = React.useRef<HTMLDivElement>(null)
-  const searchInputRef = React.useRef<HTMLInputElement>(null)
+  const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState("");
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleOpenChange = React.useCallback(
     (nextOpen: boolean) => {
-      setOpen(nextOpen)
+      setOpen(nextOpen);
       if (nextOpen) {
-        setQuery('')
-        onOpen?.()
-        setTimeout(() => searchInputRef.current?.focus(), 50)
+        setQuery("");
+        onOpen?.();
+        setTimeout(() => searchInputRef.current?.focus(), 50);
       }
-      onOpenChange?.(nextOpen)
+      onOpenChange?.(nextOpen);
     },
     [onOpenChange, onOpen],
-  )
+  );
 
   // Click outside listener
   React.useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        handleOpenChange(false)
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        handleOpenChange(false);
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [open, handleOpenChange])
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open, handleOpenChange]);
 
   const selectedOptions = React.useMemo(
     () => options.filter((opt) => value.includes(opt.value)),
     [options, value],
-  )
+  );
 
   const filteredOptions = React.useMemo(() => {
-    if (!query.trim()) return options
-    const q = query.toLowerCase()
-    return options.filter((opt) => opt.label.toLowerCase().includes(q))
-  }, [options, query])
+    if (!query.trim()) return options;
+    const q = query.toLowerCase();
+    return options.filter((opt) => opt.label.toLowerCase().includes(q));
+  }, [options, query]);
 
-  const hasSelection = value.length > 0
+  const hasSelection = value.length > 0;
 
   const handleToggle = (optionValue: string) => {
     if (value.includes(optionValue)) {
-      onChange?.(value.filter((v) => v !== optionValue))
+      onChange?.(value.filter((v) => v !== optionValue));
     } else {
-      onChange?.([...value, optionValue])
+      onChange?.([...value, optionValue]);
     }
-  }
+  };
 
   const handleSelectAll = () => {
-    const selectable = options.filter((o) => !o.disabled && o.value).map((o) => o.value)
-    onChange?.(selectable)
-  }
+    const selectable = options
+      .filter((o) => !o.disabled && o.value)
+      .map((o) => o.value);
+    onChange?.(selectable);
+  };
 
   const handleClearAll = (e?: React.MouseEvent) => {
     if (e) {
-      e.preventDefault()
-      e.stopPropagation()
+      e.preventDefault();
+      e.stopPropagation();
     }
-    onChange?.([])
-  }
+    onChange?.([]);
+  };
 
   return (
     <div ref={containerRef} className="relative inline-block w-full">
@@ -114,12 +119,14 @@ export function MultiSelectDropdown({
         aria-invalid={invalid || undefined}
         onClick={() => handleOpenChange(!open)}
         className={cn(
-          'flex min-h-[36px] w-full items-center justify-between gap-1.5 rounded-lg border bg-white px-2.5 py-1 text-xs font-normal text-slate-800 transition-colors outline-none select-none hover:border-slate-400 focus:border-[var(--navy,#102A43)] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60',
-          invalid && 'border-red-500!',
+          "flex min-h-[36px] w-full items-center justify-between gap-1.5 rounded-lg border bg-white px-2.5 py-1 text-xs font-normal text-slate-800 transition-colors outline-none select-none hover:border-slate-400 focus:border-[var(--navy,#102A43)] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60",
+          invalid && "border-red-500!",
           className,
         )}
         style={{
-          borderColor: invalid ? 'var(--danger, #ef4444)' : 'var(--border, #DED5C5)',
+          borderColor: invalid
+            ? "var(--danger, #ef4444)"
+            : "var(--border, #DED5C5)",
         }}
       >
         <div className="flex flex-1 flex-wrap items-center gap-1 overflow-hidden">
@@ -140,8 +147,8 @@ export function MultiSelectDropdown({
                     tabIndex={0}
                     aria-label={`Remove ${opt.label}`}
                     onClick={(e) => {
-                      e.stopPropagation()
-                      handleToggle(opt.value)
+                      e.stopPropagation();
+                      handleToggle(opt.value);
                     }}
                     className="hover:text-red-500 transition-colors cursor-pointer"
                   >
@@ -169,8 +176,8 @@ export function MultiSelectDropdown({
               className="flex size-4 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
               onClick={handleClearAll}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleClearAll(e as unknown as React.MouseEvent)
+                if (e.key === "Enter" || e.key === " ") {
+                  handleClearAll(e as unknown as React.MouseEvent);
                 }
               }}
             >
@@ -180,8 +187,8 @@ export function MultiSelectDropdown({
 
           <ChevronDown
             className={cn(
-              'size-3.5 shrink-0 text-slate-400 transition-transform duration-150',
-              open && 'rotate-180',
+              "size-3.5 shrink-0 text-slate-400 transition-transform duration-150",
+              open && "rotate-180",
             )}
           />
         </div>
@@ -191,13 +198,14 @@ export function MultiSelectDropdown({
       {open && (
         <div
           className={cn(
-            'absolute left-0 top-full z-50 mt-1 w-full min-w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl outline-none',
+            "absolute left-0 top-full z-50 mt-1 w-full min-w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl outline-none",
             contentClassName,
           )}
           style={{
-            backgroundColor: '#FFFFFF',
-            borderColor: 'var(--border, #DED5C5)',
-            boxShadow: '0 10px 25px -5px rgba(16, 42, 67, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+            backgroundColor: "#FFFFFF",
+            borderColor: "var(--border, #DED5C5)",
+            boxShadow:
+              "0 10px 25px -5px rgba(16, 42, 67, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)",
           }}
         >
           {/* Internal Search Header & Quick Actions */}
@@ -211,12 +219,12 @@ export function MultiSelectDropdown({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={searchPlaceholder}
                 className="h-8 w-full rounded-md border bg-slate-50 pl-7 pr-7 text-xs outline-none transition-colors placeholder:text-slate-400 focus:border-[var(--navy,#102A43)] focus:bg-white"
-                style={{ borderColor: 'var(--border, #DED5C5)' }}
+                style={{ borderColor: "var(--border, #DED5C5)" }}
               />
               {query && (
                 <button
                   type="button"
-                  onClick={() => setQuery('')}
+                  onClick={() => setQuery("")}
                   className="absolute right-1.5 flex size-4 items-center justify-center rounded text-slate-400 hover:text-slate-700"
                 >
                   <X className="size-3" />
@@ -227,7 +235,10 @@ export function MultiSelectDropdown({
             {/* Quick Actions (Select All / Clear) */}
             <div className="flex items-center justify-between px-1 py-0.5 text-[11px]">
               <span className="font-semibold text-slate-500">
-                <span className="font-bold text-[var(--navy,#102A43)]">{selectedOptions.length}</span> of {options.length} selected
+                <span className="font-bold text-[var(--navy,#102A43)]">
+                  {selectedOptions.length}
+                </span>{" "}
+                of {options.length} selected
               </span>
               <div className="flex items-center gap-1.5">
                 <button
@@ -261,7 +272,7 @@ export function MultiSelectDropdown({
               </div>
             ) : (
               filteredOptions.map((opt) => {
-                const isSelected = value.includes(opt.value)
+                const isSelected = value.includes(opt.value);
                 return (
                   <button
                     key={opt.key || opt.value}
@@ -269,21 +280,24 @@ export function MultiSelectDropdown({
                     disabled={opt.disabled}
                     onClick={() => !opt.disabled && handleToggle(opt.value)}
                     className={cn(
-                      'relative flex w-full cursor-pointer select-none items-center rounded-md py-1.5 pl-7 pr-2.5 text-xs outline-none transition-colors hover:bg-slate-100',
+                      "relative flex w-full cursor-pointer select-none items-center rounded-md py-1.5 pl-7 pr-2.5 text-xs outline-none transition-colors hover:bg-slate-100",
                       isSelected
-                        ? 'bg-slate-100 font-semibold text-[var(--navy,#102A43)]'
-                        : 'text-slate-700 font-normal',
-                      opt.disabled && 'cursor-not-allowed opacity-40',
+                        ? "bg-slate-100 font-semibold text-[var(--navy,#102A43)]"
+                        : "text-slate-700 font-normal",
+                      opt.disabled && "cursor-not-allowed opacity-40",
                     )}
                   >
                     <span className="absolute left-2 flex size-3.5 items-center justify-center">
                       {isSelected && (
-                        <Check className="size-3.5 text-[var(--navy,#102A43)]" strokeWidth={2.5} />
+                        <Check
+                          className="size-3.5 text-[var(--navy,#102A43)]"
+                          strokeWidth={2.5}
+                        />
                       )}
                     </span>
                     <span className="truncate">{opt.label}</span>
                   </button>
-                )
+                );
               })
             )}
           </div>
@@ -295,8 +309,8 @@ export function MultiSelectDropdown({
                 disabled={footerAction.disabled}
                 className="flex h-8 w-full items-center justify-start gap-1.5 rounded-md px-2 text-xs font-semibold text-[var(--navy,#102A43)] hover:bg-slate-50 transition-colors"
                 onClick={() => {
-                  handleOpenChange(false)
-                  footerAction.onClick()
+                  handleOpenChange(false);
+                  footerAction.onClick();
                 }}
               >
                 <Plus className="size-3.5 shrink-0" aria-hidden />
@@ -307,5 +321,5 @@ export function MultiSelectDropdown({
         </div>
       )}
     </div>
-  )
+  );
 }
