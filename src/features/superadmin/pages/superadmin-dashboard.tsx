@@ -1,8 +1,8 @@
-import { useAuth } from '@/contexts/auth-context'
-import { ShieldAlert } from 'lucide-react'
+import { useAuth } from "@/contexts/auth-context";
+import { ShieldAlert } from "lucide-react";
 
 export default function SuperAdminDashboard() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
@@ -13,7 +13,8 @@ export default function SuperAdminDashboard() {
         Welcome, Super Admin!
       </h1>
       <p className="text-[var(--text-secondary)] text-lg max-w-xl">
-        This is your central command center. You have elevated privileges to oversee organizations, staff, and system configurations.
+        This is your central command center. You have elevated privileges to
+        oversee organizations, staff, and system configurations.
       </p>
 
       {user && (
@@ -23,5 +24,5 @@ export default function SuperAdminDashboard() {
         </div>
       )}
     </div>
-  )
+  );
 }
