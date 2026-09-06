@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   LogOut, User, Building2, Hash, ChevronDown,
 } from 'lucide-react'
-import { Button, InitialsAvatar, Separator } from '@/components/ui'
+import { Button, InitialsAvatar, Separator, NotificationDrawer } from '@/components/ui'
 import { eduLogo } from '@/assets/images'
 import { useAuth } from '@/contexts/auth-context'
 import { UserRole } from '@/features/auth/enums/auth.enum'
@@ -35,14 +35,13 @@ function roleBadgeStyle(role: UserRole): React.CSSProperties {
 
 /**
  * AppHeader — compact navy header for all authenticated app pages.
- * Used inside DashboardLayout.
- * - Left:   EduWeConnect logo (small)
- * - Center: current page icon + label (auto-detected from route)
- * - Right:  user avatar → click → profile popover card
+ * Used inside DashboardLayout & SuperAdminLayout.
+ * - Left:   EduWeConnect logo
+ * - Right:  Notifications Drawer + User Avatar Popover
  */
 export function AppHeader() {
   const { user, signOut } = useAuth()
-  const [open, setOpen]   = useState(false)
+  const [open, setOpen] = useState(false)
 
   const fullName = user ? `${user.firstName} ${user.lastName}` : 'Guest'
 
@@ -63,8 +62,11 @@ export function AppHeader() {
           <div className="flex-1"></div>
         )}
 
-        {/* ── Right corner: User avatar + popover ──────────────────────────── */}
-        <div className="relative flex items-center shrink-0">
+        {/* ── Right corner: Notification Bell + User Avatar ────────────────── */}
+        <div className="relative flex items-center gap-2.5 sm:gap-3 shrink-0">
+          <NotificationDrawer />
+
+          {/* User Profile Button */}
           <button
             data-plain
             data-dropdown-trigger

@@ -12,7 +12,7 @@ interface SheetProps {
 
 interface SheetContentProps { children: ReactNode; className?: string }
 interface SheetHeaderProps  { children: ReactNode; className?: string }
-interface SheetTitleProps   { children: ReactNode; className?: string }
+interface SheetTitleProps   { children: ReactNode; className?: string; style?: React.CSSProperties }
 interface SheetFooterProps  { children: ReactNode; className?: string }
 
 export function Sheet({ open, onOpenChange, children, side = 'right', width = 'max-w-sm' }: SheetProps) {
@@ -33,10 +33,10 @@ export function Sheet({ open, onOpenChange, children, side = 'right', width = 'm
         <button
           type="button"
           onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 rounded-md p-1 hover:bg-[var(--beige)] transition-colors"
+          className="absolute right-4 top-4 z-20 rounded-lg p-1.5 bg-black/10 hover:bg-black/20 text-white/80 hover:text-white transition-colors"
           aria-label="Close panel"
         >
-          <X className="size-4" style={{ color: 'var(--text-muted)' }} />
+          <X className="size-4" />
         </button>
         {children}
       </div>
@@ -52,8 +52,8 @@ export function SheetHeader({ children, className }: SheetHeaderProps) {
   return <div className={cn('border-b px-5 py-4 pr-12', className)} style={{ borderColor: 'var(--border)' }}>{children}</div>
 }
 
-export function SheetTitle({ children, className }: SheetTitleProps) {
-  return <h2 className={cn('text-sm font-bold', className)} style={{ color: 'var(--navy)' }}>{children}</h2>
+export function SheetTitle({ children, className, style }: SheetTitleProps) {
+  return <h2 className={cn('text-sm font-bold text-[var(--navy)]', className)} style={style}>{children}</h2>
 }
 
 export function SheetFooter({ children, className }: SheetFooterProps) {
