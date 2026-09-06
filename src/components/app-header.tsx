@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import {
   LogOut, User, Building2, Hash, ChevronDown,
 } from 'lucide-react'
-import { Button, InitialsAvatar, Separator, NotificationDrawer } from '@/components/ui'
+import { Button, InitialsAvatar, Separator } from '@/components/ui'
+import { NotificationDrawer } from '@/features/notifications'
 import { eduLogo } from '@/assets/images'
 import { useAuth } from '@/contexts/auth-context'
 import { UserRole } from '@/features/auth/enums/auth.enum'
@@ -46,7 +47,7 @@ export function AppHeader({ hideLogo = false }: { hideLogo?: boolean } = {}) {
   const fullName = user ? `${user.firstName} ${user.lastName}` : 'Guest'
 
   return (
-    <header className="w-full bg-[var(--navy)] sticky top-0 z-50 shadow-sm border-b border-[var(--gold)]/20">
+    <header className="w-full bg-[var(--cream)] sticky top-0 z-50 shadow-sm border-b border-[var(--border)]/60">
       <div className="w-full px-3 md:px-5 h-[64px] flex items-center justify-between">
 
         {/* ── Left corner: Logo (Full left edge) ───────────────────────────── */}
@@ -55,7 +56,7 @@ export function AppHeader({ hideLogo = false }: { hideLogo?: boolean } = {}) {
             <img
               src={eduLogo}
               alt="EduWeConnect"
-              className="h-[60px] w-auto object-contain brightness-0 invert"
+              className="h-[60px] w-auto object-contain"
             />
           </Link>
         ) : (

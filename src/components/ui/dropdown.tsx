@@ -117,11 +117,17 @@ export function Dropdown({
         aria-invalid={invalid || undefined}
         onClick={() => handleOpenChange(!open)}
         className={cn(
-          'flex h-9 w-full items-center justify-between gap-1.5 rounded-lg border bg-white px-3 text-xs font-normal text-slate-800 transition-colors outline-none select-none hover:border-slate-400 focus:border-[var(--navy,#102A43)] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60',
+          'flex h-9 w-full items-center justify-between gap-1.5 rounded-lg border px-3 text-xs font-normal text-slate-800 transition-colors outline-none select-none hover:border-slate-400 focus:border-[var(--navy,#102A43)]',
+          disabled || isLoading
+            ? 'cursor-not-allowed bg-[var(--cream)] opacity-85'
+            : 'bg-white',
+          'disabled:cursor-not-allowed disabled:bg-[var(--cream,#F7F1E3)] disabled:opacity-85',
           invalid && 'border-red-500!',
           className,
         )}
         style={{
+          backgroundColor: disabled || isLoading ? 'var(--cream, #F7F1E3)' : '#FFFFFF',
+          cursor: disabled || isLoading ? 'not-allowed' : undefined,
           borderColor: invalid ? 'var(--danger, #ef4444)' : 'var(--border, #DED5C5)',
         }}
       >

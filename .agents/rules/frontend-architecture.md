@@ -75,7 +75,7 @@ npx tsc --noEmit     # Must show 0 errors before every commit/PR
 
   /* UI Elements */
   --border: #DED5C5;        /* All borders */
-  --input-bg: #FFFCF6;      /* All input backgrounds */
+  --input-bg: #FFFFFF;      /* Editable input / entry box backgrounds */
   --success: #56745A;       /* Success states */
 
   /* Composite */
@@ -404,7 +404,23 @@ Success               → var(--success)
 
 // ❌ BANNED — native browser dialog
 window.confirm('Are you sure?')            → use <Dialog> ALWAYS
+
+// ❌ BANNED — inline action icon buttons (raw button with Lucide icon)
+<button onClick={onView}><Eye className="w-4 h-4" /></button>  → ALWAYS use <ActionIconButton variant="view" onClick={onView} />
+<button onClick={onDelete}><Trash2 className="w-4 h-4" /></button> → ALWAYS use <ActionIconButton variant="delete" onClick={onDelete} />
+<button onClick={onDownload}><Download /></button> → ALWAYS use <ActionIconButton variant="download" onClick={onDownload} />
 ```
+
+### Action Icon Button & Document Card Standards
+- **Action Buttons (`ActionIconButton`)**:
+  - **MANDATORY**: Use `<ActionIconButton variant="view" | "edit" | "delete" | "download" | "close" />` (from `@/components/ui`) for all action icon buttons across tables, cards, wizards, and document uploads.
+  - **Loading States**: Always pass `isLoading={isPending}` to `ActionIconButton` for asynchronous actions — it automatically displays a spinning loader and prevents duplicate clicks.
+  - **Tooltips & Accessibility**: Standard `title` and `aria-label` are built-in for every variant.
+- **Review & Document Cards**:
+  - Show document registration/PAN/GST numbers in dedicated mono-font pills (`font-mono font-bold`).
+  - Document attachment pills must display file type tags (`PDF` / `IMG` / `DOC`), clean truncated filenames, and formatted sizes (e.g. `(142 KB)`).
+  - Use `ActionIconButton` with live spinner state for document preview and file download triggers.
+  - In organization profile reviews, cleanly separate personal contact information from identity verification (Aadhar) cards.
 
 ---
 
@@ -433,12 +449,13 @@ window.confirm('Are you sure?')            → use <Dialog> ALWAYS
 |---|---|---|
 | `<Dropdown />` | Headless popover logic | Solid white `#FFFFFF`, `--border`, clearable `X`, dark navy selected |
 | `<SearchInput />` | HTML5 input + Lucide | Search icon + instant clear `X` button, `--navy` focus |
+| `<ActionIconButton />` | Accessible HTML button + Lucide + Spinner | Built-in `view`, `edit`, `delete`, `download`, `close` variants with spinner loading feedback |
 | `<Dialog />` | `@radix-ui/react-dialog` | Modal overlay `bg-black/40`, `--card-background`, `--card-shadow` |
 | `<Popover />` | `@radix-ui/react-popover` | Solid `#FFFFFF`, `--border`, smooth slide/fade animations |
 | `<Tooltip />` | `@radix-ui/react-tooltip` | `--deep-navy` background, `--cream` text, micro-animations |
 | `<Tabs />` | `@radix-ui/react-tabs` | Active indicator `--navy`, hover `--cream` |
 | `<Checkbox />` | `@radix-ui/react-checkbox` | Checked `--navy`, border `--border` |
-| `<Button />` | Custom HTML button | `primary` (`--navy`), `danger` (`--danger`), `outline`, `ghost` |
+| `<Button />` | Custom HTML button | `primary` (`--navy`), `danger` (`--danger`), `outline`, `ghost`, `gold` |
 | `<Spinner />` | SVG animation | Size prop, color matches brand |
 
 ### Usage Standards (`src/components/ui`)
@@ -447,6 +464,7 @@ window.confirm('Are you sure?')            → use <Dialog> ALWAYS
 // ✅ Always import from barrel
 import {
   Button,
+  ActionIconButton,
   Spinner,
   Dropdown,
   SearchInput,
@@ -465,10 +483,17 @@ import {
 <Button variant="danger" isLoading={isPending}>Delete</Button>
 <Button variant="outline">Cancel</Button>
 
-// 2. Loading — ONLY Spinner, never plain text
+// 2. Action Icon Buttons (Tables, Cards, Document Uploads)
+<ActionIconButton variant="view" onClick={handleView} title="View Details" />
+<ActionIconButton variant="edit" onClick={handleEdit} title="Edit Record" />
+<ActionIconButton variant="delete" isLoading={isDeleting} onClick={handleDelete} title="Delete Record" />
+<ActionIconButton variant="download" isLoading={isDownloading} onClick={handleDownload} title="Download Document" />
+<ActionIconButton variant="close" onClick={handleRemove} title="Remove File" />
+
+// 3. Loading — ONLY Spinner, never plain text
 <Spinner size={32} />
 
-// 3. Search Box — includes built-in X to clear
+// 4. Search Box — includes built-in X to clear
 <SearchInput
   placeholder="Search..."
   value={query}
@@ -476,7 +501,7 @@ import {
   onClear={() => setQuery('')}
 />
 
-// 4. Dropdown — strictly attached, clearable with X, keyboard-friendly
+// 5. Dropdown — strictly attached, clearable with X, keyboard-friendly
 <Dropdown
   value={status}
   onChange={setStatus}
@@ -485,7 +510,7 @@ import {
   clearable={true}
 />
 
-// 5. Dialog — ALWAYS Dialog, never window.confirm()
+// 6. Dialog — ALWAYS Dialog, never window.confirm()
 <Dialog open={open} onOpenChange={setOpen}>
   <DialogContent>
     <DialogHeader><DialogTitle>Delete Record?</DialogTitle></DialogHeader>
@@ -1613,15 +1638,17 @@ export function CreateAttendanceModal({ open, onOpenChange }: CreateAttendanceMo
 }
 ```
 
-### 7. Form Validation Error UX & Auto-Scroll (MNC Standard)
+### 7. Form Validation Error UX, Timing & Auto-Scroll (MNC Standard)
 > **MANDATORY FORM VALIDATION RULES**:
 > 1. **Inline Error Display with Red Border**:
 >    - Validation errors must **NEVER** use browser-native tooltips. Always add `noValidate` to every `<form>`.
 >    - When a field has an error, the input element must display a red border (`error={!!errors[field]}` applying `border-red-400 focus:border-red-500`).
 >    - The error message must render directly beneath the input as inline red text (`<p className="text-[12px] font-medium text-red-500 mt-1">` or `<FormError message={...} />`).
-> 2. **Auto-Clear Error on Correction / Keystroke**:
->    - Do not show validation errors while the user is typing for the first time (`mode: 'onSubmit'`, `reValidateMode: 'onSubmit'`).
->    - When a user types or edits a field that currently has an error, the error message and red border must **automatically clear immediately** (`if (errors[field]) clearErrors(field)`).
+> 2. **Form Validation Timing Standard (No Early Typing Errors)**:
+>    - **Initial Entry (Silent While Typing)**: Fields must remain silent while typing fresh input for the first time. NEVER show red validation errors or error text while the user is actively typing initial values (gives the user time to complete input without premature errors).
+>    - **Validation on Field Switch / Blur (`onBlur` / `onTouched`) or Next / Submit**: Validation errors must ONLY trigger when the user leaves/switches away from a field (`onBlur`) with incomplete/invalid input, or when the user clicks the "Next" button / submits the form (`trigger()` or `onSubmit`).
+>    - **Real-Time Error Clearance on Correction (`reValidateMode: 'onChange'`)**: Once an error has been shown for a field, as soon as the user starts correcting and enters a valid value (e.g. completes all 10 digits for mobile or 12 digits for Aadhar), the error message and red border must **automatically disappear immediately in real time**.
+>    - **RHF Setup Standard**: Always configure React Hook Form with `mode: 'onTouched'` (or `mode: 'onBlur'`) and `reValidateMode: 'onChange'`. For custom formatted inputs with `setValue`, pass `{ shouldValidate: !!errors[fieldName], shouldDirty: true }`.
 > 3. **Auto-Scroll to First Error Field on Submit**:
 >    - When form submission fails validation, the form container must **automatically scroll smoothly to the first erroneous field** and focus it so the user immediately sees what to fix.
 >    ```tsx
@@ -1633,6 +1660,7 @@ export function CreateAttendanceModal({ open, onOpenChange }: CreateAttendanceMo
 >        ;(el as HTMLElement)?.focus()
 >      }
 >    }
+>    ```
 > 4. **OTP / PIN Box Validation**:
 >    - When validating segmented OTP/PIN input boxes upon submission/verification, if empty or incomplete:
 >      - Display the validation message directly beneath the boxes as inline red text (`<p className="text-[12px] font-medium text-red-500 text-center mb-3">`).
@@ -1651,7 +1679,7 @@ export function CreateAttendanceModal({ open, onOpenChange }: CreateAttendanceMo
 >
 > | State | Token / Style | Tailwind / CSS Class | Description |
 > |---|---|---|---|
-> | **1. Default State** | `var(--border)` (`#DED5C5`) | `border border-[var(--border)]` | Soft, warm neutral border matching brand palette. Background: `var(--input-bg)` (`#FFFCF6`). |
+> | **1. Default State** | `var(--border)` (`#DED5C5`) | `border border-[var(--border)]` | Soft, warm neutral border matching brand palette. Background: `var(--input-bg)` (`#FFFFFF`). |
 > | **2. Focus / Selected State** | `var(--navy)` (`#102A43`) | `focus:border-[var(--navy)] outline-none` | Crisp brand navy border on focus or open dropdown. **NEVER** use browser default blue ring or glow (`ring-0`, `outline: none`). |
 > | **3. Error State** | `#EF4444` / `border-red-500` | `border-red-400 focus:border-red-500` | Stays red even when clicked/focused. Must set `aria-invalid={error || undefined}`. |
 >

@@ -42,7 +42,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
       onClick={(e) => { if (e.target === overlayRef.current) onOpenChange(false) }}
       role="dialog"
       aria-modal

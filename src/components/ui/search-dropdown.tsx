@@ -107,11 +107,17 @@ export function SearchDropdown({
         aria-invalid={invalid || undefined}
         onClick={() => handleOpenChange(!open)}
         className={cn(
-          'flex h-9 w-full items-center justify-between gap-1.5 rounded-lg border bg-white px-3 text-xs font-normal text-slate-800 transition-colors outline-none select-none hover:border-slate-400 focus:border-[var(--navy,#102A43)] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60',
+          'flex h-9 w-full items-center justify-between gap-1.5 rounded-lg border px-3 text-xs font-normal text-slate-800 transition-colors outline-none select-none hover:border-slate-400 focus:border-[var(--navy,#102A43)]',
+          disabled || isLoading
+            ? 'cursor-not-allowed bg-[var(--cream)] opacity-85'
+            : 'bg-white',
+          'disabled:cursor-not-allowed disabled:bg-[var(--cream,#F7F1E3)] disabled:opacity-85',
           invalid && 'border-red-500!',
           className,
         )}
         style={{
+          backgroundColor: disabled || isLoading ? 'var(--cream, #F7F1E3)' : '#FFFFFF',
+          cursor: disabled || isLoading ? 'not-allowed' : undefined,
           borderColor: invalid ? 'var(--danger, #ef4444)' : 'var(--border, #DED5C5)',
         }}
       >
@@ -165,7 +171,7 @@ export function SearchDropdown({
           }}
         >
           {/* Internal Search Header */}
-          <div className="border-b border-slate-100 p-1.5">
+          <div className="border-b border-slate-100 p-1.5 bg-[var(--cream)]/30">
             <div className="relative flex items-center">
               <Search className="pointer-events-none absolute left-2 size-3.5 text-slate-400" />
               <input
@@ -174,8 +180,8 @@ export function SearchDropdown({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="h-8 w-full rounded-md border bg-slate-50 pl-7 pr-7 text-xs outline-none transition-colors placeholder:text-slate-400 focus:border-[var(--navy,#102A43)] focus:bg-white"
-                style={{ borderColor: 'var(--border, #DED5C5)' }}
+                className="h-8 w-full rounded-md border bg-white pl-7 pr-7 text-xs outline-none transition-colors placeholder:text-slate-400 focus:border-[var(--navy,#102A43)]"
+                style={{ borderColor: 'var(--border, #DED5C5)', backgroundColor: '#FFFFFF' }}
               />
               {query && (
                 <button

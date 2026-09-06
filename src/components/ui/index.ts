@@ -62,7 +62,6 @@ export {
   Sheet, SheetContent,
   SheetHeader, SheetTitle, SheetFooter,
 }                                                from './sheet'
-export { NotificationDrawer, type NotificationItem, type NotificationDrawerProps } from './notification-drawer'
 export { Dropdown, type DropdownOption, type DropdownProps, type DropdownFooterAction } from './dropdown'
 export { SearchDropdown, type SearchDropdownProps } from './search-dropdown'
 export { MultiSelectDropdown, type MultiSelectDropdownProps } from './multi-select-dropdown'

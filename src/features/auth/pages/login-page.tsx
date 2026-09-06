@@ -174,7 +174,7 @@ export default function LoginPage() {
 
               <form onSubmit={handleSuperAdminRegister} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
+                  <label className="text-[12px] font-semibold text-[var(--navy)] uppercase tracking-wider">
                     Email Address
                   </label>
                   <Input 
@@ -188,7 +188,7 @@ export default function LoginPage() {
                 </div>
                 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider">
+                  <label className="text-[12px] font-semibold text-[var(--navy)] uppercase tracking-wider">
                     Password
                   </label>
                   <Input 

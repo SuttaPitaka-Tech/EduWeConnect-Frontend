@@ -60,6 +60,7 @@ export function RegisterForm() {
   })
 
   const onSubmit = (values: RegisterEmailValues) => {
+    localStorage.setItem('registeredOrgEmail', values.organizationEmail)
     navigate('/otp', { state: { email: values.organizationEmail, flow: 'register' } })
   }
 
@@ -74,7 +75,7 @@ export function RegisterForm() {
       <form noValidate className="flex flex-col gap-2.5" onSubmit={handleSubmit(onSubmit)}>
         {/* ORGANIZATION EMAIL */}
         <div>
-          <label className="block text-[10.5px] font-bold tracking-wider text-[var(--navy)] uppercase mb-1">
+          <label className="block text-[10.5px] font-semibold tracking-wider text-[var(--navy)] uppercase mb-1">
             Organization Email
           </label>
           <div className="relative">

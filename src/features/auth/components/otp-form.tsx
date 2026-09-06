@@ -127,6 +127,7 @@ export function OtpForm({ email, flow = 'register' }: OtpFormProps) {
         setVerifiedBoxIndex(-1)
         toast.success('OTP verified successfully')
         if (flow === 'register') {
+          localStorage.setItem('registeredOrgEmail', email)
           navigate('/register/details', { state: { email } })
         } else {
           navigate('/app')

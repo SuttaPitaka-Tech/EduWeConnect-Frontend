@@ -86,7 +86,7 @@ export function LoginForm() {
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="login-email"
-              className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider"
+              className="text-[12px] font-semibold text-[var(--navy)] uppercase tracking-wider"
             >
               Email / Username
             </label>
@@ -116,7 +116,7 @@ export function LoginForm() {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="login-password"
-                className="text-[12px] font-bold text-[var(--navy)] uppercase tracking-wider"
+                className="text-[12px] font-semibold text-[var(--navy)] uppercase tracking-wider"
               >
                 Password
               </label>

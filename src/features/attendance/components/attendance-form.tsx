@@ -181,7 +181,7 @@ export function AttendanceForm({
         {/* Dynamic Attendee Records (useFieldArray) */}
         <div className="flex flex-col gap-2 pt-2">
           <div className="flex items-center justify-between">
-            <Label className="font-bold">Student / Staff Records *</Label>
+            <Label className="font-semibold">Student / Staff Records *</Label>
             <Button
               type="button"
               variant="outline"

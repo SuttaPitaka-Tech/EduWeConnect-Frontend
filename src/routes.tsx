@@ -26,7 +26,7 @@ const LoginPage = lazyWithRetry(() => import('@/features/auth/pages/login-page')
 const RegisterPage = lazyWithRetry(() => import('@/features/auth/pages/register-page'))
 const ForgotPasswordPage = lazyWithRetry(() => import('@/features/auth/pages/forgot-password-page'))
 const OtpPage = lazyWithRetry(() => import('@/features/auth/pages/otp-page'))
-const RegisterDetailsPage = lazyWithRetry(() => import('@/features/auth/pages/register-details-page'))
+const RegisterDetailsPage = lazyWithRetry(() => import('@/features/onboarding/pages/register-details-page'))
 
 // ── Layouts ──────────────────────────────────────────────────────────────────
 const PublicLayout      = lazyWithRetry(() => import('@/layouts/public-layout'))
