@@ -103,10 +103,10 @@ export function RegisterForm() {
           )}
         </div>
 
-        {/* ── Submit — gold gradient button ─────────────────────────────── */}
+        {/* ── Submit — primary navy button ─────────────────────────────── */}
         <Button
           type="submit"
-          variant="gold"
+          variant="primary"
           isLoading={isSubmitting}
           className="w-full h-[47px] rounded-xl font-bold text-[14.5px] mt-0.5 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.008] active:scale-[0.99] transition-all group"
         >

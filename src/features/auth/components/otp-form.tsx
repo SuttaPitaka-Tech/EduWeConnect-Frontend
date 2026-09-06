@@ -226,7 +226,7 @@ export function OtpForm({ email, flow = 'register' }: OtpFormProps) {
         {/* ── Verify OTP Button ── */}
         <Button
           type="submit"
-          variant="gold"
+          variant="primary"
           isLoading={verifyingOtp}
           className="w-full h-[47px] rounded-xl font-bold text-[14.5px] mt-0.5 tracking-wide shadow-md hover:shadow-lg hover:scale-[1.008] active:scale-[0.99] transition-all group"
         >
