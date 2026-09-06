@@ -7,6 +7,7 @@ import { Button, Input, FormError } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { loginSchema } from '../schemas/schemas'
 import type { LoginFormValues } from '../types/types'
+import { UserRole } from '../enums/auth.enum'
 
 function FieldIcon({ children }: { children: React.ReactNode }) {
   return (
@@ -42,8 +43,9 @@ export function LoginForm() {
       if (result.nextPage === 'otp') {
         navigate('/otp', { state: { email: values.email } })
       } else {
-        if (result.user?.role === 'superadmin') {
-          navigate('/app/superadmin', { replace: true })
+        const role = result.user?.role
+        if (role === UserRole.SuperAdmin || role === 'superadmin') {
+          navigate('/app/superadmin/dashboard', { replace: true })
         } else {
           navigate('/app/attendance', { replace: true })
         }
