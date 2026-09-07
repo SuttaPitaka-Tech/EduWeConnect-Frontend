@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui'
 import { getRouter } from './routes'
 import './index.css'
 
-export const queryClient = new QueryClient({
+const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry:                1,
