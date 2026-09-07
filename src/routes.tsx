@@ -1,3 +1,4 @@
+/* @refresh reset */
 /**
  * EduWeConnect App Router — MNC Enterprise Pattern
  *

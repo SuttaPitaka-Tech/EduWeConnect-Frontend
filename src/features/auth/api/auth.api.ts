@@ -1,64 +1,44 @@
-import { apiClient } from '@/lib/api-client'
+import keycloak, { getKeycloakLogoutUrl } from '@/core/config/keycloak'
 import type { LoginResponse, MeResponse, AuthUser } from '../types/types'
+import { apiClient } from '@/lib/api-client'
 
 // ── Login ──────────────────────────────────────────────────────────────────
-
-export async function loginApi(email: string, password: string): Promise<LoginResponse> {
-  // Check mock users in localStorage first
-  const mockUsersStr = localStorage.getItem('mockUsers')
-  if (mockUsersStr) {
-    const mockUsers = JSON.parse(mockUsersStr)
-    const matchedUser = mockUsers.find((u: any) => u.email === email && u.password === password)
-    if (matchedUser) {
-      // Simulate successful login for mock user
-      return {
-        accessToken: `mock-token-${Date.now()}`,
-        nextPage: 'dashboard',
-        user: {
-          id: matchedUser.id || 'mock-id-123',
-          email: matchedUser.email,
-          firstName: matchedUser.firstName || 'Mock',
-          lastName: matchedUser.lastName || 'User',
-          role: matchedUser.role,
-          institutionId: matchedUser.role === 'organization' ? 'mock-inst' : null,
-          institutionName: matchedUser.role === 'organization' ? (matchedUser.organizationName || 'Mock Org') : null,
-          avatarUrl: null
-        }
-      } as unknown as LoginResponse
-    }
+export async function loginApi(_email?: string, _password?: string): Promise<LoginResponse> {
+  // Keycloak uses redirect-based flow, so we don't actually post email/password here.
+  // Instead, we trigger the login redirect.
+  await keycloak.login();
+  
+  // This code theoretically won't be reached after a successful redirect, 
+  // but we return a stub to satisfy types
+  return {
+    accessToken: keycloak.token || '',
+    nextPage: 'dashboard',
+    user: {} as AuthUser
   }
-
-  // Fallback to real API
-  const { data } = await apiClient.post<LoginResponse>('/auth/login', { email, password })
-  return data
-}
-
-// ── OTP verification ───────────────────────────────────────────────────────
-
-export async function verifyOtpApi(email: string, otp: string): Promise<LoginResponse> {
-  const { data } = await apiClient.post<LoginResponse>('/auth/verify-otp', { email, otp })
-  return data
-}
-
-// ── Forgot password — send OTP/link to email ──────────────────────────────
-
-export async function forgotPasswordApi(email: string): Promise<void> {
-  await apiClient.post('/auth/forgot-password', { email })
-}
-
-// ── Reset password with OTP ────────────────────────────────────────────────
-
-export async function resetPasswordApi(
-  email: string,
-  otp: string,
-  password: string,
-): Promise<void> {
-  await apiClient.post('/auth/reset-password', { email, otp, password })
 }
 
 // ── Get current user (session restore) ────────────────────────────────────
-
 export async function getMeApi(): Promise<AuthUser> {
+  // If Keycloak is authenticated, we pull details from the Keycloak token
+  if (keycloak.authenticated && keycloak.tokenParsed) {
+    const roles = keycloak.realmAccess?.roles || [];
+    let mappedRole = 'user';
+    if (roles.includes('admin')) mappedRole = 'superadmin';
+    if (roles.includes('organization')) mappedRole = 'organization';
+
+    return {
+      id: keycloak.subject || '',
+      firstName: keycloak.tokenParsed.given_name || keycloak.tokenParsed.preferred_username,
+      lastName: keycloak.tokenParsed.family_name || '',
+      email: keycloak.tokenParsed.email || '',
+      role: mappedRole as AuthUser['role'],
+      institutionId: '',
+      institutionName: '',
+      avatarUrl: undefined,
+    }
+  }
+
+  // Fallback to real API if needed
   const { data } = await apiClient.get<MeResponse>('/auth/me')
   return {
     id:              data.id,
@@ -73,7 +53,16 @@ export async function getMeApi(): Promise<AuthUser> {
 }
 
 // ── Logout ─────────────────────────────────────────────────────────────────
-
 export async function logoutApi(): Promise<void> {
+  if (keycloak.authenticated) {
+    const logoutUrl = getKeycloakLogoutUrl(window.location.origin);
+    window.location.href = logoutUrl;
+    return;
+  }
   await apiClient.post('/auth/logout')
 }
+
+// ── Other stubs ────────────────────────────────────────────────────────────
+export async function verifyOtpApi(_email: string, _otp: string): Promise<LoginResponse> { return {} as LoginResponse; }
+export async function forgotPasswordApi(_email: string): Promise<void> {}
+export async function resetPasswordApi(_e: string, _o: string, _p: string): Promise<void> {}

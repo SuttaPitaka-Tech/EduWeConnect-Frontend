@@ -1,0 +1,48 @@
+{
+  "id": "eduweconnect",
+  "realm": "eduweconnect",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "eduweconnect-frontend",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": ["http://localhost:7005/*", "http://localhost:5173/*", "http://localhost:7000/*"],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:7005/*##http://localhost:5173/*##http://localhost:7000/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "user1",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["user"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Admin Role"
+      },
+      {
+        "name": "user",
+        "description": "User Role"
+      }
+    ]
+  }
+}
