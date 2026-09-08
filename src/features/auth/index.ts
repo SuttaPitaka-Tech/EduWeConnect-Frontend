@@ -10,14 +10,11 @@ export { AuthJourney, AuthNextPage, UserRole }   from './enums/auth.enum'
 export {
   loginSchema, otpSchema,
   forgotPasswordSchema, resetPasswordSchema,
-  registerSchema,
-  loginResponseSchema, meResponseSchema,
 }                                                from './schemas/schemas'
 export { mapToAuthUser, getDisplayName, getRoleLabel } from './utils/auth-utils'
 export type {
   AuthUser, AuthContextValue,
   LoginFormValues, OtpFormValues,
   ForgotPasswordFormValues, ResetPasswordFormValues,
-  RegisterFormValues,
   LoginResponse, MeResponse,
 }                                                from './types/types'

@@ -20,7 +20,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogFooter, Button } from '@/components/ui'
-import { getMeApi, loginApi, logoutApi, verifyOtpApi } from '@/features/auth/api/auth.api'
+import { getMeApi, loginApi, logoutApi, verifyOtpApi, changePasswordApi } from '@/features/auth/api/auth.api'
 import {
   getToken,
   setToken,
@@ -88,6 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       }
     },
+    initialData: () => {
+      const token = getToken()
+      if (!token || wasExplicitLogout()) return null
+      return getStoredUser()
+    },
     staleTime: Infinity,   // Session never auto-refetches — only on explicit action
     retry:     false,
   })
@@ -103,11 +108,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const result = await loginApi(email, password)
 
-        // If backend requires OTP next — don't set token yet
-        if (result.nextPage === 'otp') {
+        // If backend requires OTP next or password change — don't set token yet
+        if (result.nextPage === 'otp' || result.mustChangePassword) {
           return result
         }
 
+        setToken(result.accessToken)
+        setStoredUser(result.user as AuthUser)
+        queryClient.setQueryData<AuthUser | null>(authKeys.session(), result.user as AuthUser)
+        return result
+      } finally {
+        setAuthLoading(false)
+      }
+    },
+    [queryClient],
+  )
+
+  // ── Change Password (first-time mandatory change) ─────────────────────────
+
+  const changePassword = useCallback(
+    async (email: string, currentPassword: string, newPassword: string): Promise<LoginResponse> => {
+      clearExplicitLogout()
+      setAuthLoading(true)
+      try {
+        const result = await changePasswordApi(email, currentPassword, newPassword)
         setToken(result.accessToken)
         setStoredUser(result.user as AuthUser)
         queryClient.setQueryData<AuthUser | null>(authKeys.session(), result.user as AuthUser)
@@ -167,10 +191,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isInitialized:   !sessionLoading,
       isLoading:       sessionLoading || authLoading,
       signIn,
+      changePassword,
       verifyOtp,
       signOut,
     }),
-    [user, sessionLoading, authLoading, signIn, verifyOtp, signOut],
+    [user, sessionLoading, authLoading, signIn, changePassword, verifyOtp, signOut],
   )
 
   return (
