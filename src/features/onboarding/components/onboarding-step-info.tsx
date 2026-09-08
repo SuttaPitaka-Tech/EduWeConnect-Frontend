@@ -14,9 +14,10 @@ import type { RegisterFormValues } from "../types/types";
 
 interface OnboardingStepInfoProps {
   onNext: () => void;
+  isSuperAdmin?: boolean;
 }
 
-export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
+export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingStepInfoProps) {
   const {
     register,
     control,
@@ -61,7 +62,7 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {/* Row 1: Organization Email (Locked) & Organization Name */}
+        {/* Row 1: Organization Email & Organization Name */}
         <div>
           <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
             Organization Email *
@@ -70,13 +71,19 @@ export function OnboardingStepInfo({ onNext }: OnboardingStepInfoProps) {
             <Input
               {...register("organizationEmail")}
               type="email"
-              readOnly
+              readOnly={!isSuperAdmin}
               placeholder="organization@domain.com"
-              className="h-[40px] pl-3 pr-9 rounded-xl text-[13px] font-semibold select-none bg-[var(--cream)] cursor-not-allowed"
+              className={`h-[40px] pl-3 ${
+                isSuperAdmin
+                  ? "pr-3 font-medium bg-white"
+                  : "pr-9 font-semibold select-none bg-[var(--cream)] cursor-not-allowed"
+              } rounded-xl text-[13px]`}
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--gold)] opacity-75">
-              <Lock className="w-4 h-4" />
-            </div>
+            {!isSuperAdmin && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--gold)] opacity-75">
+                <Lock className="w-4 h-4" />
+              </div>
+            )}
           </div>
           {errors.organizationEmail && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">

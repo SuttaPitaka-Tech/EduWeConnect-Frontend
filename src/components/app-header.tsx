@@ -9,27 +9,23 @@ import { eduLogo } from '@/assets/images'
 import { useAuth } from '@/contexts/auth-context'
 import { UserRole } from '@/features/auth/enums/auth.enum'
 
-// ── Role display labels ───────────────────────────────────────────────────────
+// ── Role display labels (matches MySQL user_roles table) ─────────────────────
 const ROLE_LABEL: Record<string, string> = {
-  super_admin: 'Super Admin',
-  admin:       'Admin',
-  principal:   'Principal',
-  teacher:     'Teacher',
-  student:     'Student',
-  parent:      'Parent',
-  staff:       'Staff',
+  [UserRole.SuperAdmin]:   'Super Admin',
+  [UserRole.Organization]: 'Organization',
+  [UserRole.Staff]:        'Staff',
+  [UserRole.Students]:     'Student',
+  [UserRole.Parents]:      'Parent',
 }
 
 // ── Role badge color ──────────────────────────────────────────────────────────
-function roleBadgeStyle(role: UserRole): React.CSSProperties {
+function roleBadgeStyle(role: string): React.CSSProperties {
   const map: Record<string, string> = {
-    super_admin: 'var(--gold)',
-    admin:       'var(--gold)',
-    principal:   '#6366f1',
-    teacher:     '#0ea5e9',
-    student:     'var(--success)',
-    parent:      '#f97316',
-    staff:       '#8b5cf6',
+    [UserRole.SuperAdmin]:   'var(--gold)',
+    [UserRole.Organization]: 'var(--navy)',
+    [UserRole.Staff]:        '#8b5cf6',
+    [UserRole.Students]:     'var(--success)',
+    [UserRole.Parents]:      '#f97316',
   }
   return { background: map[role] ?? 'var(--navy)', color: '#fff' }
 }
@@ -37,21 +33,28 @@ function roleBadgeStyle(role: UserRole): React.CSSProperties {
 /**
  * AppHeader — compact navy header for all authenticated app pages.
  * Used inside DashboardLayout & SuperAdminLayout.
- * - Left:   EduWeConnect logo
+ * - Left:   EduWeConnect logo (hidden completely for Super Admin)
  * - Right:  Notifications Drawer + User Avatar Popover
  */
 export function AppHeader({ hideLogo = false }: { hideLogo?: boolean } = {}) {
   const { user, signOut } = useAuth()
   const [open, setOpen] = useState(false)
 
-  const fullName = user ? `${user.firstName} ${user.lastName}` : 'Guest'
+  const isSuperAdmin = user?.role === UserRole.SuperAdmin
+  const isOrg = user?.role === UserRole.Organization
+  const orgDisplayName = user?.organizationName || user?.institutionName
+  const fullName = isOrg
+    ? `${orgDisplayName || user?.firstName || 'Organization'} (Org)`
+    : user
+    ? `${user.firstName} ${user.lastName}`.trim() || user.email
+    : 'Guest'
 
   return (
     <header className="w-full bg-[var(--cream)] sticky top-0 z-50 shadow-sm border-b border-[var(--border)]/60">
       <div className="w-full px-3 md:px-5 h-[64px] flex items-center justify-between">
 
-        {/* ── Left corner: Logo (Full left edge) ───────────────────────────── */}
-        {!hideLogo && user?.role !== UserRole.SuperAdmin ? (
+        {/* ── Left corner: Logo (Hidden for Super Admin) ───────────────────── */}
+        {!hideLogo && !isSuperAdmin ? (
           <Link to="/app/attendance" className="flex items-center shrink-0 -ml-1">
             <img
               src={eduLogo}
@@ -139,7 +142,15 @@ export function AppHeader({ hideLogo = false }: { hideLogo?: boolean } = {}) {
                     </div>
                   )}
 
-                  {user?.institutionName && (
+                  {isOrg && orgDisplayName ? (
+                    <div className="flex items-start gap-2.5">
+                      <Building2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: 'var(--gold)' }} />
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Organization</p>
+                        <p className="text-[12px] font-medium" style={{ color: 'var(--navy)' }}>{orgDisplayName}</p>
+                      </div>
+                    </div>
+                  ) : user?.institutionName ? (
                     <div className="flex items-start gap-2.5">
                       <Building2 className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: 'var(--gold)' }} />
                       <div>
@@ -147,7 +158,7 @@ export function AppHeader({ hideLogo = false }: { hideLogo?: boolean } = {}) {
                         <p className="text-[12px] font-medium" style={{ color: 'var(--navy)' }}>{user.institutionName}</p>
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
                   <div className="flex items-start gap-2.5">
                     <User className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: 'var(--gold)' }} />

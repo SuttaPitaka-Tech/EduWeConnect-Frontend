@@ -1,12 +1,16 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useFormContext } from 'react-hook-form'
-import { CheckCircle2, Home, LogIn } from 'lucide-react'
+import { CheckCircle2, Home, LogIn, ClipboardCheck, PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui'
 import type { RegisterFormValues } from '../types/types'
 
 export function OnboardingStepSuccess() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const isSuperAdmin = location.pathname.startsWith('/superadmin')
   const { getValues } = useFormContext<RegisterFormValues>()
+  const registeredId = localStorage.getItem('lastRegisteredOrgId')
+  const appRef = registeredId ? `#EDU-ORG-${registeredId.slice(0, 8).toUpperCase()}` : '#EDU-ORG-581922'
 
   return (
     <div className="flex flex-col items-center text-center p-6 md:p-10 gap-3.5 animate-fadeIn">
@@ -15,21 +19,26 @@ export function OnboardingStepSuccess() {
       </div>
 
       <h3 className="text-xl md:text-2xl font-serif font-bold text-[var(--navy)]">
-        Registration Application Submitted!
+        {isSuperAdmin ? 'Organization Created Successfully!' : 'Registration Application Submitted!'}
       </h3>
       
       <p className="text-xs md:text-sm text-[var(--text-secondary)] max-w-[480px] leading-relaxed">
-        Your organization profile and statutory documents have been successfully registered under application reference <strong className="text-[var(--navy)]">#EDU-ORG-581922</strong>.
+        {isSuperAdmin
+          ? `The organization profile and statutory documents have been registered under application reference `
+          : `Your organization profile and statutory documents have been successfully registered under application reference `}
+        <strong className="text-[var(--navy)]">{appRef}</strong>.
       </p>
 
       <p className="text-xs text-[var(--text-muted)] max-w-[440px]">
-        Your application is currently under review for verification. Once completed, you will be notified via your registered email address.
+        {isSuperAdmin
+          ? 'The organization has been added to the Super Admin approvals queue. You can now review statutory documents, approve, and activate their access.'
+          : 'Your application is currently under review for verification. Once completed, you will be notified via your registered email address.'}
       </p>
 
       <div className="bg-white/80 border border-[var(--border)] rounded-2xl p-4 w-full max-w-[400px] my-2 text-left text-xs space-y-2 shadow-2xs">
         <div className="flex justify-between items-center">
           <span className="text-[var(--text-muted)] font-medium">Application Ref:</span>
-          <span className="font-mono font-bold text-[var(--navy)] text-xs">#EDU-ORG-581922</span>
+          <span className="font-mono font-bold text-[var(--navy)] text-xs">{appRef}</span>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-[var(--text-muted)] font-medium">Institution:</span>
@@ -48,25 +57,47 @@ export function OnboardingStepSuccess() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-3 mt-3 w-full max-w-[400px]">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => navigate('/')} 
-          className="w-full sm:w-1/2 h-[42px] rounded-xl font-semibold text-xs border-[var(--border)] text-[var(--navy)] hover:bg-[var(--beige)]"
-        >
-          <Home className="w-3.5 h-3.5 mr-1.5" /> Back to Home
-        </Button>
+      {isSuperAdmin ? (
+        <div className="flex flex-col sm:flex-row items-center gap-3 mt-3 w-full max-w-[400px]">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => window.location.reload()} 
+            className="w-full sm:w-1/2 h-[42px] rounded-xl font-semibold text-xs border-[var(--border)] text-[var(--navy)] hover:bg-[var(--beige)]"
+          >
+            <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> Create Another
+          </Button>
 
-        <Button 
-          type="button" 
-          variant="gold" 
-          onClick={() => navigate('/login')} 
-          className="w-full sm:w-1/2 h-[42px] rounded-xl font-bold text-xs shadow-md"
-        >
-          <LogIn className="w-3.5 h-3.5 mr-1.5" /> Login Portal
-        </Button>
-      </div>
+          <Button 
+            type="button" 
+            variant="gold" 
+            onClick={() => navigate('/superadmin/approval')} 
+            className="w-full sm:w-1/2 h-[42px] rounded-xl font-bold text-xs shadow-md"
+          >
+            <ClipboardCheck className="w-3.5 h-3.5 mr-1.5 text-[var(--navy)]" /> Go to Approvals
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row items-center gap-3 mt-3 w-full max-w-[400px]">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => navigate('/')} 
+            className="w-full sm:w-1/2 h-[42px] rounded-xl font-semibold text-xs border-[var(--border)] text-[var(--navy)] hover:bg-[var(--beige)]"
+          >
+            <Home className="w-3.5 h-3.5 mr-1.5" /> Back to Home
+          </Button>
+
+          <Button 
+            type="button" 
+            variant="gold" 
+            onClick={() => navigate('/login')} 
+            className="w-full sm:w-1/2 h-[42px] rounded-xl font-bold text-xs shadow-md"
+          >
+            <LogIn className="w-3.5 h-3.5 mr-1.5" /> Login Portal
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

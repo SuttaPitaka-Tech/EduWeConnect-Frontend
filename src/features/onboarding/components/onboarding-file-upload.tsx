@@ -27,6 +27,12 @@ export function OnboardingFileUpload({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0] || null
     if (selected) {
+      const isValid = /\.(pdf|png|jpg|jpeg)$/i.test(selected.name)
+      if (!isValid) {
+        if (fileInputRef.current) fileInputRef.current.value = ''
+        alert('Invalid file format. Please upload a PDF, PNG, or JPG file.')
+        return
+      }
       setIsUploading(true)
       setTimeout(() => {
         setIsUploading(false)

@@ -1,5 +1,5 @@
 import type { AuthUser } from '../types/types'
-import type { UserRole } from '../enums/auth.enum'
+import { UserRole } from '../enums/auth.enum'
 
 /** Map a raw API user object → typed AuthUser */
 export function mapToAuthUser(raw: {
@@ -33,13 +33,11 @@ export function getDisplayName(user: AuthUser | null): string {
 /** Role display label */
 export function getRoleLabel(role: UserRole): string {
   const labels: Record<UserRole, string> = {
-    super_admin: 'Super Admin',
-    admin:       'Admin',
-    principal:   'Principal',
-    teacher:     'Teacher',
-    student:     'Student',
-    parent:      'Parent',
-    staff:       'Staff',
+    [UserRole.SuperAdmin]:   'Super Admin',
+    [UserRole.Organization]: 'Organization',
+    [UserRole.Staff]:        'Staff',
+    [UserRole.Students]:     'Students',
+    [UserRole.Parents]:      'Parents',
   }
   return labels[role] ?? role
 }

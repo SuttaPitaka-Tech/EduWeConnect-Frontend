@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { registerBg, eduLogo, lotusLarge } from '@/assets/images'
-import { Users, UserCheck, Building, X, ShieldAlert } from 'lucide-react'
+import { Users, UserCheck, Building, X, ShieldAlert, Eye, EyeOff } from 'lucide-react'
 import { LoginForm } from '../components/login-form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui'
+import { API_GATEWAY_URL } from '@/config/api.config'
 
 /**
  * LoginPage — same layout as RegisterPage.
@@ -13,26 +14,40 @@ import { toast } from '@/components/ui'
 export default function LoginPage() {
   const [isSuperAdminOpen, setIsSuperAdminOpen] = useState(false)
   const [superEmail, setSuperEmail] = useState('')
+  const [superMobile, setSuperMobile] = useState('')
   const [superPassword, setSuperPassword] = useState('')
+  const [superConfirmPassword, setSuperConfirmPassword] = useState('')
+  const [showSuperPass, setShowSuperPass] = useState(false)
+  const [showSuperConfirmPass, setShowSuperConfirmPass] = useState(false)
 
-  const handleSuperAdminRegister = (e: React.FormEvent) => {
+  const handleSuperAdminRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    const newMockUser = {
-      id: `super-${Date.now()}`,
-      email: superEmail,
-      password: superPassword,
-      role: 'superadmin',
-      firstName: 'Super',
-      lastName: 'Admin'
+    if (superPassword !== superConfirmPassword) {
+      toast.error("Passwords do not match!")
+      return
     }
 
-    const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]')
-    localStorage.setItem('mockUsers', JSON.stringify([...existingUsers, newMockUser]))
+    try {
+      const response = await fetch(`${API_GATEWAY_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: superEmail,
+          password: superPassword,
+          mobile_number: superMobile,
+        })
+      });
+      if (!response.ok) throw new Error('Registration failed');
 
-    setSuperEmail('')
-    setSuperPassword('')
-    setIsSuperAdminOpen(false)
-    toast.success("Superadmin registered successfully! You can now log in.")
+      setSuperEmail('')
+      setSuperMobile('')
+      setSuperPassword('')
+      setSuperConfirmPassword('')
+      setIsSuperAdminOpen(false)
+      toast.success("Superadmin registered successfully! You can now log in.")
+    } catch (err) {
+      toast.error("Failed to register superadmin.")
+    }
   }
 
   return (
@@ -189,16 +204,62 @@ export default function LoginPage() {
                 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[12px] font-semibold text-[var(--navy)] uppercase tracking-wider">
-                    Password
+                    Mobile Number
                   </label>
                   <Input 
-                    type="password" 
+                    type="text" 
                     required
-                    placeholder="Enter secure password"
-                    value={superPassword}
-                    onChange={(e) => setSuperPassword(e.target.value)}
+                    placeholder="Enter mobile number"
+                    value={superMobile}
+                    onChange={(e) => setSuperMobile(e.target.value)}
                     className="h-10 text-[13px]"
                   />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-semibold text-[var(--navy)] uppercase tracking-wider">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Input 
+                      type={showSuperPass ? 'text' : 'password'} 
+                      required
+                      placeholder="Enter secure password"
+                      value={superPassword}
+                      onChange={(e) => setSuperPassword(e.target.value)}
+                      className="h-10 text-[13px] pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSuperPass(!showSuperPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--gold)]"
+                    >
+                      {showSuperPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-[var(--gold)]" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-semibold text-[var(--navy)] uppercase tracking-wider">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <Input 
+                      type={showSuperConfirmPass ? 'text' : 'password'} 
+                      required
+                      placeholder="Confirm your password"
+                      value={superConfirmPassword}
+                      onChange={(e) => setSuperConfirmPassword(e.target.value)}
+                      className="h-10 text-[13px] pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSuperConfirmPass(!showSuperConfirmPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--gold)]"
+                    >
+                      {showSuperConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-[var(--gold)]" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-2 flex justify-end gap-3">
