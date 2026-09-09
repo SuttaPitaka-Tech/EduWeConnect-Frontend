@@ -59,6 +59,7 @@ export function OrgOnboardingWizard({
       organizationName: "",
       organizationMobile: "",
       organizationType: "",
+      organization_std: [],
       address: "",
       city: "",
       district: "",
@@ -117,6 +118,7 @@ export function OrgOnboardingWizard({
       "organizationName",
       "organizationMobile",
       "organizationType",
+      "organization_std",
       "address",
       "city",
       "district",
@@ -162,6 +164,14 @@ export function OrgOnboardingWizard({
       formData.append("organizationEmail", values.organizationEmail || "");
       formData.append("organizationMobile", values.organizationMobile || "");
       formData.append("organizationType", values.organizationType || "");
+      formData.append(
+        "organization_std",
+        JSON.stringify(values.organization_std || [])
+      );
+      formData.append(
+        "organizationStd",
+        JSON.stringify(values.organization_std || [])
+      );
       formData.append("address", values.address || "");
       formData.append("city", values.city || "");
       formData.append("district", values.district || "");

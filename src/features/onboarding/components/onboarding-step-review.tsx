@@ -130,6 +130,27 @@ export function OnboardingStepReview({
               </p>
             </div>
 
+            {/* Field Card: Standards Offered */}
+            <div className="py-2.5 px-3.5 rounded-xl bg-white/70 hover:bg-white border border-[var(--border)]/70 transition-all shadow-2xs sm:col-span-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] block mb-1">
+                Standards Offered
+              </span>
+              {getValues('organization_std') && getValues('organization_std').length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 mt-0.5">
+                  {getValues('organization_std').map((std: string) => (
+                    <span
+                      key={std}
+                      className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[var(--gold)]/15 text-[var(--navy)] border border-[var(--gold)]/30"
+                    >
+                      {std}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="font-semibold text-[var(--navy)] text-xs">Not Specified</p>
+              )}
+            </div>
+
             {/* Field Card: Campus Address */}
             <div className="py-2.5 px-3.5 rounded-xl bg-white/70 hover:bg-white border border-[var(--border)]/70 transition-all shadow-2xs sm:col-span-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] block">

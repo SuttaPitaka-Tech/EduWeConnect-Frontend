@@ -16,6 +16,7 @@ export const registerSchema = z.object({
     .min(1, 'Mobile number is required')
     .regex(/^[0-9]{10}$/, 'Mobile number must be exactly 10 digits'),
   organizationType: z.string().min(1, 'Select an organization type'),
+  organization_std: z.array(z.string()).optional().default([]),
   address: z.string().trim().min(3, 'Address is required'),
   city: z.string().trim().min(1, 'City/Village is required'),
   district: z.string().trim().min(1, 'District is required'),
