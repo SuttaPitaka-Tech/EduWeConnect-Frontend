@@ -73,7 +73,7 @@ export function LoginForm() {
             const orgName = result.user?.organizationName || result.organizationName || 'Organization'
             toast.success(`Welcome ${orgName} (Org)!`)
           }
-          navigate('/app/attendance', { replace: true })
+          navigate(role === UserRole.Organization ? '/organization/dashboard' : '/app/attendance', { replace: true })
         }
       }
     } catch (err: any) {
@@ -115,7 +115,7 @@ export function LoginForm() {
       if (role === UserRole.SuperAdmin) {
         navigate('/superadmin/dashboard', { replace: true })
       } else {
-        navigate('/app/attendance', { replace: true })
+        navigate(role === UserRole.Organization ? '/organization/dashboard' : '/app/attendance', { replace: true })
       }
     } catch (err: any) {
       setChangePassError(err?.message || 'Failed to update password. Please try again.')

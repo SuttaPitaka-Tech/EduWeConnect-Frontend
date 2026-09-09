@@ -9,7 +9,7 @@ export function AppFooter() {
   return (
     <footer
       className="w-full shrink-0"
-      style={{ background: 'var(--navy)' }}
+      style={{ background: 'var(--deep-navy)' }}
     >
       <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8 h-[40px] flex items-center justify-between">
 

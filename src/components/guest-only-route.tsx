@@ -14,6 +14,9 @@ export function GuestOnlyRoute({ children }: GuestOnlyRouteProps) {
     if (user?.role === UserRole.SuperAdmin) {
       return <Navigate to="/superadmin/dashboard" replace />
     }
+    if (user?.role === UserRole.Organization) {
+      return <Navigate to="/organization/dashboard" replace />
+    }
     return <Navigate to="/app/attendance" replace />
   }
 

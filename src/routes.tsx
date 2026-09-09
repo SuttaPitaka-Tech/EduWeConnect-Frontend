@@ -38,6 +38,10 @@ const SuperAdminLayout  = lazyWithRetry(() => import('@/layouts/superadmin-layou
 const AttendancePage = lazyWithRetry(() => import('@/features/attendance/pages/attendance-page'))
 const UiShowcasePage = lazyWithRetry(() => import('@/pages/ui-showcase-page'))
 
+// ── Organization ─────────────────────────────────────────────────────────────
+const OrganizationDashboard = lazyWithRetry(() => import('@/features/organization-menu/pages/organization-dashboard'))
+const OrganizationCreateUsers = lazyWithRetry(() => import('@/features/organization-menu/pages/organization-create-users'))
+
 // ── Superadmin ───────────────────────────────────────────────────────────────
 const SuperAdminDashboard = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-dashboard'))
 const SuperAdminApprovals = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-approvals'))
@@ -72,7 +76,7 @@ export function createAppRouter(queryClient: QueryClient) {
           ],
         },
 
-        // ── Protected app shell ──────────────────────────────────────────────────
+        // ── Standard Authenticated App (Staff, Students, Parents) ───────────────
         {
           path: '/app',
           element: (
@@ -81,8 +85,10 @@ export function createAppRouter(queryClient: QueryClient) {
             </ProtectedRoute>
           ),
           children: [
-            // Root redirect → Attendance module directly
-            { index: true, element: <Navigate to="/app/attendance" replace /> },
+            // Redirect legacy /app paths to /organization/dashboard
+            { index: true, element: <Navigate to="/organization/dashboard" replace /> },
+            { path: 'dashboard', element: <Navigate to="/organization/dashboard" replace /> },
+            { path: 'create-users', element: <Navigate to="/organization/create-users" replace /> },
 
             // Attendance — fully developed reference module
             {
@@ -102,6 +108,21 @@ export function createAppRouter(queryClient: QueryClient) {
             },
 
             // ── ADD NEW MODULES HERE as they are developed ───────────────────────
+          ],
+        },
+
+        // ── Organization App Shell ──────────────────────────────────────────────
+        {
+          path: '/organization',
+          element: (
+            <ProtectedRoute>
+              <Lazy><DashboardLayout /></Lazy>
+            </ProtectedRoute>
+          ),
+          children: [
+            { index: true, element: <Navigate to="/organization/dashboard" replace /> },
+            { path: 'dashboard', element: <Lazy><OrganizationDashboard /></Lazy> },
+            { path: 'create-users', element: <Lazy><OrganizationCreateUsers /></Lazy> },
           ],
         },
 
