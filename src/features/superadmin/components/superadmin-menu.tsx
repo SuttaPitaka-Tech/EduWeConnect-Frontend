@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ClipboardCheck } from 'lucide-react'
+import { LayoutDashboard, ClipboardCheck, Building2 } from 'lucide-react'
 
 export function SuperAdminMenu({ onNavigate }: { onNavigate?: () => void }) {
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) => 
@@ -28,6 +28,15 @@ export function SuperAdminMenu({ onNavigate }: { onNavigate?: () => void }) {
         >
           <ClipboardCheck className="w-5 h-5 text-[var(--gold)]" />
           <span>Approval</span>
+        </NavLink>
+
+        <NavLink 
+          to="/superadmin/organization-management" 
+          className={getNavLinkClass}
+          onClick={onNavigate}
+        >
+          <Building2 className="w-5 h-5 text-[var(--gold)]" />
+          <span>Organization Management</span>
         </NavLink>
       </nav>
     </div>

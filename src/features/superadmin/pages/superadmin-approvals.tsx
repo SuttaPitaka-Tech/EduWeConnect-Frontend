@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Building2,
   Search,
@@ -43,6 +43,7 @@ export interface OrganizationRecord {
   organization_email: string
   organization_mobile: string
   organization_type: string
+  organization_std?: string[] | null
   address?: string
   city?: string
   district?: string
@@ -97,8 +98,17 @@ export default function SuperAdminApprovals() {
   // Document Preview Modal State
   const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string; fileName: string } | null>(null)
 
+  // Document Loading State
+  const [loadingDocId, setLoadingDocId] = useState<string | null>(null)
+
+  // Double-mount guard for React 18 StrictMode
+  const hasMountedRef = useRef(false)
+  const isFetchingRef = useRef(false)
+
   // ── Fetch Organizations ──────────────────────────────────────────────────
   const fetchOrganizations = async (isManual = false) => {
+    if (isFetchingRef.current && !isManual) return
+    isFetchingRef.current = true
     if (isManual) setIsRefreshing(true)
     else setIsLoading(true)
 
@@ -119,12 +129,59 @@ export default function SuperAdminApprovals() {
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
+      isFetchingRef.current = false
     }
   }
 
   useEffect(() => {
+    if (hasMountedRef.current) return
+    hasMountedRef.current = true
     fetchOrganizations()
   }, [])
+
+  // ── On-demand Document Handlers ──────────────────────────────────────────
+  const handlePreviewDoc = async (title: string, fileId?: string) => {
+    if (!fileId) {
+      toast.error('Document file not uploaded or not found')
+      return
+    }
+    try {
+      setLoadingDocId(fileId)
+      const res = await fetch(`${API_GATEWAY_URL}/files/download/${fileId}`)
+      if (!res.ok) throw new Error('Failed to retrieve document access URL')
+      const data = await res.json()
+      if (!data.url) throw new Error('Document URL not returned')
+      setPreviewDoc({
+        title,
+        url: data.url,
+        fileName: fileId,
+      })
+    } catch (err: any) {
+      toast.error(err.message || 'Could not load document preview')
+    } finally {
+      setLoadingDocId(null)
+    }
+  }
+
+  const handleDownloadDoc = async (fileId?: string) => {
+    if (!fileId) {
+      toast.error('Document file not uploaded or not found')
+      return
+    }
+    try {
+      setLoadingDocId(fileId)
+      const res = await fetch(`${API_GATEWAY_URL}/files/download/${fileId}`)
+      if (!res.ok) throw new Error('Failed to retrieve document download URL')
+      const data = await res.json()
+      if (data.url) {
+        window.open(data.url, '_blank')
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Could not download document')
+    } finally {
+      setLoadingDocId(null)
+    }
+  }
 
   // ── Status Update Handler ────────────────────────────────────────────────
   const handleUpdateStatus = async (
@@ -701,6 +758,19 @@ export default function SuperAdminApprovals() {
                         <span className="font-mono font-medium text-[var(--navy)]">{selectedOrg.organization_mobile}</span>
                       </div>
                     </div>
+
+                    {selectedOrg.organization_std && selectedOrg.organization_std.length > 0 && (
+                      <div className="pt-2 border-t border-[var(--border)]/60 text-xs">
+                        <span className="font-semibold text-[var(--text-muted)] block mb-1">Standards / Classes Offered:</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedOrg.organization_std.map((std: string) => (
+                            <span key={std} className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[var(--navy)]/10 text-[var(--navy)]">
+                              {std}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Card: Location & Address */}
@@ -834,18 +904,14 @@ export default function SuperAdminApprovals() {
                         docNumber={selectedOrg.pan_number}
                         docNumberLabel="PAN"
                         fileId={selectedOrg.pan_file_id}
-                        url={selectedOrg.documentUrls?.pan}
-                        onPreview={() => {
-                          if (selectedOrg.documentUrls?.pan) {
-                            setPreviewDoc({
-                              title: `PAN Card (${selectedOrg.pan_number || 'Document'})`,
-                              url: selectedOrg.documentUrls.pan,
-                              fileName: selectedOrg.pan_file_id || 'pan_card.pdf',
-                            })
-                          } else {
-                            toast.error('PAN file URL not available.')
-                          }
-                        }}
+                        isLoading={loadingDocId === selectedOrg.pan_file_id}
+                        onPreview={() =>
+                          handlePreviewDoc(
+                            `PAN Card (${selectedOrg.pan_number || 'Document'})`,
+                            selectedOrg.pan_file_id
+                          )
+                        }
+                        onDownload={() => handleDownloadDoc(selectedOrg.pan_file_id)}
                       />
 
                       {/* Document 2: GST Certificate */}
@@ -854,18 +920,14 @@ export default function SuperAdminApprovals() {
                         docNumber={selectedOrg.gst_number}
                         docNumberLabel="GSTIN"
                         fileId={selectedOrg.gst_file_id}
-                        url={selectedOrg.documentUrls?.gst}
-                        onPreview={() => {
-                          if (selectedOrg.documentUrls?.gst) {
-                            setPreviewDoc({
-                              title: `GST Certificate (${selectedOrg.gst_number || 'Document'})`,
-                              url: selectedOrg.documentUrls.gst,
-                              fileName: selectedOrg.gst_file_id || 'gst_cert.pdf',
-                            })
-                          } else {
-                            toast.error('GST certificate URL not available.')
-                          }
-                        }}
+                        isLoading={loadingDocId === selectedOrg.gst_file_id}
+                        onPreview={() =>
+                          handlePreviewDoc(
+                            `GST Certificate (${selectedOrg.gst_number || 'Document'})`,
+                            selectedOrg.gst_file_id
+                          )
+                        }
+                        onDownload={() => handleDownloadDoc(selectedOrg.gst_file_id)}
                       />
 
                       {/* Document 3: Registration Certificate */}
@@ -874,18 +936,14 @@ export default function SuperAdminApprovals() {
                         docNumber={selectedOrg.reg_cert_number}
                         docNumberLabel="Reg No"
                         fileId={selectedOrg.reg_cert_file_id}
-                        url={selectedOrg.documentUrls?.regCert}
-                        onPreview={() => {
-                          if (selectedOrg.documentUrls?.regCert) {
-                            setPreviewDoc({
-                              title: `Registration Certificate (${selectedOrg.reg_cert_number || 'Document'})`,
-                              url: selectedOrg.documentUrls.regCert,
-                              fileName: selectedOrg.reg_cert_file_id || 'registration_certificate.pdf',
-                            })
-                          } else {
-                            toast.error('Registration Certificate URL not available.')
-                          }
-                        }}
+                        isLoading={loadingDocId === selectedOrg.reg_cert_file_id}
+                        onPreview={() =>
+                          handlePreviewDoc(
+                            `Registration Certificate (${selectedOrg.reg_cert_number || 'Document'})`,
+                            selectedOrg.reg_cert_file_id
+                          )
+                        }
+                        onDownload={() => handleDownloadDoc(selectedOrg.reg_cert_file_id)}
                       />
 
                       {/* Document 4: Head Aadhar */}
@@ -894,18 +952,14 @@ export default function SuperAdminApprovals() {
                         docNumber={selectedOrg.head_aadhar_number}
                         docNumberLabel="Aadhar"
                         fileId={selectedOrg.head_aadhar_file_id}
-                        url={selectedOrg.documentUrls?.headAadhar}
-                        onPreview={() => {
-                          if (selectedOrg.documentUrls?.headAadhar) {
-                            setPreviewDoc({
-                              title: `Authorized Head Aadhar (${selectedOrg.head_aadhar_number || 'Document'})`,
-                              url: selectedOrg.documentUrls.headAadhar,
-                              fileName: selectedOrg.head_aadhar_file_id || 'head_aadhar.pdf',
-                            })
-                          } else {
-                            toast.error('Aadhar file URL not available.')
-                          }
-                        }}
+                        isLoading={loadingDocId === selectedOrg.head_aadhar_file_id}
+                        onPreview={() =>
+                          handlePreviewDoc(
+                            `Authorized Head Aadhar (${selectedOrg.head_aadhar_number || 'Document'})`,
+                            selectedOrg.head_aadhar_file_id
+                          )
+                        }
+                        onDownload={() => handleDownloadDoc(selectedOrg.head_aadhar_file_id)}
                       />
                     </div>
                   </div>
@@ -1097,17 +1151,19 @@ function DocumentCard({
   docNumber,
   docNumberLabel,
   fileId,
-  url,
+  isLoading,
   onPreview,
+  onDownload,
 }: {
   title: string
   docNumber?: string
   docNumberLabel?: string
   fileId?: string
-  url?: string | null
+  isLoading?: boolean
   onPreview: () => void
+  onDownload: () => void
 }) {
-  const hasFile = Boolean(fileId && url)
+  const hasFile = Boolean(fileId)
   const isPdf = fileId?.toLowerCase().endsWith('.pdf')
 
   return (
@@ -1145,23 +1201,29 @@ function DocumentCard({
           type="button"
           variant="outline"
           size="sm"
-          disabled={!hasFile}
+          disabled={!hasFile || isLoading}
           onClick={onPreview}
           className="h-7 px-2.5 rounded-lg text-[11px] font-bold border-[var(--border)] text-[var(--navy)] hover:bg-[var(--beige)]"
         >
-          <Eye className="w-3 h-3 mr-1 text-[var(--gold)]" /> View
+          {isLoading ? (
+            <RotateCw className="w-3 h-3 mr-1 animate-spin text-[var(--gold)]" />
+          ) : (
+            <Eye className="w-3 h-3 mr-1 text-[var(--gold)]" />
+          )}
+          View
         </Button>
 
-        {hasFile && url && (
-          <a
-            href={url}
-            download={fileId || 'document'}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center h-7 px-2.5 rounded-lg text-[11px] font-bold bg-[var(--warm-white)] border border-[var(--border)] text-[var(--navy)] hover:bg-[var(--gold)] hover:text-white transition-colors"
+        {hasFile && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isLoading}
+            onClick={onDownload}
+            className="h-7 px-2.5 rounded-lg text-[11px] font-bold bg-[var(--warm-white)] border border-[var(--border)] text-[var(--navy)] hover:bg-[var(--gold)] hover:text-white transition-colors"
           >
             <Download className="w-3 h-3 mr-1" /> Download
-          </a>
+          </Button>
         )}
       </div>
     </div>

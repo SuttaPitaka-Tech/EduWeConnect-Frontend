@@ -41,6 +41,7 @@ const UiShowcasePage = lazyWithRetry(() => import('@/pages/ui-showcase-page'))
 // ── Superadmin ───────────────────────────────────────────────────────────────
 const SuperAdminDashboard = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-dashboard'))
 const SuperAdminApprovals = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-approvals'))
+const SuperAdminOrganizations = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-organizations'))
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -117,6 +118,8 @@ export function createAppRouter(queryClient: QueryClient) {
             { path: 'dashboard', element: <Lazy><SuperAdminDashboard /></Lazy> },
             { path: 'approval', element: <Lazy><SuperAdminApprovals /></Lazy> },
             { path: 'approvals', element: <Navigate to="/superadmin/approval" replace /> },
+            { path: 'organization-management', element: <Lazy><SuperAdminOrganizations /></Lazy> },
+            { path: 'organizations', element: <Navigate to="/superadmin/organization-management" replace /> },
             { path: 'create-organization', element: <Navigate to="/superadmin/approval" replace /> },
           ],
         },
