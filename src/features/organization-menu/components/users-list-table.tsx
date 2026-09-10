@@ -18,46 +18,16 @@ import {
   Pencil,
   Trash2,
   Loader2,
+  MapPin,
 } from 'lucide-react'
 import { Button } from '@/components/ui'
-import { apiClient } from '@/lib/api-client'
 import { toast } from 'sonner'
+import { staffService, type StaffMember } from '../services/staff.service'
+import { studentService, type StudentMember } from '../services/student.service'
+import { useAuth } from '@/contexts/auth-context'
 
+export type { StaffMember, StudentMember }
 export type UserRoleTab = 'staff' | 'students' | 'parents'
-
-export interface StaffMember {
-  id: string
-  organization_id?: string
-  employee_first_name: string
-  employee_last_name?: string
-  employee_email: string
-  employee_mobile_number: string
-  employee_type: 'Teacher' | 'Non Staff' | 'Finance' | string
-  subjects?: string[]
-  employee_pan_number?: string
-  employee_pan_file_id?: string | null
-  employee_aadhar_number?: string
-  employee_aadhar_file_id?: string | null
-  employee_experience?: string
-  employee_previous_work_institute_name?: string
-  employee_experience_letter_file_id?: string | null
-  employee_relieving_letter_file_id?: string | null
-  additional_documents?: Array<{ docName: string; file_id?: string; file_name?: string }>
-  status?: string
-  created_at: string
-}
-
-export interface StudentMember {
-  id: string
-  name: string
-  email: string
-  mobile_number: string
-  class_grade: string
-  roll_number: string
-  parent_name: string
-  status: string
-  created_at: string
-}
 
 export interface ParentMember {
   id: string
@@ -71,99 +41,6 @@ export interface ParentMember {
   created_at: string
 }
 
-const MOCK_STUDENTS: StudentMember[] = [
-  {
-    id: 'STU-94812',
-    name: 'Aarav Sharma',
-    email: 'aarav.sharma@institution.edu',
-    mobile_number: '+91 98451 22334',
-    class_grade: '10th Std - Section A',
-    roll_number: '1001',
-    parent_name: 'Rajesh Sharma (Father)',
-    status: 'Active',
-    created_at: '2026-09-01T10:00:00.000Z',
-  },
-  {
-    id: 'STU-94813',
-    name: 'Ananya Rao',
-    email: 'ananya.rao@institution.edu',
-    mobile_number: '+91 97402 55667',
-    class_grade: '9th Std - Section B',
-    roll_number: '0914',
-    parent_name: 'Suresh Rao (Father)',
-    status: 'Active',
-    created_at: '2026-09-02T11:30:00.000Z',
-  },
-  {
-    id: 'STU-94814',
-    name: 'Rohan Deshmukh',
-    email: 'rohan.d@institution.edu',
-    mobile_number: '+91 99003 77889',
-    class_grade: '1st PUC - PCMB',
-    roll_number: '1105',
-    parent_name: 'Priya Deshmukh (Mother)',
-    status: 'Active',
-    created_at: '2026-09-05T09:15:00.000Z',
-  },
-  {
-    id: 'STU-94815',
-    name: 'Diya Patel',
-    email: 'diya.patel@institution.edu',
-    mobile_number: '+91 98860 99112',
-    class_grade: '8th Std - Section A',
-    roll_number: '0822',
-    parent_name: 'Amit Patel (Father)',
-    status: 'Active',
-    created_at: '2026-09-07T14:20:00.000Z',
-  },
-]
-
-const MOCK_PARENTS: ParentMember[] = [
-  {
-    id: 'PAR-88210',
-    name: 'Rajesh Sharma',
-    email: 'rajesh.sharma@gmail.com',
-    mobile_number: '+91 98451 22334',
-    relation: 'Father',
-    student_name: 'Aarav Sharma',
-    student_grade: '10th Std - Sec A',
-    status: 'Verified',
-    created_at: '2026-09-01T10:00:00.000Z',
-  },
-  {
-    id: 'PAR-88211',
-    name: 'Suresh Rao',
-    email: 'suresh.rao@outlook.com',
-    mobile_number: '+91 97402 55667',
-    relation: 'Father',
-    student_name: 'Ananya Rao',
-    student_grade: '9th Std - Sec B',
-    status: 'Verified',
-    created_at: '2026-09-02T11:30:00.000Z',
-  },
-  {
-    id: 'PAR-88212',
-    name: 'Priya Deshmukh',
-    email: 'priya.deshmukh@yahoo.com',
-    mobile_number: '+91 99003 77889',
-    relation: 'Mother',
-    student_name: 'Rohan Deshmukh',
-    student_grade: '1st PUC - PCMB',
-    status: 'Verified',
-    created_at: '2026-09-05T09:15:00.000Z',
-  },
-  {
-    id: 'PAR-88213',
-    name: 'Amit Patel',
-    email: 'amit.patel@gmail.com',
-    mobile_number: '+91 98860 99112',
-    relation: 'Father',
-    student_name: 'Diya Patel',
-    student_grade: '8th Std - Sec A',
-    status: 'Verified',
-    created_at: '2026-09-07T14:20:00.000Z',
-  },
-]
 
 interface UsersListTableProps {
   onCreateStaffClick?: () => void
@@ -172,6 +49,9 @@ interface UsersListTableProps {
   onViewStaff?: (staff: StaffMember) => void
   onEditStaff?: (staff: StaffMember) => void
   onStaffDeleted?: (staffId: string) => void
+  onViewStudent?: (student: StudentMember) => void
+  onEditStudent?: (student: StudentMember) => void
+  onStudentDeleted?: (studentId: string) => void
 }
 
 export function UsersListTable({
@@ -181,7 +61,11 @@ export function UsersListTable({
   onViewStaff,
   onEditStaff,
   onStaffDeleted,
+  onViewStudent,
+  onEditStudent,
+  onStudentDeleted,
 }: UsersListTableProps) {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<UserRoleTab>('staff')
   const [searchQuery, setSearchQuery] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -193,6 +77,29 @@ export function UsersListTable({
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null)
   const [confirmDeleteStaffId, setConfirmDeleteStaffId] = useState<string | null>(null)
 
+  // Real students state from backend API (student_details table)
+  const [studentsList, setStudentsList] = useState<StudentMember[]>([])
+  const [isLoadingStudents, setIsLoadingStudents] = useState<boolean>(false)
+  const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null)
+  const [confirmDeleteStudentId, setConfirmDeleteStudentId] = useState<string | null>(null)
+
+  const handleDeleteStudent = async (student: StudentMember) => {
+    setDeletingStudentId(student.id)
+    try {
+      await studentService.delete(student.id)
+      const name = student.student_name || 'Student'
+      toast.success(`Student "${name}" deleted successfully`)
+      setStudentsList((prev) => prev.filter((s) => s.id !== student.id))
+      onStudentDeleted?.(student.id)
+    } catch (err: any) {
+      console.error('Failed to delete student:', err)
+      toast.error(err.response?.data?.message || 'Failed to delete student')
+    } finally {
+      setDeletingStudentId(null)
+      setConfirmDeleteStudentId(null)
+    }
+  }
+
   // Guard against duplicate in-flight and React double-mount API calls
   const hasFetchedRef = useRef(false)
   const isFetchingRef = useRef(false)
@@ -200,7 +107,7 @@ export function UsersListTable({
   const handleDeleteStaff = async (staff: StaffMember) => {
     setDeletingStaffId(staff.id)
     try {
-      await apiClient.delete(`/staff-details/${staff.id}`)
+      await staffService.delete(staff.id)
       const name = `${staff.employee_first_name} ${staff.employee_last_name || ''}`.trim()
       toast.success(`Staff member "${name}" deleted successfully`)
       setStaffList((prev) => prev.filter((s) => s.id !== staff.id))
@@ -221,12 +128,8 @@ export function UsersListTable({
     setIsLoadingStaff(true)
     setFetchError(null)
     try {
-      const res = await apiClient.get<StaffMember[]>('/staff-details')
-      if (Array.isArray(res.data)) {
-        setStaffList(res.data)
-      } else {
-        setStaffList([])
-      }
+      const data = await staffService.list()
+      setStaffList(data)
     } catch (err: any) {
       console.error('Failed to load staff list:', err)
       setFetchError('Unable to load staff records. Click refresh to retry.')
@@ -236,11 +139,27 @@ export function UsersListTable({
     }
   }, [])
 
+  // Fetch real students from API Gateway / Student Details (student_details table)
+  const fetchStudentsData = useCallback(async () => {
+    setIsLoadingStudents(true)
+    try {
+      const orgId = user?.institutionId || localStorage.getItem('lastRegisteredOrgId') || undefined
+      const data = await studentService.list(orgId)
+      setStudentsList(data)
+    } catch (err: any) {
+      console.error('Failed to load students list from database:', err)
+      setStudentsList([])
+    } finally {
+      setIsLoadingStudents(false)
+    }
+  }, [user?.institutionId])
+
   useEffect(() => {
     if (hasFetchedRef.current) return
     hasFetchedRef.current = true
     fetchStaffData()
-  }, [fetchStaffData])
+    fetchStudentsData()
+  }, [fetchStaffData, fetchStudentsData])
 
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id)
@@ -260,38 +179,131 @@ export function UsersListTable({
       const type = (s.employee_type || '').toLowerCase()
       const id = (s.id || '').toLowerCase()
       const subjects = (s.subjects || []).join(' ').toLowerCase()
+      const addr = s.staff_address
+        ? `${s.staff_address.current_address || ''} ${s.staff_address.permanent_address || ''} ${s.staff_address.state || ''} ${s.staff_address.country || ''} ${s.staff_address.pincode || ''}`.toLowerCase()
+        : ''
       return (
         fullName.includes(q) ||
         email.includes(q) ||
         mobile.includes(q) ||
         type.includes(q) ||
         id.includes(q) ||
-        subjects.includes(q)
+        subjects.includes(q) ||
+        addr.includes(q)
       )
     })
   }, [staffList, searchQuery])
 
-  // Filter students based on search query
+  // Filter students dynamically from live database records
   const filteredStudents = useMemo(() => {
     const q = searchQuery.toLowerCase().trim()
-    if (!q) return MOCK_STUDENTS
-    return MOCK_STUDENTS.filter((st) => {
+    if (!q) return studentsList
+    return studentsList.filter((st) => {
+      const name = (st.student_name || '').toLowerCase()
+      const id = (st.id || '').toLowerCase()
+      const std = (st.standard || '').toLowerCase()
+      const email = (st.contact_email || '').toLowerCase()
+      const mobile = (st.contact_mobile || '').toLowerCase()
+      const father = (st.father_name || '').toLowerCase()
+      const mother = (st.mother_name || '').toLowerCase()
+      const emergency = (st.emergency_person_name || '').toLowerCase()
+      const aadhar = (st.student_aadhar_number || '').toLowerCase()
       return (
-        st.name.toLowerCase().includes(q) ||
-        st.id.toLowerCase().includes(q) ||
-        st.email.toLowerCase().includes(q) ||
-        st.class_grade.toLowerCase().includes(q) ||
-        st.roll_number.toLowerCase().includes(q) ||
-        st.parent_name.toLowerCase().includes(q)
+        name.includes(q) ||
+        id.includes(q) ||
+        std.includes(q) ||
+        email.includes(q) ||
+        mobile.includes(q) ||
+        father.includes(q) ||
+        mother.includes(q) ||
+        emergency.includes(q) ||
+        aadhar.includes(q)
       )
     })
-  }, [searchQuery])
+  }, [studentsList, searchQuery])
 
-  // Filter parents based on search query
+  // Dynamically derive guardian/parent accounts from enrolled students in the database
+  const parentsList = useMemo<ParentMember[]>(() => {
+    const list: ParentMember[] = []
+    const seenKeys = new Set<string>()
+
+    for (const st of studentsList) {
+      // 1. Father
+      if (st.father_name && st.father_name.trim()) {
+        const fatherEmail = st.father_email?.trim() || ''
+        const fatherPhone = st.father_mobile?.trim() || ''
+        const key = `${st.father_name.trim()}_${fatherPhone || fatherEmail || st.id}`
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key)
+          list.push({
+            id: `PAR-${st.id.slice(0, 6).toUpperCase()}-F`,
+            name: st.father_name.trim(),
+            email: fatherEmail || st.contact_email?.trim() || '—',
+            mobile_number: fatherPhone || st.contact_mobile?.trim() || '—',
+            relation: 'Father',
+            student_name: st.student_name,
+            student_grade: st.standard,
+            status: 'Verified',
+            created_at: st.created_at,
+          })
+        }
+      }
+
+      // 2. Mother
+      if (st.mother_name && st.mother_name.trim()) {
+        const motherEmail = st.mother_email?.trim() || ''
+        const motherPhone = st.mother_mobile?.trim() || ''
+        const key = `${st.mother_name.trim()}_${motherPhone || motherEmail || st.id}`
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key)
+          list.push({
+            id: `PAR-${st.id.slice(0, 6).toUpperCase()}-M`,
+            name: st.mother_name.trim(),
+            email: motherEmail || st.contact_email?.trim() || '—',
+            mobile_number: motherPhone || st.contact_mobile?.trim() || '—',
+            relation: 'Mother',
+            student_name: st.student_name,
+            student_grade: st.standard,
+            status: 'Verified',
+            created_at: st.created_at,
+          })
+        }
+      }
+
+      // 3. Emergency Contact / Guardian if neither father nor mother is registered
+      if (
+        !st.father_name?.trim() &&
+        !st.mother_name?.trim() &&
+        st.emergency_person_name &&
+        st.emergency_person_name.trim()
+      ) {
+        const emPhone = st.emergency_person_mobile?.trim() || st.contact_mobile?.trim() || ''
+        const key = `${st.emergency_person_name.trim()}_${emPhone || st.id}`
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key)
+          list.push({
+            id: `PAR-${st.id.slice(0, 6).toUpperCase()}-G`,
+            name: st.emergency_person_name.trim(),
+            email: st.contact_email?.trim() || '—',
+            mobile_number: emPhone || '—',
+            relation: st.emergency_person_relation?.trim() || 'Guardian',
+            student_name: st.student_name,
+            student_grade: st.standard,
+            status: 'Verified',
+            created_at: st.created_at,
+          })
+        }
+      }
+    }
+
+    return list
+  }, [studentsList])
+
+  // Filter parents dynamically from live database records
   const filteredParents = useMemo(() => {
     const q = searchQuery.toLowerCase().trim()
-    if (!q) return MOCK_PARENTS
-    return MOCK_PARENTS.filter((p) => {
+    if (!q) return parentsList
+    return parentsList.filter((p) => {
       return (
         p.name.toLowerCase().includes(q) ||
         p.id.toLowerCase().includes(q) ||
@@ -301,7 +313,7 @@ export function UsersListTable({
         p.relation.toLowerCase().includes(q)
       )
     })
-  }, [searchQuery])
+  }, [parentsList, searchQuery])
 
   const renderRoleBadge = (type: string) => {
     const normalized = (type || '').toLowerCase()
@@ -392,7 +404,7 @@ export function UsersListTable({
                     : 'bg-gray-200/70 text-gray-600'
                 }`}
               >
-                {MOCK_STUDENTS.length}
+                {studentsList.length}
               </span>
             </button>
 
@@ -415,7 +427,7 @@ export function UsersListTable({
                     : 'bg-gray-200/70 text-gray-600'
                 }`}
               >
-                {MOCK_PARENTS.length}
+                {parentsList.length}
               </span>
             </button>
           </div>
@@ -446,12 +458,15 @@ export function UsersListTable({
           <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
             <button
               type="button"
-              onClick={() => fetchStaffData(true)}
-              disabled={isLoadingStaff}
+              onClick={() => {
+                fetchStaffData(true)
+                fetchStudentsData()
+              }}
+              disabled={isLoadingStaff || isLoadingStudents}
               className="h-10 px-3.5 rounded-xl border border-[var(--border)] bg-white hover:bg-[var(--cream)]/40 text-[var(--navy)] text-xs font-bold flex items-center gap-2 shadow-2xs active:scale-95 transition-all cursor-pointer disabled:opacity-50"
               title="Refresh users data"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-[var(--gold)] ${isLoadingStaff ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-[var(--gold)] ${isLoadingStaff || isLoadingStudents ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
 
@@ -557,6 +572,9 @@ export function UsersListTable({
                       Employee Type
                     </th>
                     <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10.5px]">
+                      Staff Address
+                    </th>
+                    <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10.5px]">
                       Assigned Subjects
                     </th>
                     <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10.5px] text-center">
@@ -646,7 +664,35 @@ export function UsersListTable({
                           {renderRoleBadge(staff.employee_type)}
                         </td>
 
-                        {/* 6. Subjects */}
+                        {/* 6. Staff Address */}
+                        <td className="py-3.5 px-4 max-w-[220px]">
+                          {staff.staff_address &&
+                          (staff.staff_address.current_address ||
+                            staff.staff_address.state ||
+                            staff.staff_address.pincode ||
+                            staff.staff_address.country) ? (
+                            <div
+                              className="flex items-start gap-1.5"
+                              title={`${staff.staff_address.current_address || ''}${staff.staff_address.state ? `, ${staff.staff_address.state}` : ''}${staff.staff_address.pincode ? ` - ${staff.staff_address.pincode}` : ''}${staff.staff_address.country ? `, ${staff.staff_address.country}` : ''}`}
+                            >
+                              <MapPin className="w-3.5 h-3.5 text-[var(--gold)] shrink-0 mt-0.5" />
+                              <div className="min-w-0">
+                                <span className="text-xs text-[var(--navy)] font-semibold block truncate">
+                                  {staff.staff_address.current_address || staff.staff_address.permanent_address || '—'}
+                                </span>
+                                <span className="text-[10.5px] text-[var(--text-secondary)] font-medium block truncate">
+                                  {[staff.staff_address.state, staff.staff_address.pincode, staff.staff_address.country]
+                                    .filter(Boolean)
+                                    .join(', ')}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 italic text-[11px]">—</span>
+                          )}
+                        </td>
+
+                        {/* 7. Subjects */}
                         <td className="py-3.5 px-4">
                           {Array.isArray(staff.subjects) && staff.subjects.length > 0 ? (
                             <div className="flex flex-wrap gap-1 max-w-xs">
@@ -743,13 +789,13 @@ export function UsersListTable({
           </>
         )}
 
-        {/* 2. STUDENTS TAB (Placeholder & Preview Data) */}
+        {/* 2. STUDENTS TAB (Live Database Records) */}
         {activeTab === 'students' && (
           <div>
             <div className="px-5 py-2.5 bg-blue-50/60 border-b border-blue-100 flex items-center justify-between text-xs text-blue-900">
               <span className="flex items-center gap-2 font-medium">
                 <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />
-                <span>Student enrollment schema is currently active. Showing roster of enrolled students.</span>
+                <span>Student enrollment roster. Showing enrolled students from database.</span>
               </span>
               <span className="text-[11px] font-bold text-blue-700">Total: {filteredStudents.length} Students</span>
             </div>
@@ -775,49 +821,181 @@ export function UsersListTable({
                   <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10.5px] text-center">
                     Status
                   </th>
+                  <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10.5px] text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]/60 bg-white">
-                {filteredStudents.map((st) => (
-                  <tr key={st.id} className="hover:bg-[#FCFBF7] transition-colors">
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] font-bold text-[var(--navy)]">
-                      <span className="bg-[var(--cream)]/60 px-2 py-0.5 rounded-md border border-[var(--border)]">
-                        #{st.id}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center">
-                          {st.name.charAt(0)}
-                        </div>
-                        <div>
-                          <span className="font-bold text-[var(--navy)] text-xs block">{st.name}</span>
-                          <span className="text-[10px] text-[var(--text-secondary)]">{st.email}</span>
-                        </div>
+                {isLoadingStudents ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 px-4 text-center">
+                      <div className="flex items-center justify-center gap-2.5 text-xs text-[var(--text-secondary)]">
+                        <Loader2 className="w-4 h-4 animate-spin text-[var(--gold)]" />
+                        <span>Loading students from database...</span>
                       </div>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[var(--cream)] text-[var(--navy)] border border-[var(--gold)]/30">
-                        {st.class_grade}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono font-bold text-[var(--navy)]">
-                      {st.roll_number}
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div>
-                        <span className="font-semibold text-xs text-[var(--navy)] block">{st.parent_name}</span>
-                        <span className="text-[11px] text-[var(--text-secondary)] font-mono">{st.mobile_number}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span>{st.status}</span>
-                      </span>
                     </td>
                   </tr>
-                ))}
+                ) : filteredStudents.length > 0 ? (
+                  filteredStudents.map((st) => (
+                    <tr key={st.id} className="hover:bg-[#FCFBF7] transition-colors">
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] font-bold text-[var(--navy)]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="bg-[var(--cream)]/60 px-2 py-0.5 rounded-md border border-[var(--border)]">
+                            #{st.id.slice(0, 8).toUpperCase()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyId(st.id)}
+                            className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            title="Copy full UUID"
+                          >
+                            {copiedId === st.id ? (
+                              <Check className="w-3 h-3 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center">
+                            {st.student_name ? st.student_name.charAt(0).toUpperCase() : 'S'}
+                          </div>
+                          <div>
+                            <span className="font-bold text-[var(--navy)] text-xs block">{st.student_name}</span>
+                            <span className="text-[10px] text-[var(--text-secondary)] font-mono">
+                              {st.contact_email || st.contact_mobile || 'No contact email'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[var(--cream)] text-[var(--navy)] border border-[var(--gold)]/30">
+                          {st.standard}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono font-bold text-[var(--navy)]">
+                        <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200/80 font-bold">
+                          {st.roll_number || '—'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div>
+                          <span className="font-semibold text-xs text-[var(--navy)] block">
+                            {st.father_name
+                              ? `${st.father_name} (Father)`
+                              : st.mother_name
+                              ? `${st.mother_name} (Mother)`
+                              : st.emergency_person_name
+                              ? `${st.emergency_person_name} (${st.emergency_person_relation || 'Guardian'})`
+                              : '—'}
+                          </span>
+                          <span className="text-[11px] text-[var(--text-secondary)] font-mono">
+                            {st.father_mobile ||
+                              st.mother_mobile ||
+                              st.contact_mobile ||
+                              st.emergency_person_mobile ||
+                              '—'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span>{st.status || 'Active'}</span>
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap text-right">
+                        {confirmDeleteStudentId === st.id ? (
+                          <div className="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-200 p-1 rounded-xl animate-fadeIn">
+                            <span className="text-[11px] font-bold text-rose-700 px-1">Delete?</span>
+                            <button
+                              type="button"
+                              disabled={deletingStudentId === st.id}
+                              onClick={() => handleDeleteStudent(st)}
+                              className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
+                            >
+                              {deletingStudentId === st.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3 h-3" />
+                              )}
+                              <span>Yes</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteStudentId(null)}
+                              className="px-2 py-1 rounded-lg text-gray-500 hover:bg-gray-200 text-[11px] font-medium cursor-pointer"
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* View Option */}
+                            <button
+                              type="button"
+                              onClick={() => onViewStudent?.(st)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[var(--navy)] bg-[var(--cream)]/70 hover:bg-[var(--gold)]/20 border border-[var(--gold)]/35 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                              title="View Student Profile"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-[var(--gold)]" />
+                              <span>View</span>
+                            </button>
+
+                            {/* Edit Option */}
+                            <button
+                              type="button"
+                              onClick={() => onEditStudent?.(st)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[var(--navy)] bg-white hover:bg-blue-50/80 hover:text-blue-700 border border-[var(--border)] hover:border-blue-300 shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer"
+                              title="Edit Student Record"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Edit</span>
+                            </button>
+
+                            {/* Delete Option */}
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteStudentId(st.id)}
+                              className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all cursor-pointer"
+                              title="Delete Student"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-12 px-4 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <GraduationCap className="w-8 h-8 text-[var(--gold)]/60" />
+                        <p className="text-xs font-semibold text-[var(--navy)]">
+                          No enrolled students found in database.
+                        </p>
+                        <p className="text-[11px] text-[var(--text-secondary)]">
+                          Click "Add Student" above to enroll students into approved standards.
+                        </p>
+                        {onCreateStudentClick && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={onCreateStudentClick}
+                            className="mt-2 text-xs font-bold border border-[var(--gold)] text-[var(--navy)] hover:bg-[var(--gold)]/10 cursor-pointer"
+                          >
+                            <GraduationCap className="w-3.5 h-3.5 text-[var(--gold)] mr-1.5" />
+                            <span>Enroll Student</span>
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -861,55 +1039,71 @@ export function UsersListTable({
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]/60 bg-white">
-                {filteredParents.map((p) => (
-                  <tr key={p.id} className="hover:bg-[#FCFBF7] transition-colors">
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] font-bold text-[var(--navy)]">
-                      <span className="bg-[var(--cream)]/60 px-2 py-0.5 rounded-md border border-[var(--border)]">
-                        #{p.id}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 font-bold text-xs flex items-center justify-center">
-                          {p.name.charAt(0)}
+                {filteredParents.length > 0 ? (
+                  filteredParents.map((p) => (
+                    <tr key={p.id} className="hover:bg-[#FCFBF7] transition-colors">
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] font-bold text-[var(--navy)]">
+                        <span className="bg-[var(--cream)]/60 px-2 py-0.5 rounded-md border border-[var(--border)]">
+                          #{p.id}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 font-bold text-xs flex items-center justify-center">
+                            {p.name.charAt(0)}
+                          </div>
+                          <span className="font-bold text-[var(--navy)] text-xs">{p.name}</span>
                         </div>
-                        <span className="font-bold text-[var(--navy)] text-xs">{p.name}</span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-gray-100 text-gray-700 border border-gray-200">
+                          {p.relation}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <a
+                          href={`mailto:${p.email}`}
+                          className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--navy)] font-medium"
+                        >
+                          <Mail className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
+                          <span>{p.email}</span>
+                        </a>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] text-[var(--navy)] font-semibold">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
+                          <span>{p.mobile_number}</span>
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div>
+                          <span className="font-bold text-xs text-[var(--navy)] block">{p.student_name}</span>
+                          <span className="text-[10px] text-[var(--text-secondary)]">{p.student_grade}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                          <span>{p.status}</span>
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-12 px-4 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Users className="w-8 h-8 text-[var(--gold)]/60" />
+                        <p className="text-xs font-semibold text-[var(--navy)]">
+                          No registered parents or guardians found in database.
+                        </p>
+                        <p className="text-[11px] text-[var(--text-secondary)]">
+                          Parent records are automatically linked when students are enrolled in an approved standard.
+                        </p>
                       </div>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-gray-100 text-gray-700 border border-gray-200">
-                        {p.relation}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <a
-                        href={`mailto:${p.email}`}
-                        className="inline-flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--navy)] font-medium"
-                      >
-                        <Mail className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
-                        <span>{p.email}</span>
-                      </a>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] text-[var(--navy)] font-semibold">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
-                        <span>{p.mobile_number}</span>
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div>
-                        <span className="font-bold text-xs text-[var(--navy)] block">{p.student_name}</span>
-                        <span className="text-[10px] text-[var(--text-secondary)]">{p.student_grade}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                        <span>{p.status}</span>
-                      </span>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

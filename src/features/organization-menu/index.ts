@@ -1,3 +1,5 @@
 export * from './types'
 export * from './organization-menu'
 export * from './organization-sidebar'
+export * from './services/staff.service'
+export * from './services/student.service'
