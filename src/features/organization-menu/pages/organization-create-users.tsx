@@ -3,17 +3,29 @@ import { UserCheck, GraduationCap, Users } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { toast } from 'sonner'
 import { CreateStaffForm } from '../components/create-staff-form'
-import { UsersListTable, StaffMember } from '../components/users-list-table'
+import { UsersListTable, StaffMember, StudentMember } from '../components/users-list-table'
 import { StaffDetailView } from '../components/staff-detail-view'
+import { CreateStudentView } from '../components/create-student-view'
+import { StudentDetailView } from '../components/student-detail-view'
+import { CreateStudentForm } from '../components/create-student-form'
 
 export default function OrganizationCreateUsers() {
-  const [activeView, setActiveView] = useState<'main' | 'create-staff' | 'edit-staff' | 'view-staff'>('main')
+  const [activeView, setActiveView] = useState<
+    'main' | 'create-staff' | 'edit-staff' | 'view-staff' | 'create-student' | 'view-student' | 'edit-student'
+  >('main')
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null)
+  const [selectedStudent, setSelectedStudent] = useState<StudentMember | null>(null)
 
   const handleAction = (type: string) => {
     if (type === 'Staff') {
       setSelectedStaff(null)
+      setSelectedStudent(null)
       setActiveView('create-staff')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else if (type === 'Student') {
+      setSelectedStaff(null)
+      setSelectedStudent(null)
+      setActiveView('create-student')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       toast.info(`Create ${type} form will be configured next.`)
@@ -29,6 +41,18 @@ export default function OrganizationCreateUsers() {
   const handleEditStaff = (staff: StaffMember) => {
     setSelectedStaff(staff)
     setActiveView('edit-staff')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleViewStudent = (student: StudentMember) => {
+    setSelectedStudent(student)
+    setActiveView('view-student')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleEditStudent = (student: StudentMember) => {
+    setSelectedStudent(student)
+    setActiveView('edit-student')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -77,7 +101,53 @@ export default function OrganizationCreateUsers() {
         />
       )}
 
-      {/* ── 4. Main View: Header + Registered Institutional Users Table ───── */}
+      {/* ── 4. Create Student View (Inline Welcome Page) ──────────────────── */}
+      {activeView === 'create-student' && (
+        <CreateStudentView
+          onBack={() => {
+            setActiveView('main')
+          }}
+        />
+      )}
+
+      {/* ── 5. View Student Profile (Inline) ───────────────────────────────── */}
+      {activeView === 'view-student' && selectedStudent && (
+        <StudentDetailView
+          student={selectedStudent}
+          onBack={() => {
+            setSelectedStudent(null)
+            setActiveView('main')
+          }}
+          onEdit={(student) => {
+            setSelectedStudent(student)
+            setActiveView('edit-student')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+          onDelete={() => {
+            setSelectedStudent(null)
+            setActiveView('main')
+          }}
+        />
+      )}
+
+      {/* ── 6. Edit Student Form (Inline) ──────────────────────────────────── */}
+      {activeView === 'edit-student' && selectedStudent && (
+        <CreateStudentForm
+          mode="edit"
+          initialData={selectedStudent}
+          standard={selectedStudent.standard}
+          onBack={() => {
+            setSelectedStudent(null)
+            setActiveView('main')
+          }}
+          onSuccess={() => {
+            setSelectedStudent(null)
+            setActiveView('main')
+          }}
+        />
+      )}
+
+      {/* ── 7. Main View: Header + Registered Institutional Users Table ───── */}
       {activeView === 'main' && (
         <>
           {/* Page Header & Action Buttons Bar */}
@@ -137,6 +207,8 @@ export default function OrganizationCreateUsers() {
             onCreateParentsClick={() => handleAction('Parents')}
             onViewStaff={handleViewStaff}
             onEditStaff={handleEditStaff}
+            onViewStudent={handleViewStudent}
+            onEditStudent={handleEditStudent}
           />
         </>
       )}

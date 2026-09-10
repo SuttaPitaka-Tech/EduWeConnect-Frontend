@@ -16,11 +16,12 @@ import {
   Trash2,
   ShieldCheck,
   Loader2,
+  MapPin,
+  Home,
 } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { toast } from 'sonner'
-import { apiClient } from '@/lib/api-client'
-import { StaffMember } from './users-list-table'
+import { staffService, type StaffMember } from '../services/staff.service'
 
 interface StaffDetailViewProps {
   staff: StaffMember
@@ -57,19 +58,11 @@ export function StaffDetailView({
     if (!fileKey) return
     setLoadingDocKey(fileKey)
     try {
-      // Clean file key if needed
-      const cleanKey = fileKey.startsWith('/') ? fileKey.substring(1) : fileKey
-      const res = await apiClient.get<{ url?: string; error?: string }>(
-        `/minio/download?fileName=${encodeURIComponent(cleanKey)}`
-      )
-      if (res.data?.url) {
-        window.open(res.data.url, '_blank', 'noopener,noreferrer')
-      } else {
-        toast.error(`Unable to retrieve URL for ${docLabel}`)
-      }
+      const url = await staffService.getDownloadUrl(fileKey)
+      window.open(url, '_blank', 'noopener,noreferrer')
     } catch (err: any) {
       console.error('Document download failed:', err)
-      toast.error(`Failed to open document: ${err.message || 'File not accessible'}`)
+      toast.error(`Unable to retrieve document for ${docLabel}`)
     } finally {
       setLoadingDocKey(null)
     }
@@ -78,7 +71,7 @@ export function StaffDetailView({
   const handleDeleteStaff = async () => {
     setIsDeleting(true)
     try {
-      await apiClient.delete(`/staff-details/${staff.id}`)
+      await staffService.delete(staff.id)
       toast.success(`Staff member "${fullName}" deleted successfully`)
       onDelete(staff.id)
       onBack()
@@ -237,6 +230,16 @@ export function StaffDetailView({
                   <Phone className="w-3.5 h-3.5 text-[var(--gold)]" />
                   <span>{staff.employee_mobile_number}</span>
                 </span>
+                {(staff.staff_address?.state || staff.staff_address?.country) && (
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[var(--gold)]" />
+                    <span>
+                      {[staff.staff_address.state, staff.staff_address.country]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </span>
+                  </span>
+                )}
                 {staff.created_at && (
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-[var(--gold)]" />
@@ -269,8 +272,8 @@ export function StaffDetailView({
         </div>
       </div>
 
-      {/* ── Main Information Cards (3-Column / Grid) ──────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ── Main Information Cards (2x2 Grid) ─────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Card 1: Personal & Statutory Info */}
         <div className="bg-white/95 rounded-2xl p-6 border border-[var(--border)] shadow-sm flex flex-col gap-5">
           <div className="flex items-center gap-2.5 pb-3 border-b border-[var(--border)]">
@@ -345,7 +348,81 @@ export function StaffDetailView({
           </div>
         </div>
 
-        {/* Card 2: Employment & Subject Allocations */}
+        {/* Card 2: Residential & Address Details */}
+        <div className="bg-white/95 rounded-2xl p-6 border border-[var(--border)] shadow-sm flex flex-col gap-5">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-[var(--border)]">
+            <div className="w-8 h-8 rounded-xl bg-[var(--cream)] border border-[var(--gold)]/30 flex items-center justify-center text-[var(--gold)]">
+              <MapPin className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-[var(--navy)]">Residential &amp; Address</h3>
+              <p className="text-[11px] text-[var(--text-secondary)]">Location, state, country, and postal addresses</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <span className="text-[10.5px] uppercase font-bold tracking-wider text-[var(--text-secondary)] block mb-1">
+                  Country
+                </span>
+                <span className="font-semibold text-[var(--navy)] text-sm">
+                  {staff.staff_address?.country || 'India'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10.5px] uppercase font-bold tracking-wider text-[var(--text-secondary)] block mb-1">
+                  State / Province
+                </span>
+                <span className="font-semibold text-[var(--navy)] text-sm">
+                  {staff.staff_address?.state || '—'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10.5px] uppercase font-bold tracking-wider text-[var(--text-secondary)] block mb-1">
+                  Pincode / ZIP
+                </span>
+                <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-md bg-[var(--cream)]/70 text-[var(--navy)] border border-[var(--gold)]/30 inline-block">
+                  {staff.staff_address?.pincode || '—'}
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-[var(--border)] flex flex-col gap-3.5">
+              <div>
+                <span className="text-[10.5px] uppercase font-bold tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5 mb-1">
+                  <MapPin className="w-3 h-3 text-[var(--gold)]" />
+                  <span>Current Residential Address</span>
+                </span>
+                <div className="p-3 rounded-xl bg-[#FCFBF7] border border-[var(--border)] text-[var(--navy)] font-medium text-xs leading-relaxed min-h-[52px]">
+                  {staff.staff_address?.current_address ? (
+                    <p className="whitespace-pre-line">{staff.staff_address.current_address}</p>
+                  ) : (
+                    <span className="text-gray-400 italic">No current address specified</span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10.5px] uppercase font-bold tracking-wider text-[var(--text-secondary)] flex items-center gap-1.5 mb-1">
+                  <Home className="w-3 h-3 text-[var(--gold)]" />
+                  <span>Permanent Residential Address</span>
+                </span>
+                <div className="p-3 rounded-xl bg-[#FCFBF7] border border-[var(--border)] text-[var(--navy)] font-medium text-xs leading-relaxed min-h-[52px]">
+                  {staff.staff_address?.permanent_address ? (
+                    <p className="whitespace-pre-line">{staff.staff_address.permanent_address}</p>
+                  ) : (
+                    <span className="text-gray-400 italic">No permanent address specified</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Employment & Subject Allocations */}
         <div className="bg-white/95 rounded-2xl p-6 border border-[var(--border)] shadow-sm flex flex-col gap-5">
           <div className="flex items-center gap-2.5 pb-3 border-b border-[var(--border)]">
             <div className="w-8 h-8 rounded-xl bg-[var(--cream)] border border-[var(--gold)]/30 flex items-center justify-center text-[var(--gold)]">

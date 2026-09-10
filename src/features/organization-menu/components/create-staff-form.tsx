@@ -22,11 +22,13 @@ import {
   Eye,
   ExternalLink,
   Loader2,
+  MapPin,
+  Home,
 } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
-import { apiClient, formatApiClientError } from '@/lib/api-client'
+import { formatApiClientError } from '@/lib/api-client'
 
 export interface AdditionalDoc {
   id: string
@@ -138,7 +140,40 @@ const COMMON_SUBJECTS = [
   'Economics',
 ]
 
-import { StaffMember } from './users-list-table'
+const INDIAN_STATES = [
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chhattisgarh',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+  'Delhi NCR',
+  'Chandigarh',
+]
+
+import { staffService, type StaffMember, type StaffFormInput } from '../services/staff.service'
 
 interface CreateStaffFormProps {
   onBack: () => void
@@ -158,6 +193,35 @@ export function CreateStaffForm({ onBack, initialData, mode = 'create' }: Create
   const [panFile, setPanFile] = useState<File | null>(null)
   const [aadharNumber, setAadharNumber] = useState(initialData?.employee_aadhar_number || '')
   const [aadharFile, setAadharFile] = useState<File | null>(null)
+
+  // ── Address & Residential State ───────────────────────────────────────────
+  const initialAddr = initialData?.staff_address
+  const [country, setCountry] = useState(initialAddr?.country || 'India')
+  const [stateName, setStateName] = useState(initialAddr?.state || 'Karnataka')
+  const [pincode, setPincode] = useState(initialAddr?.pincode || '')
+  const [currentAddress, setCurrentAddress] = useState(initialAddr?.current_address || '')
+  const [permanentAddress, setPermanentAddress] = useState(initialAddr?.permanent_address || '')
+  const [sameAsCurrent, setSameAsCurrent] = useState(
+    Boolean(
+      initialAddr?.current_address &&
+        initialAddr?.permanent_address &&
+        initialAddr.current_address === initialAddr.permanent_address
+    )
+  )
+
+  const handleToggleSameAsCurrent = (checked: boolean) => {
+    setSameAsCurrent(checked)
+    if (checked) {
+      setPermanentAddress(currentAddress)
+    }
+  }
+
+  const handleCurrentAddressChange = (val: string) => {
+    setCurrentAddress(val)
+    if (sameAsCurrent) {
+      setPermanentAddress(val)
+    }
+  }
 
   const [experience, setExperience] = useState(initialData?.employee_experience || '')
   const [previousInstitute, setPreviousInstitute] = useState(
@@ -283,58 +347,42 @@ export function CreateStaffForm({ onBack, initialData, mode = 'create' }: Create
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
-      const formData = new FormData()
       const orgId = user?.institutionId || localStorage.getItem('lastRegisteredOrgId') || ''
-      if (orgId) {
-        formData.append('organization_id', orgId)
-      }
-      formData.append('employee_first_name', firstName.trim())
-      if (lastName.trim()) formData.append('employee_last_name', lastName.trim())
-      formData.append('employee_email', email.trim())
-      formData.append('employee_mobile_number', mobile.trim())
-      formData.append('employee_type', employeeType)
-
-      if (panNumber.trim()) formData.append('employee_pan_number', panNumber.trim())
-      if (panFile) formData.append('panFile', panFile)
-
-      if (aadharNumber.trim()) formData.append('employee_aadhar_number', aadharNumber.trim())
-      if (aadharFile) formData.append('aadharFile', aadharFile)
-
-      if (experience.trim()) formData.append('employee_experience', experience.trim())
-      if (previousInstitute.trim()) {
-        formData.append('employee_previous_work_institute_name', previousInstitute.trim())
-      }
-      if (expLetterFile) formData.append('expLetterFile', expLetterFile)
-      if (relievingLetterFile) formData.append('relievingLetterFile', relievingLetterFile)
-
-      if (subjects.length > 0) {
-        formData.append('subjects', JSON.stringify(subjects))
-      }
-
-      if (additionalDocs.length > 0) {
-        const docMeta: Array<{ docName: string }> = []
-        additionalDocs.forEach((doc) => {
-          docMeta.push({ docName: doc.docName || 'Document' })
-          if (doc.file) {
-            formData.append('additionalFiles', doc.file)
-          }
-        })
-        formData.append('additional_documents', JSON.stringify(docMeta))
+      const payload: StaffFormInput = {
+        organizationId: orgId,
+        firstName,
+        lastName,
+        email,
+        mobile,
+        employeeType,
+        panNumber,
+        panFile,
+        aadharNumber,
+        aadharFile,
+        experience,
+        previousInstitute,
+        expLetterFile,
+        relievingLetterFile,
+        subjects,
+        additionalDocs,
+        address: {
+          country: country.trim() || 'India',
+          state: stateName.trim(),
+          pincode: pincode.trim(),
+          current_address: currentAddress.trim(),
+          permanent_address: (sameAsCurrent ? currentAddress : permanentAddress).trim(),
+        },
       }
 
       if (isEditMode && initialData?.id) {
-        await apiClient.patch(`/staff-details/${initialData.id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        setIsSubmitted(true)
+        await staffService.update(initialData.id, payload)
         toast.success(`Staff member "${firstName} ${lastName}" updated successfully!`)
       } else {
-        await apiClient.post('/staff-details', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        setIsSubmitted(true)
+        await staffService.create(payload)
         toast.success(`Staff member "${firstName} ${lastName}" created and uploaded to MinIO successfully!`)
       }
+
+      setIsSubmitted(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err: any) {
       console.error('Staff submission error:', err)
@@ -354,6 +402,18 @@ export function CreateStaffForm({ onBack, initialData, mode = 'create' }: Create
       setPanFile(null)
       setAadharNumber(initialData.employee_aadhar_number || '')
       setAadharFile(null)
+      setCountry(initialData.staff_address?.country || 'India')
+      setStateName(initialData.staff_address?.state || 'Karnataka')
+      setPincode(initialData.staff_address?.pincode || '')
+      setCurrentAddress(initialData.staff_address?.current_address || '')
+      setPermanentAddress(initialData.staff_address?.permanent_address || '')
+      setSameAsCurrent(
+        Boolean(
+          initialData.staff_address?.current_address &&
+            initialData.staff_address?.permanent_address &&
+            initialData.staff_address.current_address === initialData.staff_address.permanent_address
+        )
+      )
       setExperience(initialData.employee_experience || '')
       setPreviousInstitute(initialData.employee_previous_work_institute_name || '')
       setExpLetterFile(null)
@@ -372,6 +432,12 @@ export function CreateStaffForm({ onBack, initialData, mode = 'create' }: Create
       setPanFile(null)
       setAadharNumber('')
       setAadharFile(null)
+      setCountry('India')
+      setStateName('Karnataka')
+      setPincode('')
+      setCurrentAddress('')
+      setPermanentAddress('')
+      setSameAsCurrent(false)
       setExperience('')
       setPreviousInstitute('')
       setExpLetterFile(null)
@@ -552,6 +618,63 @@ export function CreateStaffForm({ onBack, initialData, mode = 'create' }: Create
                   </span>
                   <p className="font-mono font-bold text-[var(--navy)] text-xs mt-0.5">
                     {aadharNumber || 'Not provided'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card: Residential & Address Details */}
+          <div className="bg-white/95 rounded-2xl p-6 border border-[var(--border)] shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 pb-3.5 border-b border-[var(--border)]/70">
+                <div className="w-9 h-9 rounded-xl bg-[var(--cream)] text-[var(--gold)] flex items-center justify-center font-bold">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">
+                    Residential &amp; Address Details
+                  </h3>
+                  <p className="text-[11px] text-[var(--text-secondary)]">
+                    Current residence, permanent address, state, and postal pincode
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-xs">
+                <div className="p-3 rounded-xl bg-[var(--cream)]/30 border border-[var(--border)]/60 sm:col-span-2">
+                  <span className="text-[10.5px] uppercase font-bold text-[var(--text-muted)] tracking-wider">
+                    Current Residential Address
+                  </span>
+                  <p className="font-semibold text-[var(--navy)] text-xs mt-0.5 leading-relaxed">
+                    {currentAddress || 'Not provided'}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[var(--cream)]/30 border border-[var(--border)]/60 sm:col-span-2">
+                  <span className="text-[10.5px] uppercase font-bold text-[var(--text-muted)] tracking-wider">
+                    Permanent Address
+                  </span>
+                  <p className="font-semibold text-[var(--navy)] text-xs mt-0.5 leading-relaxed">
+                    {sameAsCurrent ? `${currentAddress || 'Not provided'} (Same as current)` : (permanentAddress || 'Not provided')}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[var(--cream)]/30 border border-[var(--border)]/60">
+                  <span className="text-[10.5px] uppercase font-bold text-[var(--text-muted)] tracking-wider">
+                    State &amp; Country
+                  </span>
+                  <p className="font-bold text-[var(--navy)] text-xs mt-0.5">
+                    {stateName || '—'}, {country || 'India'}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[var(--cream)]/30 border border-[var(--border)]/60">
+                  <span className="text-[10.5px] uppercase font-bold text-[var(--text-muted)] tracking-wider">
+                    Postal Pincode
+                  </span>
+                  <p className="font-mono font-bold text-[var(--navy)] text-xs mt-0.5">
+                    {pincode || 'Not provided'}
                   </p>
                 </div>
               </div>
@@ -1192,7 +1315,122 @@ export function CreateStaffForm({ onBack, initialData, mode = 'create' }: Create
         </div>
       </div>
 
-      {/* ── Section 2: Experience & Previous Employment ────────────────────── */}
+      {/* ── Section 2: Residential & Address Details ───────────────────────── */}
+      <div className="bg-white/95 rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+        <div className="flex items-center gap-2.5 pb-4 border-b border-[var(--border)]/70 mb-5">
+          <div className="w-9 h-9 rounded-xl bg-[#F5EEDB] text-[var(--gold)] flex items-center justify-center font-bold">
+            <MapPin className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">
+              2. Residential &amp; Address Details
+            </h3>
+            <p className="text-xs text-[var(--text-secondary)]">
+              Country, state, current residence, permanent domicile address, and postal pincode
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {/* Row 1: Country, State, Pincode */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Country */}
+            <div>
+              <label className="block text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider mb-1.5">
+                Country
+              </label>
+              <input
+                type="text"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                placeholder="e.g. India"
+                className="w-full h-10 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-xs text-[var(--navy)] focus:outline-none focus:border-[var(--gold)] placeholder:text-[var(--text-muted)] transition-colors shadow-2xs font-medium"
+              />
+            </div>
+
+            {/* State */}
+            <div>
+              <label className="block text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider mb-1.5">
+                State / Province
+              </label>
+              <input
+                type="text"
+                list="indian-states-list"
+                value={stateName}
+                onChange={(e) => setStateName(e.target.value)}
+                placeholder="e.g. Karnataka"
+                className="w-full h-10 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-xs text-[var(--navy)] focus:outline-none focus:border-[var(--gold)] placeholder:text-[var(--text-muted)] transition-colors shadow-2xs font-medium"
+              />
+              <datalist id="indian-states-list">
+                {INDIAN_STATES.map((st) => (
+                  <option key={st} value={st} />
+                ))}
+              </datalist>
+            </div>
+
+            {/* Pincode */}
+            <div>
+              <label className="block text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider mb-1.5">
+                Postal Pincode
+              </label>
+              <input
+                type="text"
+                maxLength={6}
+                value={pincode}
+                onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
+                placeholder="e.g. 560011"
+                className="w-full h-10 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-xs font-mono font-semibold text-[var(--navy)] focus:outline-none focus:border-[var(--gold)] placeholder:text-[var(--text-muted)] transition-colors shadow-2xs"
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Current Address */}
+          <div>
+            <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-[var(--gold)]" />
+              <span>Current Residential Address</span>
+            </label>
+            <textarea
+              rows={2}
+              value={currentAddress}
+              onChange={(e) => handleCurrentAddressChange(e.target.value)}
+              placeholder="Door / Flat No., Building Name, Street / Layout, Landmark, City"
+              className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-xs text-[var(--navy)] focus:outline-none focus:border-[var(--gold)] placeholder:text-[var(--text-muted)] transition-colors shadow-2xs font-medium resize-none"
+            />
+          </div>
+
+          {/* Row 3: Permanent Address with Checkbox */}
+          <div className="pt-1">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[11px] font-bold text-[var(--navy)] uppercase tracking-wider flex items-center gap-1.5">
+                <Home className="w-3.5 h-3.5 text-[var(--gold)]" />
+                <span>Permanent Address</span>
+              </label>
+              <label className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--navy)] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={sameAsCurrent}
+                  onChange={(e) => handleToggleSameAsCurrent(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded text-[var(--gold)] accent-[var(--gold)] cursor-pointer"
+                />
+                <span>Same as Current Address</span>
+              </label>
+            </div>
+            <textarea
+              rows={2}
+              disabled={sameAsCurrent}
+              value={sameAsCurrent ? currentAddress : permanentAddress}
+              onChange={(e) => setPermanentAddress(e.target.value)}
+              placeholder="Permanent domicile / hometown address"
+              className={`w-full p-3 rounded-xl border border-[var(--border)] text-xs text-[var(--navy)] focus:outline-none focus:border-[var(--gold)] placeholder:text-[var(--text-muted)] transition-colors shadow-2xs font-medium resize-none ${
+                sameAsCurrent ? 'bg-gray-100/70 text-gray-600 cursor-not-allowed' : 'bg-[var(--input-bg)]'
+              }`}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Section 3: Experience & Previous Employment ────────────────────── */}
       <div className="bg-white/95 rounded-2xl p-6 border border-[var(--border)] shadow-sm">
         <div className="flex items-center gap-2.5 pb-4 border-b border-[var(--border)]/70 mb-5">
           <div className="w-9 h-9 rounded-xl bg-[#F5EEDB] text-[var(--gold)] flex items-center justify-center font-bold">
@@ -1200,7 +1438,7 @@ export function CreateStaffForm({ onBack, initialData, mode = 'create' }: Create
           </div>
           <div>
             <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">
-              2. Experience &amp; Employment History
+              3. Experience &amp; Employment History
             </h3>
             <p className="text-xs text-[var(--text-secondary)]">
               Work experience record, previous institutions, and service verification letters
@@ -1425,7 +1663,7 @@ export function CreateStaffForm({ onBack, initialData, mode = 'create' }: Create
         </div>
       </div>
 
-      {/* ── Section 3: Employee Type & Subjects ────────────────────────────── */}
+      {/* ── Section 4: Employee Type & Subjects ────────────────────────────── */}
       <div className="bg-white/95 rounded-2xl p-6 border border-[var(--border)] shadow-sm">
         <div className="flex items-center gap-2.5 pb-4 border-b border-[var(--border)]/70 mb-5">
           <div className="w-9 h-9 rounded-xl bg-[#F5EEDB] text-[var(--gold)] flex items-center justify-center font-bold">
@@ -1433,7 +1671,7 @@ export function CreateStaffForm({ onBack, initialData, mode = 'create' }: Create
           </div>
           <div>
             <h3 className="text-sm font-bold text-[var(--navy)] uppercase tracking-wider">
-              3. Employee Role &amp; Subject Allocation
+              4. Employee Role &amp; Subject Allocation
             </h3>
             <p className="text-xs text-[var(--text-secondary)]">
               Specify the designation category and curricular subject assignments
