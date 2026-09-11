@@ -19,7 +19,10 @@ import { PageSpinner } from '@/components/ui'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import { ProtectedRoute } from '@/components/protected-route'
 import { GuestOnlyRoute } from '@/components/guest-only-route'
-import { AuthProvider } from '@/contexts/auth-context'
+import { RoleRoute } from '@/components/role-route'
+import { AuthProvider, useAuth } from '@/contexts/auth-context'
+import { UserRole } from '@/features/auth/enums/auth.enum'
+import { getRoleHomeRoute } from '@/core/config/rbac.config'
 
 // ── Pages ──────────────────────────────────────────────────────────────────
 const LandingPage = lazyWithRetry(() => import('@/pages/landing-page'))
@@ -47,6 +50,14 @@ const SuperAdminDashboard = lazyWithRetry(() => import('@/features/superadmin/pa
 const SuperAdminApprovals = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-approvals'))
 const SuperAdminOrganizations = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-organizations'))
 
+// ── Staff & Student ──────────────────────────────────────────────────────────
+const StaffStudentLayout = lazyWithRetry(() => import('@/layouts/staff-student-layout'))
+const StaffWelcomePage = lazyWithRetry(() => import('@/features/staff/pages/staff-welcome-page'))
+const StudentLayout = lazyWithRetry(() => import('@/layouts/student-layout'))
+const StudentWelcomePage = lazyWithRetry(() => import('@/features/student/pages/student-welcome-page'))
+const StudentTimetablePage = lazyWithRetry(() => import('@/features/student/pages/student-timetable-page'))
+const StudentAttendancePage = lazyWithRetry(() => import('@/features/student/pages/student-attendance-page'))
+
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
   return <PageSpinner />
@@ -56,8 +67,13 @@ function Lazy({ children }: { children: JSX.Element }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>
 }
 
+function AppHomeRedirect() {
+  const { user } = useAuth()
+  return <Navigate to={getRoleHomeRoute(user?.role)} replace />
+}
+
 // ── Router factory ────────────────────────────────────────────────────────────
-export function createAppRouter(queryClient: QueryClient) {
+export function createAppRouter(_queryClient: QueryClient) {
   return createBrowserRouter([
     {
       element: (
@@ -76,48 +92,28 @@ export function createAppRouter(queryClient: QueryClient) {
           ],
         },
 
-        // ── Standard Authenticated App (Staff, Students, Parents) ───────────────
+        // ── Standard Authenticated App Redirection ──────────────────────────────
         {
           path: '/app',
           element: (
             <ProtectedRoute>
-              <Lazy><DashboardLayout /></Lazy>
+              <AppHomeRedirect />
             </ProtectedRoute>
           ),
           children: [
-            // Redirect legacy /app paths to /organization/dashboard
-            { index: true, element: <Navigate to="/organization/dashboard" replace /> },
-            { path: 'dashboard', element: <Navigate to="/organization/dashboard" replace /> },
-            { path: 'create-users', element: <Navigate to="/organization/create-users" replace /> },
-
-            // Attendance — fully developed reference module
-            {
-              path: 'attendance',
-              element: <Lazy><AttendancePage /></Lazy>,
-              loader: async () => {
-                const { attendanceKeys } = await import('@/features/attendance/queries/keys')
-                await queryClient.invalidateQueries({ queryKey: attendanceKeys.all, refetchType: 'all' })
-                return null
-              },
-            },
-
-            // UI Showcase Page
-            {
-              path: 'ui-showcase',
-              element: <Lazy><UiShowcasePage /></Lazy>,
-            },
-
-            // ── ADD NEW MODULES HERE as they are developed ───────────────────────
+            { index: true, element: <AppHomeRedirect /> },
+            { path: 'dashboard', element: <AppHomeRedirect /> },
+            { path: 'create-users', element: <AppHomeRedirect /> },
           ],
         },
 
-        // ── Organization App Shell ──────────────────────────────────────────────
+        // ── Organization App Shell (Strictly for Organizations) ───────────────────
         {
           path: '/organization',
           element: (
-            <ProtectedRoute>
+            <RoleRoute allowedRoles={[UserRole.Organization]}>
               <Lazy><DashboardLayout /></Lazy>
-            </ProtectedRoute>
+            </RoleRoute>
           ),
           children: [
             { index: true, element: <Navigate to="/organization/dashboard" replace /> },
@@ -126,13 +122,13 @@ export function createAppRouter(queryClient: QueryClient) {
           ],
         },
 
-        // ── Superadmin App Shell ────────────────────────────────────────────────
+        // ── Superadmin App Shell (Strictly for Super Admin) ───────────────────────
         {
           path: '/superadmin',
           element: (
-            <ProtectedRoute>
+            <RoleRoute allowedRoles={[UserRole.SuperAdmin]}>
               <Lazy><SuperAdminLayout /></Lazy>
-            </ProtectedRoute>
+            </RoleRoute>
           ),
           children: [
             { index: true, element: <Navigate to="/superadmin/dashboard" replace /> },
@@ -147,6 +143,37 @@ export function createAppRouter(queryClient: QueryClient) {
         {
           path: '/app/superadmin/*',
           element: <Navigate to="/superadmin/dashboard" replace />,
+        },
+
+        // ── Staff Portal (Strictly for Staff: Teacher, Non-Staff, Finance) ───────
+        {
+          path: '/staff',
+          element: (
+            <RoleRoute allowedRoles={[UserRole.Staff]}>
+              <Lazy><StaffStudentLayout /></Lazy>
+            </RoleRoute>
+          ),
+          children: [
+            { index: true, element: <Navigate to="/staff/welcome" replace /> },
+            { path: 'welcome', element: <Lazy><StaffWelcomePage /></Lazy> },
+          ],
+        },
+
+        // ── Student Portal (Strictly for Students) ───────────────────────────────
+        {
+          path: '/student',
+          element: (
+            <RoleRoute allowedRoles={[UserRole.Students]}>
+              <Lazy><StudentLayout /></Lazy>
+            </RoleRoute>
+          ),
+          children: [
+            { index: true, element: <Navigate to="/student/welcome" replace /> },
+            { path: 'welcome', element: <Lazy><StudentWelcomePage /></Lazy> },
+            { path: 'dashboard', element: <Navigate to="/student/welcome" replace /> },
+            { path: 'timetable', element: <Lazy><StudentTimetablePage /></Lazy> },
+            { path: 'attendance', element: <Lazy><StudentAttendancePage /></Lazy> },
+          ],
         },
 
         // ── Guest-only auth routes (no public header/footer) ──────────────────────

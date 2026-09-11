@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  LogOut, User, Building2, Hash, ChevronDown,
+  LogOut, User, Building2, Hash, ChevronDown, GraduationCap,
 } from 'lucide-react'
 import { Button, InitialsAvatar, Separator } from '@/components/ui'
 import { NotificationDrawer } from '@/features/notifications'
 import { eduLogo } from '@/assets/images'
 import { useAuth } from '@/contexts/auth-context'
 import { UserRole } from '@/features/auth/enums/auth.enum'
+import { getRoleHomeRoute } from '@/core/config/rbac.config'
 
 // ── Role display labels (matches MySQL user_roles table) ─────────────────────
 const ROLE_LABEL: Record<string, string> = {
@@ -55,7 +56,10 @@ export function AppHeader({ hideLogo = false }: { hideLogo?: boolean } = {}) {
 
         {/* ── Left corner: Logo (Hidden for Super Admin) ───────────────────── */}
         {!hideLogo && !isSuperAdmin ? (
-          <Link to="/app/attendance" className="flex items-center shrink-0 -ml-1">
+          <Link
+            to={getRoleHomeRoute(user?.role)}
+            className="flex items-center shrink-0 -ml-1"
+          >
             <img
               src={eduLogo}
               alt="EduWeConnect"
@@ -159,6 +163,20 @@ export function AppHeader({ hideLogo = false }: { hideLogo?: boolean } = {}) {
                       </div>
                     </div>
                   ) : null}
+
+                  {/* STD / Class for Students */}
+                  {(user?.standard || user?.role === UserRole.Students || String(user?.role).toLowerCase().includes('student')) && (
+                    <div className="flex items-start gap-2.5">
+                      <GraduationCap className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: 'var(--gold)' }} />
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>STD</p>
+                        <p className="text-[12px] font-medium" style={{ color: 'var(--navy)' }}>
+                          {user?.standard || '—'}
+                          {user?.rollNumber ? ` (Roll #${user.rollNumber})` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex items-start gap-2.5">
                     <User className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: 'var(--gold)' }} />
