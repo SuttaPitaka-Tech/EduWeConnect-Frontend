@@ -8,7 +8,7 @@ import { Button, Input, FormError } from '@/components/ui'
 import { useAuth } from '@/contexts/auth-context'
 import { loginSchema } from '../schemas/schemas'
 import type { LoginFormValues } from '../types/types'
-import { UserRole } from '../enums/auth.enum'
+import { getRoleHomeRoute, getRoleWelcomeMessage } from '@/core/config/rbac.config'
 
 function FieldIcon({ children }: { children: React.ReactNode }) {
   return (
@@ -65,19 +65,11 @@ export function LoginForm() {
       if (result.nextPage === 'otp') {
         navigate('/otp', { state: { email: values.email } })
       } else {
-        const role = result.user?.role
-        if (role === UserRole.SuperAdmin) {
-          navigate('/superadmin/dashboard', { replace: true })
-        } else {
-          if (role === UserRole.Organization) {
-            const orgName = result.user?.organizationName || result.organizationName || 'Organization'
-            toast.success(`Welcome ${orgName} (Org)!`)
-          }
-          navigate(role === UserRole.Organization ? '/organization/dashboard' : '/app/attendance', { replace: true })
-        }
+        toast.success(getRoleWelcomeMessage(result.user))
+        navigate(getRoleHomeRoute(result.user?.role), { replace: true })
       }
     } catch (err: any) {
-      setServerError(err?.message || 'Invalid credentials. Please check your email and password.')
+      setServerError(err?.message || 'Invalid credentials. Please check your email/student ID and password.')
     }
   }
 
@@ -105,18 +97,8 @@ export function LoginForm() {
     setChangePassLoading(true)
     try {
       const result = await changePassword(pendingEmail, currentPassword, newPassword)
-      const role = result.user?.role
-      const orgName = result.user?.organizationName || result.organizationName || 'Organization'
-      const welcomeMsg = role === UserRole.Organization
-        ? `Welcome ${orgName} (Org)!`
-        : `Welcome ${result.user?.firstName || 'User'}!`
-      toast.success(welcomeMsg)
-
-      if (role === UserRole.SuperAdmin) {
-        navigate('/superadmin/dashboard', { replace: true })
-      } else {
-        navigate(role === UserRole.Organization ? '/organization/dashboard' : '/app/attendance', { replace: true })
-      }
+      toast.success(getRoleWelcomeMessage(result.user))
+      navigate(getRoleHomeRoute(result.user?.role), { replace: true })
     } catch (err: any) {
       setChangePassError(err?.message || 'Failed to update password. Please try again.')
     } finally {
@@ -333,14 +315,19 @@ export function LoginForm() {
               </div>
             )}
 
-            {/* Email */}
+            {/* Email / Student ID */}
             <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="login-email"
-                className="text-[12px] font-semibold text-[var(--navy)] uppercase tracking-wider"
-              >
-                Email / Username
-              </label>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="login-email"
+                  className="text-[12px] font-semibold text-[var(--navy)] uppercase tracking-wider"
+                >
+                  Email or Student ID
+                </label>
+                <span className="text-[11px] text-[var(--text-secondary)] font-medium">
+                  Staff: Email • Students: Student ID
+                </span>
+              </div>
               <div className="relative">
                 <FieldIcon>
                   <Mail className="h-[15px] w-[15px] text-[var(--gold)]" strokeWidth={1.75} />
@@ -348,7 +335,7 @@ export function LoginForm() {
                 <Input
                   id="login-email"
                   type="text"
-                  placeholder="Enter your email or username"
+                  placeholder="Enter email or student ID"
                   autoComplete="username"
                   {...register('email')}
                   error={Boolean(errors.email)}

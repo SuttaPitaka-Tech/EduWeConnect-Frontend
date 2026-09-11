@@ -30,6 +30,13 @@ export interface MeResponse {
   firstName?: string
   lastName?: string
   organizationName?: string
+  institutionId?: string
+  employeeType?: string
+  standard?: string
+  rollNumber?: string
+  studentId?: string
+  subjects?: string[]
+  mobileNumber?: string
   mustChangePassword?: boolean
 }
 
@@ -43,6 +50,12 @@ export interface AuthUser {
   institutionId?:  string
   institutionName?: string
   organizationName?: string
+  employeeType?:   string // 'Teacher' | 'Non Staff' | 'Finance'
+  standard?:       string // for students
+  rollNumber?:     string // for students
+  studentId?:      string // for students
+  subjects?:       string[] // for teachers
+  mobileNumber?:   string
   mustChangePassword?: boolean
   avatarUrl?:      string
 }

@@ -24,6 +24,9 @@ export async function loginApi(email?: string, password?: string): Promise<Login
   const orgName = data.organizationName || data.user?.organizationName || '';
   const mustChange = Boolean(data.mustChangePassword ?? data.user?.mustChangePassword);
   
+  const isOrg = normalizedRole === UserRole.Organization;
+  const userFirstName = isOrg ? (orgName || 'Organization') : (data.user?.firstName || data.user?.email || '');
+
   return {
     accessToken: data.access_token,
     nextPage: 'dashboard',
@@ -31,13 +34,19 @@ export async function loginApi(email?: string, password?: string): Promise<Login
     organizationName: orgName,
     user: {
       id: data.user?.id || '',
-      firstName: orgName || data.user?.email || '',
-      lastName: '',
+      firstName: userFirstName,
+      lastName: data.user?.lastName || '',
       email: data.user?.email || '',
       role: normalizedRole,
-      institutionId: '',
-      institutionName: '',
+      institutionId: data.user?.institutionId || '',
+      institutionName: data.user?.institutionName || orgName,
       organizationName: orgName,
+      employeeType: data.user?.employeeType,
+      standard: data.user?.standard,
+      rollNumber: data.user?.rollNumber,
+      studentId: data.user?.studentId || data.user?.id,
+      subjects: data.user?.subjects || [],
+      mobileNumber: data.user?.mobileNumber,
       mustChangePassword: mustChange,
     }
   }
@@ -66,6 +75,8 @@ export async function changePasswordApi(
     : data.user?.role;
 
   const orgName = data.organizationName || data.user?.organizationName || '';
+  const isOrg = normalizedRole === UserRole.Organization;
+  const userFirstName = isOrg ? (orgName || 'Organization') : (data.user?.firstName || data.user?.email || '');
 
   return {
     accessToken: data.access_token,
@@ -74,13 +85,19 @@ export async function changePasswordApi(
     organizationName: orgName,
     user: {
       id: data.user?.id || '',
-      firstName: orgName || data.user?.email || '',
-      lastName: '',
+      firstName: userFirstName,
+      lastName: data.user?.lastName || '',
       email: data.user?.email || '',
       role: normalizedRole,
-      institutionId: '',
-      institutionName: '',
+      institutionId: data.user?.institutionId || '',
+      institutionName: data.user?.institutionName || orgName,
       organizationName: orgName,
+      employeeType: data.user?.employeeType,
+      standard: data.user?.standard,
+      rollNumber: data.user?.rollNumber,
+      studentId: data.user?.studentId || data.user?.id,
+      subjects: data.user?.subjects || [],
+      mobileNumber: data.user?.mobileNumber,
       mustChangePassword: false,
     }
   }
@@ -106,15 +123,26 @@ export async function getMeApi(): Promise<AuthUser> {
     ? UserRole.SuperAdmin 
     : (data.role || 'user');
 
+  const isOrg = normalizedRole === UserRole.Organization;
+  const firstName = isOrg 
+    ? (data.organizationName || 'Organization') 
+    : (data.firstName || data.email || 'User');
+
   return {
     id:              data.id || '',
-    firstName:       data.organizationName || data.firstName || data.email || 'Super Admin',
+    firstName:       firstName,
     lastName:        data.lastName || '',
     email:           data.email || '',
     role:            normalizedRole as AuthUser['role'],
     institutionId:   data.institutionId || '',
-    institutionName: data.institutionName || '',
+    institutionName: data.institutionName || data.organizationName || '',
     organizationName: data.organizationName || '',
+    employeeType:    data.employeeType,
+    standard:        data.standard,
+    rollNumber:      data.rollNumber,
+    studentId:       data.studentId || data.id,
+    subjects:        data.subjects || [],
+    mobileNumber:    data.mobileNumber,
     mustChangePassword: Boolean(data.mustChangePassword),
     avatarUrl:       data.avatarUrl,
   }
