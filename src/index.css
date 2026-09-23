@@ -188,6 +188,26 @@ button.btn-text {
   background: var(--gold);
 }
 
+/* ── Sleek Modal & Panel Scrollbars (Clean, transparent, no beige track) ── */
+.sleek-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+.sleek-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.sleek-scrollbar::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.sleek-scrollbar::-webkit-scrollbar-thumb {
+  background: #CBD5E1 !important;
+  border-radius: 9999px;
+}
+.sleek-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8 !important;
+}
+
 /* ── Table Row Hover Effect ── */
 tbody tr {
   transition: background-color 150ms ease;

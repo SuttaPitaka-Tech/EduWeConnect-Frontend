@@ -1,41 +1,26 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, CalendarDays, CalendarCheck, NotebookPen, MessageSquare } from 'lucide-react'
-import type { StudentMenuItem } from '../types'
+import { LayoutDashboard, MessageSquare } from 'lucide-react'
+import type { StaffMenuItem } from '../types'
 
-export const STUDENT_MENU_ITEMS: StudentMenuItem[] = [
+export const STAFF_MENU_ITEMS: StaffMenuItem[] = [
   {
     title: 'Dashboard',
-    to: '/student/welcome',
+    to: '/staff/welcome',
     icon: LayoutDashboard,
   },
   {
-    title: 'Time Table',
-    to: '/student/timetable',
-    icon: CalendarDays,
-  },
-  {
-    title: 'Attendance',
-    to: '/student/attendance',
-    icon: CalendarCheck,
-  },
-  {
-    title: 'Notes',
-    to: '/student/notes',
-    icon: NotebookPen,
-  },
-  {
     title: 'Chat',
-    to: '/student/chat',
+    to: '/staff/chat',
     icon: MessageSquare,
   },
 ]
 
-interface StudentMenuProps {
+interface StaffMenuProps {
   onNavigate?: () => void
   isCollapsed?: boolean
 }
 
-export function StudentMenu({ onNavigate, isCollapsed = false }: StudentMenuProps) {
+export function StaffMenu({ onNavigate, isCollapsed = false }: StaffMenuProps) {
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center rounded-xl text-sm font-semibold transition-all duration-300 transform border ${
       isCollapsed ? 'justify-center p-3 w-12 h-12 mx-auto' : 'gap-3 px-4 py-3'
@@ -48,7 +33,7 @@ export function StudentMenu({ onNavigate, isCollapsed = false }: StudentMenuProp
   return (
     <div className={`flex-1 w-full flex flex-col py-3 overflow-y-auto ${isCollapsed ? 'px-2' : 'px-4'}`}>
       <nav className="flex flex-col gap-2.5">
-        {STUDENT_MENU_ITEMS.map((item) => {
+        {STAFF_MENU_ITEMS.map((item) => {
           const Icon = item.icon
           return (
             <NavLink

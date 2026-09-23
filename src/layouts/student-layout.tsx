@@ -31,7 +31,7 @@ export default function StudentLayout() {
       />
 
       {/* Right Column: Fixed Header + Internal Scrollable Content + Footer */}
-      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden transition-all duration-300">
         {/* Pinned Header */}
         <header className="relative shrink-0 z-30">
           <AppHeader hideLogo={true} />
@@ -50,7 +50,7 @@ export default function StudentLayout() {
 
         {/* Scrollable Content Area */}
         <main className="flex-1 overflow-y-auto min-h-0 flex flex-col">
-          <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 flex flex-col">
+          <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 flex flex-col">
             <Outlet />
           </div>
         </main>

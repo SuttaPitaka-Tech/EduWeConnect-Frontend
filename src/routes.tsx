@@ -51,12 +51,14 @@ const SuperAdminApprovals = lazyWithRetry(() => import('@/features/superadmin/pa
 const SuperAdminOrganizations = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-organizations'))
 
 // ── Staff & Student ──────────────────────────────────────────────────────────
-const StaffStudentLayout = lazyWithRetry(() => import('@/layouts/staff-student-layout'))
+const StaffLayout = lazyWithRetry(() => import('@/layouts/staff-layout'))
 const StaffWelcomePage = lazyWithRetry(() => import('@/features/staff/pages/staff-welcome-page'))
 const StudentLayout = lazyWithRetry(() => import('@/layouts/student-layout'))
 const StudentWelcomePage = lazyWithRetry(() => import('@/features/student/pages/student-welcome-page'))
 const StudentTimetablePage = lazyWithRetry(() => import('@/features/student/pages/student-timetable-page'))
 const StudentAttendancePage = lazyWithRetry(() => import('@/features/student/pages/student-attendance-page'))
+const StudentNotesPage = lazyWithRetry(() => import('@/features/student/pages/student-notes-page'))
+const EduChatPage = lazyWithRetry(() => import('@/features/chat/components/chat-page'))
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -119,6 +121,7 @@ export function createAppRouter(_queryClient: QueryClient) {
             { index: true, element: <Navigate to="/organization/dashboard" replace /> },
             { path: 'dashboard', element: <Lazy><OrganizationDashboard /></Lazy> },
             { path: 'create-users', element: <Lazy><OrganizationCreateUsers /></Lazy> },
+            { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
           ],
         },
 
@@ -138,6 +141,7 @@ export function createAppRouter(_queryClient: QueryClient) {
             { path: 'organization-management', element: <Lazy><SuperAdminOrganizations /></Lazy> },
             { path: 'organizations', element: <Navigate to="/superadmin/organization-management" replace /> },
             { path: 'create-organization', element: <Navigate to="/superadmin/approval" replace /> },
+            { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
           ],
         },
         {
@@ -150,12 +154,14 @@ export function createAppRouter(_queryClient: QueryClient) {
           path: '/staff',
           element: (
             <RoleRoute allowedRoles={[UserRole.Staff]}>
-              <Lazy><StaffStudentLayout /></Lazy>
+              <Lazy><StaffLayout /></Lazy>
             </RoleRoute>
           ),
           children: [
             { index: true, element: <Navigate to="/staff/welcome" replace /> },
             { path: 'welcome', element: <Lazy><StaffWelcomePage /></Lazy> },
+            { path: 'dashboard', element: <Navigate to="/staff/welcome" replace /> },
+            { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
           ],
         },
 
@@ -173,6 +179,8 @@ export function createAppRouter(_queryClient: QueryClient) {
             { path: 'dashboard', element: <Navigate to="/student/welcome" replace /> },
             { path: 'timetable', element: <Lazy><StudentTimetablePage /></Lazy> },
             { path: 'attendance', element: <Lazy><StudentAttendancePage /></Lazy> },
+            { path: 'notes', element: <Lazy><StudentNotesPage /></Lazy> },
+            { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
           ],
         },
 
