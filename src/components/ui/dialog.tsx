@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react'
+import { type ReactNode, type CSSProperties, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -13,6 +13,7 @@ interface DialogContentProps {
   children:   ReactNode
   className?: string
   maxWidth?:  string
+  style?:     CSSProperties
 }
 
 interface DialogHeaderProps   { children: ReactNode; className?: string }
@@ -52,11 +53,11 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   )
 }
 
-export function DialogContent({ children, className, maxWidth = 'max-w-md' }: DialogContentProps) {
+export function DialogContent({ children, className, maxWidth = 'max-w-md', style }: DialogContentProps) {
   return (
     <div
       className={cn('relative w-full rounded-2xl p-6 shadow-2xl', maxWidth, className)}
-      style={{ background: 'var(--card-background)', boxShadow: 'var(--card-shadow)' }}
+      style={{ background: 'var(--card-background)', boxShadow: 'var(--card-shadow)', ...style }}
     >
       {children}
     </div>

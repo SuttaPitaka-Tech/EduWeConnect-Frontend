@@ -1,17 +1,17 @@
 import { X, Lock, Unlock } from 'lucide-react'
 import { superadminLogo, lotusLarge } from '@/assets/images'
-import { StudentMenu } from './student-menu'
+import { StaffMenu } from './staff-menu'
 import { useCollapsibleSidebar } from '@/hooks/use-collapsible-sidebar'
 
-interface StudentSidebarProps {
+interface StaffSidebarProps {
   mobileOpen: boolean
   onCloseMobile: () => void
 }
 
-export function StudentSidebar({
+export function StaffSidebar({
   mobileOpen,
   onCloseMobile,
-}: StudentSidebarProps) {
+}: StaffSidebarProps) {
   const {
     isLocked,
     isExpanded,
@@ -71,8 +71,8 @@ export function StudentSidebar({
             )}
           </div>
 
-          {/* Navigation Menu (Icon-only when collapsed) */}
-          <StudentMenu isCollapsed={!isExpanded} />
+          {/* Navigation Menu */}
+          <StaffMenu isCollapsed={!isExpanded} />
 
           {/* Bottom Lock / Mode Indicator */}
           {isExpanded ? (
@@ -113,7 +113,7 @@ export function StudentSidebar({
         </div>
       </aside>
 
-      {/* ── Mobile Sidebar Drawer (Full on mobile) ────────────────────────── */}
+      {/* ── Mobile Sidebar Drawer ────────────────────────────────────────── */}
       {mobileOpen && (
         <div className="fixed inset-0 z-[100] md:hidden flex">
           {/* Backdrop */}
@@ -144,7 +144,7 @@ export function StudentSidebar({
                 </button>
               </div>
 
-              <StudentMenu onNavigate={onCloseMobile} isCollapsed={false} />
+              <StaffMenu onNavigate={onCloseMobile} isCollapsed={false} />
             </div>
           </div>
         </div>

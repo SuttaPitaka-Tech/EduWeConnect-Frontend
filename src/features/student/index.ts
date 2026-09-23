@@ -1,6 +1,7 @@
 export { default as StudentWelcomePage } from './pages/student-welcome-page'
 export { default as StudentTimetablePage } from './pages/student-timetable-page'
 export { default as StudentAttendancePage } from './pages/student-attendance-page'
+export { default as StudentNotesPage } from './pages/student-notes-page'
 export { default as StudentProfilePage } from './pages/student-profile-page'
 export { StudentSidebar } from './components/student-sidebar'
 export { StudentMenu } from './components/student-menu'
