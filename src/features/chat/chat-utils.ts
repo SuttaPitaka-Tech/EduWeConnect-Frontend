@@ -181,3 +181,45 @@ export const PRESENCE_COLORS: Record<PresenceStatus, string> = {
   busy: 'bg-rose-500',
   offline: 'bg-slate-400',
 }
+
+/**
+ * Formats a message timestamp into conversational day dividers:
+ * - "Today"
+ * - "Yesterday"
+ * - "Monday", "Tuesday", etc. (if within last 7 days)
+ * - "Monday, September 21" (if in current year)
+ * - "September 21, 2025" (if in past year)
+ */
+export const formatChatDateDivider = (dateInput?: string | Date): string => {
+  if (!dateInput) return 'Today'
+  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput
+  if (isNaN(date.getTime())) return 'Today'
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+  const diffTime = today.getTime() - msgDate.getTime()
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
+
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays > 1 && diffDays < 7) {
+    return date.toLocaleDateString(undefined, { weekday: 'long' })
+  }
+  if (date.getFullYear() === now.getFullYear()) {
+    return date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
+  }
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+/**
+ * Returns a unique day key (YYYY-MM-DD) for grouping messages by calendar date
+ */
+export const getMessageDayKey = (dateInput?: string | Date): string => {
+  if (!dateInput) return ''
+  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput
+  if (isNaN(date.getTime())) return ''
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+}
+

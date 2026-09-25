@@ -37,6 +37,30 @@ export function useChatSocket({
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  const callbacksRef = useRef({
+    onReceiveMessage,
+    onUserTyping,
+    onReactionUpdated,
+    onMessagesRead,
+    onMessagesDelivered,
+    onMessageEdited,
+    onMessageDeleted,
+    onMessagePinned,
+  });
+
+  useEffect(() => {
+    callbacksRef.current = {
+      onReceiveMessage,
+      onUserTyping,
+      onReactionUpdated,
+      onMessagesRead,
+      onMessagesDelivered,
+      onMessageEdited,
+      onMessageDeleted,
+      onMessagePinned,
+    };
+  });
+
   // Initialize socket connection
   useEffect(() => {
     const token = getToken();
@@ -64,8 +88,8 @@ export function useChatSocket({
     });
 
     socket.on('receive_message', (msg: any) => {
-      if (onReceiveMessage) {
-        onReceiveMessage({
+      if (callbacksRef.current.onReceiveMessage) {
+        callbacksRef.current.onReceiveMessage({
           id: msg.id,
           conversationId: msg.conversationId || msg.conversation_id,
           senderId: msg.senderId || msg.sender_id,
@@ -75,12 +99,20 @@ export function useChatSocket({
           status: msg.status || 'delivered',
           timestamp: msg.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           isOutgoing: String(msg.senderId) === String(userId) || (Boolean(userName) && msg.senderName === userName),
-          attachments: msg.attachments?.map((a: any) => ({
-            name: a.name || a.file_name,
-            size: a.size || a.file_size,
-            type: a.type?.includes('pdf') ? 'pdf' : a.type?.includes('doc') ? 'doc' : 'other',
-            url: a.url,
-          })),
+          attachments: msg.attachments?.map((a: any) => {
+            const rawType = (a.type || a.file_type || '').toLowerCase();
+            const name = (a.name || a.file_name || '').toLowerCase();
+            const isImg = rawType.includes('image') || /\.(png|jpe?g|gif|webp|svg)$/i.test(name);
+            const isPdf = rawType.includes('pdf') || /\.pdf$/i.test(name);
+            return {
+              id: a.id,
+              name: a.name || a.file_name,
+              size: a.size || a.file_size,
+              type: isImg ? 'image' : isPdf ? 'pdf' : 'doc',
+              url: a.url,
+              storage_key: a.storage_key || a.storageKey,
+            };
+          }),
           reactions: msg.reactions || {},
           replyToId: msg.replyToId || msg.reply_to_id,
           replyTo: msg.replyTo || null,
@@ -91,49 +123,37 @@ export function useChatSocket({
     });
 
     socket.on('user_typing', (data: any) => {
-      if (onUserTyping) onUserTyping(data);
+      if (callbacksRef.current.onUserTyping) callbacksRef.current.onUserTyping(data);
     });
 
     socket.on('message_reacted', (data: any) => {
-      if (onReactionUpdated) onReactionUpdated(data);
+      if (callbacksRef.current.onReactionUpdated) callbacksRef.current.onReactionUpdated(data);
     });
 
     socket.on('messages_read', (data: any) => {
-      if (onMessagesRead) onMessagesRead(data);
+      if (callbacksRef.current.onMessagesRead) callbacksRef.current.onMessagesRead(data);
     });
 
     socket.on('messages_delivered', (data: any) => {
-      if (onMessagesDelivered) onMessagesDelivered(data);
+      if (callbacksRef.current.onMessagesDelivered) callbacksRef.current.onMessagesDelivered(data);
     });
 
     socket.on('message_edited', (data: any) => {
-      if (onMessageEdited) onMessageEdited(data);
+      if (callbacksRef.current.onMessageEdited) callbacksRef.current.onMessageEdited(data);
     });
 
     socket.on('message_deleted', (data: any) => {
-      if (onMessageDeleted) onMessageDeleted(data);
+      if (callbacksRef.current.onMessageDeleted) callbacksRef.current.onMessageDeleted(data);
     });
 
     socket.on('message_pinned', (data: any) => {
-      if (onMessagePinned) onMessagePinned(data);
+      if (callbacksRef.current.onMessagePinned) callbacksRef.current.onMessagePinned(data);
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [
-    userId,
-    userName,
-    userRole,
-    onReceiveMessage,
-    onUserTyping,
-    onReactionUpdated,
-    onMessagesRead,
-    onMessagesDelivered,
-    onMessageEdited,
-    onMessageDeleted,
-    onMessagePinned,
-  ]);
+  }, [userId, userName, userRole]);
 
   // Join/leave conversation room on conversation change
   useEffect(() => {
@@ -224,6 +244,7 @@ export function useChatSocket({
   );
 
   return {
+    socket: socketRef.current,
     isConnected,
     emitSendMessage,
     emitMarkAsRead,

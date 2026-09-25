@@ -11,10 +11,12 @@ export interface ChatParticipant {
 }
 
 export interface ChatAttachment {
+  id?: string
   name: string
   size: string
   type: 'pdf' | 'image' | 'doc'
   url?: string
+  storage_key?: string
 }
 
 export interface ChatMessage {

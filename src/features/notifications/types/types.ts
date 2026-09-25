@@ -1,4 +1,4 @@
-export type NotificationType = 'registration' | 'documents' | 'approval' | 'update'
+export type NotificationType = 'registration' | 'documents' | 'approval' | 'update' | 'chat'
 
 export interface NotificationItem {
   id: string
@@ -10,6 +10,11 @@ export interface NotificationItem {
   type?: NotificationType
   tag?: string
   link?: string
+  conversationId?: string
+  senderId?: string
+  senderName?: string
+  senderRole?: string
+  createdAt?: string
 }
 
 export interface NotificationDrawerProps {

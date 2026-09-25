@@ -133,3 +133,20 @@ export async function fetchChatContactsApi(query?: string): Promise<ChatContact[
   const res = await apiClient.get(`/chat/contacts${params}`);
   return res.data;
 }
+
+/**
+ * Clear chat history for the current user only (other participant still retains it)
+ */
+export async function clearChatHistoryApi(conversationId: string): Promise<any> {
+  const res = await apiClient.post(`/chat/conversations/${conversationId}/clear`);
+  return res.data;
+}
+
+/**
+ * Hide conversation from user sidebar
+ */
+export async function hideChatApi(conversationId: string): Promise<any> {
+  const res = await apiClient.post(`/chat/conversations/${conversationId}/hide`);
+  return res.data;
+}
+
