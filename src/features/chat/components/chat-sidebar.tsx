@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { Search, SquarePen, Hash, X, MessageSquare, UserPlus, Users } from 'lucide-react'
+import { Search, SquarePen, Hash, X, MessageSquare, UserPlus, Users, PhoneCall } from 'lucide-react'
 import { Input } from '@/components/ui'
 import type { ChatConversation } from '../types'
 import type { ChatContact as ApiChatContact } from '../api/chat.api'
@@ -18,6 +18,8 @@ interface ChatSidebarProps {
   onSelectConversation: (id: string) => void
   onStartDirectChat?: (contact: ApiChatContact) => void
   onOpenNewChat: () => void
+  isCallHistoryOpen?: boolean
+  onOpenCallHistory?: () => void
   searchQuery: string
   onSearchChange: (q: string) => void
   filterTab: FilterTab
@@ -44,6 +46,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onSelectConversation,
   onStartDirectChat,
   onOpenNewChat,
+  isCallHistoryOpen = false,
+  onOpenCallHistory,
   searchQuery,
   onSearchChange,
   filterTab,
@@ -81,27 +85,45 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   return (
     <div className="w-full md:w-80 lg:w-96 border-r border-slate-200/90 flex flex-col bg-white shrink-0">
       {/* Top Header */}
-      <div className="p-4 border-b border-slate-200/90 flex items-center justify-between">
-        <div>
+      <div className="p-4 border-b border-slate-200/90 flex items-center justify-between gap-2">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#0B1F33] flex items-center justify-center text-white font-bold text-xs shadow-2xs">
+            <div className="w-7 h-7 rounded-lg bg-[#0B1F33] flex items-center justify-center text-white font-bold text-xs shadow-2xs shrink-0">
               💬
             </div>
-            <h1 className="font-semibold text-base text-slate-800 tracking-tight">EduChat</h1>
+            <h1 className="font-semibold text-base text-slate-800 tracking-tight truncate">EduChat</h1>
           </div>
-          <p className="text-[11px] text-slate-400 mt-0.5 capitalize">
+          <p className="text-[11px] text-slate-400 mt-0.5 capitalize truncate">
             {currentUserName || 'User'} {currentUserRole ? `• ${currentUserRole}` : ''}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenNewChat}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0B1F33] hover:bg-[#142f4c] text-white text-xs font-medium shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-98"
-        >
-          <SquarePen className="w-3.5 h-3.5" />
-          <span>New Chat</span>
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {onOpenCallHistory && (
+            <button
+              type="button"
+              onClick={onOpenCallHistory}
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-98 ${
+                isCallHistoryOpen
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+              title="Call History"
+            >
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span>Call History</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onOpenNewChat}
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#0B1F33] hover:bg-[#142f4c] text-white text-xs font-medium shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-98"
+          >
+            <SquarePen className="w-3.5 h-3.5" />
+            <span>New Chat</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Input */}

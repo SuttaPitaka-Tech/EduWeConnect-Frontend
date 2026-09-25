@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ClipboardCheck, Building2, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, ClipboardCheck, Building2, Calendar, MessageSquare } from 'lucide-react'
 
 interface SuperAdminMenuProps {
   onNavigate?: () => void
@@ -47,6 +47,16 @@ export function SuperAdminMenu({ onNavigate, isCollapsed = false }: SuperAdminMe
         >
           <Building2 className="w-5 h-5 text-[var(--gold)] shrink-0" />
           {!isCollapsed && <span className="truncate">Organization Management</span>}
+        </NavLink>
+
+        <NavLink 
+          to="/superadmin/calendar" 
+          title={isCollapsed ? 'Calendar' : undefined}
+          className={getNavLinkClass}
+          onClick={onNavigate}
+        >
+          <Calendar className="w-5 h-5 text-[var(--gold)] shrink-0" />
+          {!isCollapsed && <span className="truncate">Calendar</span>}
         </NavLink>
 
         <NavLink 

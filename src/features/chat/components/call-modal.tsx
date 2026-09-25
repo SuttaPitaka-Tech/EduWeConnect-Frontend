@@ -86,9 +86,7 @@ export const CallModal: React.FC<CallModalProps> = ({
       if (remoteVideoRef.current.srcObject !== remoteStream) {
         remoteVideoRef.current.srcObject = remoteStream
       }
-      if (isPeerCameraOn) {
-        remoteVideoRef.current.play().catch(() => {})
-      }
+      remoteVideoRef.current.play().catch(() => {})
     }
   }, [remoteStream, isPeerCameraOn, remoteVideoRef])
 
@@ -441,8 +439,9 @@ export const CallModal: React.FC<CallModalProps> = ({
             ref={remoteVideoRef as any}
             autoPlay
             playsInline
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              isPeerVideoVisible ? 'opacity-100 block' : 'opacity-0 hidden'
+            muted={false}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+              isPeerVideoVisible ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
             }`}
           />
 

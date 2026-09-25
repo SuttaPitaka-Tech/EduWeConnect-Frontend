@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, UserPlus, MessageSquare } from 'lucide-react'
 import type { OrganizationMenuItem } from './types'
+import { createCalendarMenuItem } from '@/features/calendar'
 
 export const ORGANIZATION_MENU_ITEMS: OrganizationMenuItem[] = [
   {
@@ -13,6 +14,7 @@ export const ORGANIZATION_MENU_ITEMS: OrganizationMenuItem[] = [
     to: '/organization/create-users',
     icon: UserPlus,
   },
+  createCalendarMenuItem('/organization'),
   {
     title: 'Chat',
     to: '/organization/chat',

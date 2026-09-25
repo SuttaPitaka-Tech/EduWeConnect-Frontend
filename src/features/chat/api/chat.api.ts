@@ -150,3 +150,47 @@ export async function hideChatApi(conversationId: string): Promise<any> {
   return res.data;
 }
 
+export interface CallHistoryItem {
+  id: string;
+  caller_id: string;
+  caller_name: string;
+  caller_role: string;
+  caller_avatar: string | null;
+  receiver_id: string;
+  receiver_name: string;
+  receiver_role: string;
+  receiver_avatar: string | null;
+  conversation_id: string | null;
+  call_type: 'audio' | 'video';
+  status: 'initiated' | 'ringing' | 'ongoing' | 'completed' | 'rejected' | 'missed' | 'busy' | 'failed';
+  started_at: string | null;
+  answered_at: string | null;
+  ended_at: string | null;
+  duration_seconds: number;
+  end_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CallHistoryResponse {
+  calls: CallHistoryItem[];
+  total: number;
+}
+
+/**
+ * Fetch call history logs for the current user
+ */
+export async function fetchCallHistoryApi(params?: {
+  conversationId?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<CallHistoryResponse> {
+  const query = new URLSearchParams();
+  if (params?.conversationId) query.set('conversationId', params.conversationId);
+  if (params?.limit) query.set('limit', String(params.limit));
+  if (params?.offset) query.set('offset', String(params.offset));
+  const queryString = query.toString() ? `?${query.toString()}` : '';
+  const res = await apiClient.get(`/calls/history${queryString}`);
+  return res.data;
+}
+
