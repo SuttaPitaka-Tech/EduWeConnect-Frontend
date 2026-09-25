@@ -2,11 +2,13 @@ import React from 'react'
 import { Loader2 } from 'lucide-react'
 import type { ChatMessage } from '../types'
 import { ChatMessageItem } from './chat-message-item'
+import { formatChatDateDivider, getMessageDayKey } from '../chat-utils'
 
 interface ChatMessagesViewProps {
   messages: ChatMessage[]
   isLoading?: boolean
   messagesEndRef: React.RefObject<any>
+  firstUnreadMessageId?: string | null
   activeReactionMsgId: string | null
   setActiveReactionMsgId: (id: string | null) => void
   onReaction: (messageId: string, emoji: string) => void
@@ -27,6 +29,7 @@ export const ChatMessagesView: React.FC<ChatMessagesViewProps> = ({
   messages,
   isLoading,
   messagesEndRef,
+  firstUnreadMessageId,
   activeReactionMsgId,
   setActiveReactionMsgId,
   onReaction,
@@ -56,37 +59,61 @@ export const ChatMessagesView: React.FC<ChatMessagesViewProps> = ({
         </div>
       ) : (
         <>
-          <div className="my-3 text-center">
-            <span className="text-xs text-slate-400 font-normal select-none">Today</span>
-          </div>
-
           {messages.map((msg, index) => {
             const prevMsg = messages[index - 1]
+            const isNewDay = index === 0 || getMessageDayKey(msg.createdAt) !== getMessageDayKey(prevMsg?.createdAt)
+            const isFirstUnread = Boolean(firstUnreadMessageId && msg.id === firstUnreadMessageId)
             const isSameSenderAsPrev =
+              !isNewDay &&
+              !isFirstUnread &&
               Boolean(prevMsg) &&
               prevMsg.isOutgoing === msg.isOutgoing &&
               prevMsg.senderId === msg.senderId
 
             return (
-              <ChatMessageItem
-                key={msg.id}
-                message={msg}
-                isSameSenderAsPrev={isSameSenderAsPrev}
-                activeReactionMsgId={activeReactionMsgId}
-                setActiveReactionMsgId={setActiveReactionMsgId}
-                onReaction={onReaction}
-                onReplyQuote={onReplyQuote}
-                onForward={onForward}
-                onCopyLink={onCopyLink}
-                onToggleSave={onToggleSave}
-                onDelete={onDelete}
-                onTogglePin={onTogglePin}
-                onMarkUnread={onMarkUnread}
-                onShare={onShare}
-                onTranslate={onTranslate}
-                onSaveEdit={onSaveEdit}
-                onViewDetails={onViewDetails}
-              />
+              <React.Fragment key={msg.id}>
+                {isNewDay && (
+                  <div className="relative my-4 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                      <div className="w-full border-t border-slate-200/80" />
+                    </div>
+                    <div className="relative bg-white px-3 py-1 text-xs text-slate-500 font-medium rounded-full border border-slate-200 shadow-2xs select-none">
+                      {formatChatDateDivider(msg.createdAt)}
+                    </div>
+                  </div>
+                )}
+
+                {isFirstUnread && (
+                  <div className="relative my-4 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                      <div className="w-full border-t-2 border-red-500/80" />
+                    </div>
+                    <div className="relative bg-white px-3 py-0.5 text-[11px] font-bold text-red-600 rounded-full border border-red-300 shadow-xs flex items-center gap-1.5 uppercase tracking-wider select-none animate-in fade-in duration-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      <span>New messages</span>
+                    </div>
+                  </div>
+                )}
+
+                <ChatMessageItem
+                  message={msg}
+                  isSameSenderAsPrev={isSameSenderAsPrev}
+                  activeReactionMsgId={activeReactionMsgId}
+                  setActiveReactionMsgId={setActiveReactionMsgId}
+                  onReaction={onReaction}
+                  onReplyQuote={onReplyQuote}
+                  onForward={onForward}
+                  onCopyLink={onCopyLink}
+                  onToggleSave={onToggleSave}
+                  onDelete={onDelete}
+                  onTogglePin={onTogglePin}
+                  onMarkUnread={onMarkUnread}
+                  onShare={onShare}
+                  onTranslate={onTranslate}
+                  onSaveEdit={onSaveEdit}
+                  onViewDetails={onViewDetails}
+                />
+              </React.Fragment>
             )
           })}
         </>

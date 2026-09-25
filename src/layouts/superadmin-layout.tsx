@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { AppHeader } from '@/components/app-header'
 import { superadminSidebar, superadminLogo, lotusLarge } from '@/assets/images'
 import { SuperAdminMenu } from '@/features/superadmin/components/superadmin-menu'
@@ -15,6 +15,8 @@ export default function SuperAdminLayout() {
     handleMouseEnter,
     handleMouseLeave,
   } = useCollapsibleSidebar()
+  const location = useLocation()
+  const isChat = location.pathname.includes('/chat')
 
   return (
     <div className="h-screen flex w-full font-sans bg-[var(--cream)] overflow-hidden">
@@ -184,19 +186,23 @@ export default function SuperAdminLayout() {
         </header>
 
         {/* Scrollable Content Area */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 flex flex-col">
-          <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 flex flex-col">
+        <main className={`flex-1 min-h-0 flex flex-col ${isChat ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}`}>
+          <div className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col min-h-0 ${
+            isChat ? 'py-4 md:py-6 h-full overflow-hidden' : 'py-6 md:py-8'
+          }`}>
             <Outlet />
           </div>
 
           {/* Branded Footer */}
-          <footer className="w-full px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-[var(--border)]/60 text-xs text-[var(--text-secondary)] font-medium mt-auto bg-white/30 shrink-0">
-            <p>© 2026 Sutta Pitaka Tech. All rights reserved.</p>
-            <div className="flex items-center gap-2">
-              <img src={lotusLarge} alt="Lotus" className="w-4 h-4 object-contain opacity-80" />
-              <span className="text-[11px] font-medium text-[var(--text-secondary)]">Empowering Education. Enriching Lives.</span>
-            </div>
-          </footer>
+          {!isChat && (
+            <footer className="w-full px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-[var(--border)]/60 text-xs text-[var(--text-secondary)] font-medium mt-auto bg-white/30 shrink-0">
+              <p>© 2026 Sutta Pitaka Tech. All rights reserved.</p>
+              <div className="flex items-center gap-2">
+                <img src={lotusLarge} alt="Lotus" className="w-4 h-4 object-contain opacity-80" />
+                <span className="text-[11px] font-medium text-[var(--text-secondary)]">Empowering Education. Enriching Lives.</span>
+              </div>
+            </footer>
+          )}
         </main>
       </div>
     </div>

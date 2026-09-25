@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Bell,
   Building2,
@@ -10,37 +11,139 @@ import {
   Trash2,
   ArrowRight,
   Sparkles,
+  MessageSquare,
 } from 'lucide-react'
+import { io } from 'socket.io-client'
 import { Button, Sheet, SheetContent, SheetHeader, SheetFooter } from '@/components/ui'
+import { useAuth } from '@/contexts/auth-context'
+import { getToken } from '@/lib/auth-storage'
 import type { NotificationItem, NotificationDrawerProps } from '../types/types'
-import { DEFAULT_NOTIFICATIONS } from '../constants/constants'
+import {
+  fetchNotificationsApi,
+  deleteNotificationApi,
+  clearAllNotificationsApi,
+  markAllNotificationsReadApi,
+} from '../api/notifications.api'
+
+const SOCKET_SERVER_URL = import.meta.env.VITE_NOTIFICATION_WS_URL || 'http://localhost:7003'
 
 export function NotificationDrawer({
-  notifications: initialNotifications = DEFAULT_NOTIFICATIONS,
   onNotificationClick,
   onClearAll,
   onMarkAllAsRead,
   className = '',
 }: NotificationDrawerProps) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
 
   const unreadCount = notifications.filter((n) => !n.isRead).length
 
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+  // Load real notifications from backend MySQL notification_alert table
+  const loadNotifications = useCallback(async () => {
+    try {
+      const data = await fetchNotificationsApi()
+      setNotifications(data || [])
+    } catch {
+      // Keep current state on error
+    }
+  }, [])
+
+  // Initial load & real-time socket subscription
+  useEffect(() => {
+    loadNotifications()
+
+    const token = getToken()
+    const socket = io(SOCKET_SERVER_URL, {
+      transports: ['websocket', 'polling'],
+      auth: { token: token ? `Bearer ${token}` : undefined },
+      query: {
+        userId: user?.id || 'current-user',
+        userName: user?.firstName || 'User',
+        userRole: user?.role || 'student',
+      },
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    })
+
+    // Real-time alert received
+    socket.on('new_notification_alert', () => {
+      loadNotifications()
+    })
+
+    // Real-time alert deleted (e.g. read in chat on another tab/device)
+    socket.on('notification_deleted', (data: { conversationId?: string }) => {
+      if (data?.conversationId) {
+        setNotifications((prev) => prev.filter((n) => n.conversationId !== data.conversationId))
+      } else {
+        loadNotifications()
+      }
+    })
+
+    // Custom local window events
+    const handleConvRead = (e: any) => {
+      const convId = e.detail?.conversationId
+      if (convId) {
+        setNotifications((prev) => prev.filter((n) => n.conversationId !== convId))
+      }
+    }
+
+    const handleRefresh = () => {
+      loadNotifications()
+    }
+
+    window.addEventListener('notification:conversation_read', handleConvRead)
+    window.addEventListener('notification:refresh', handleRefresh)
+
+    return () => {
+      socket.disconnect()
+      window.removeEventListener('notification:conversation_read', handleConvRead)
+      window.removeEventListener('notification:refresh', handleRefresh)
+    }
+  }, [user?.id, loadNotifications])
+
+  // Re-fetch whenever the drawer is opened to ensure fresh data
+  useEffect(() => {
+    if (open) {
+      loadNotifications()
+    }
+  }, [open, loadNotifications])
+
+  const handleMarkAllAsRead = async () => {
+    // Delete all from notification_alert table in MySQL to free space
+    await markAllNotificationsReadApi()
+    setNotifications([])
     onMarkAllAsRead?.()
   }
 
-  const handleItemClick = (item: NotificationItem) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
-    )
+  const handleItemClick = async (item: NotificationItem) => {
+    // Delete individual notification from table to free space
+    await deleteNotificationApi(item.id)
+    setNotifications((prev) => prev.filter((n) => n.id !== item.id))
     onNotificationClick?.(item)
+
+    // Navigate to chat if it's a chat message notification
+    if (item.conversationId) {
+      setOpen(false)
+      const role = user?.role ? user.role.toLowerCase() : 'student'
+      const chatRoute =
+        role === 'organization'
+          ? '/organization/chat'
+          : role === 'superadmin'
+          ? '/superadmin/chat'
+          : role === 'staff'
+          ? '/staff/chat'
+          : '/student/chat'
+
+      navigate(chatRoute, { state: { conversationId: item.conversationId } })
+    }
   }
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
+    // Clear all from notification_alert table in MySQL to free space
+    await clearAllNotificationsApi()
     setNotifications([])
     onClearAll?.()
   }
@@ -88,7 +191,7 @@ export function NotificationDrawer({
                   )}
                 </div>
                 <p className="text-[11.5px] text-white/70 mt-0.5">
-                  Platform alerts & organization updates
+                  Platform alerts & chat messages
                 </p>
               </div>
             </div>
@@ -145,8 +248,8 @@ export function NotificationDrawer({
               <h4 className="text-sm font-bold text-[var(--navy)] mb-1">All Caught Up!</h4>
               <p className="text-xs text-[var(--text-secondary)] max-w-[240px] leading-relaxed">
                 {filter === 'unread'
-                  ? 'You have no unread organization notifications.'
-                  : 'When organizations register or update their documents, alerts will appear here.'}
+                  ? 'You have no unread notifications.'
+                  : 'When someone sends you a message or updates are posted, alerts will appear here.'}
               </p>
             </div>
           ) : (
@@ -169,7 +272,9 @@ export function NotificationDrawer({
                   {/* Category Icon */}
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-2xs ${
-                      notif.type === 'registration'
+                      notif.type === 'chat'
+                        ? 'bg-blue-50 text-blue-600'
+                        : notif.type === 'registration'
                         ? 'bg-[var(--gold)]/15 text-[var(--gold)]'
                         : notif.type === 'documents'
                         ? 'bg-blue-50 text-blue-600'
@@ -178,6 +283,7 @@ export function NotificationDrawer({
                         : 'bg-purple-50 text-purple-600'
                     }`}
                   >
+                    {notif.type === 'chat' && <MessageSquare className="w-4.5 h-4.5" />}
                     {notif.type === 'registration' && <Building2 className="w-4.5 h-4.5" />}
                     {notif.type === 'documents' && <FileText className="w-4.5 h-4.5" />}
                     {notif.type === 'approval' && <ShieldCheck className="w-4.5 h-4.5" />}
@@ -188,7 +294,7 @@ export function NotificationDrawer({
                   <div className="flex-1 min-w-0 pr-3">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--navy)] truncate max-w-[180px]">
-                        {notif.organizationName}
+                        {notif.organizationName || notif.title}
                       </span>
                       {notif.tag && (
                         <span className="text-[9.5px] px-2 py-0.5 rounded-full bg-[var(--cream)] text-[var(--navy)] font-bold border border-[var(--border)]/60">
@@ -212,7 +318,8 @@ export function NotificationDrawer({
                       </span>
 
                       <span className="text-[11px] font-bold text-[var(--gold)] group-hover:underline flex items-center gap-1">
-                        View Details <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
+                        {notif.type === 'chat' ? 'Open Chat' : 'View Details'}{' '}
+                        <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />
                       </span>
                     </div>
                   </div>

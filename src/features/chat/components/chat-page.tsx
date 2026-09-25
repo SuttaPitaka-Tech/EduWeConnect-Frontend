@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Pin } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
+import { deleteConversationNotificationsApi } from '@/features/notifications/api/notifications.api'
 import type { ChatConversation, ChatMessage, ChatAttachment } from '../types'
 import {
   fetchConversationsApi,
@@ -16,6 +18,7 @@ import {
   type ChatContact as ApiChatContact,
 } from '../api/chat.api'
 import { useChatSocket } from '../hooks/use-chat-socket'
+import { useWebRTCCall } from '../hooks/use-webrtc-call'
 import { ChatSidebar, type FilterTab } from './chat-sidebar'
 import { ChatHeader } from './chat-header'
 import { ChatMessagesView } from './chat-messages-view'
@@ -23,6 +26,7 @@ import { ChatComposer } from './chat-composer'
 import { NewChatDialog } from './new-chat-dialog'
 import { ForwardMessageDialog } from './forward-message-dialog'
 import { MessageDetailsDialog } from './message-details-dialog'
+import { CallModal } from './call-modal'
 
 // Realistic multilingual translation dictionary for instant offline preview
 const TRANSLATION_MAP: Record<string, Record<string, string>> = {
@@ -125,11 +129,13 @@ function translateMessageContent(content: string, langName: string): string {
 
 export default function EduChatPage() {
   const { user } = useAuth()
+  const location = useLocation()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Core state
   const [conversations, setConversations] = useState<ChatConversation[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string>('')
+  const [firstUnreadMessageId, setFirstUnreadMessageId] = useState<string | null>(null)
   const [contacts, setContacts] = useState<ApiChatContact[]>([])
   const [isLoadingConversations, setIsLoadingConversations] = useState(true)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
@@ -277,6 +283,7 @@ export default function EduChatPage() {
                   contacts.find((c) => c.name === (m.senderName || m.sender_name))?.organizationName),
             content: m.content,
             timestamp: m.timestamp || 'Now',
+            createdAt: m.createdAt || m.created_at || (m.timestamp && m.timestamp.includes('T') ? m.timestamp : undefined),
             status: m.status || (isOutgoing ? 'delivered' : undefined),
             isOutgoing,
             reactions: m.reactions || {},
@@ -299,6 +306,19 @@ export default function EduChatPage() {
             })),
           }
         })
+
+        // Identify the first unread message before marking conversation as read
+        const currentConv = conversations.find((c) => c.id === activeConversationId)
+        const unreadCount = currentConv?.unreadCount || 0
+        if (unreadCount > 0) {
+          const incoming = mappedMsgs.filter((m) => !m.isOutgoing)
+          if (incoming.length > 0) {
+            const idx = Math.max(0, incoming.length - unreadCount)
+            setFirstUnreadMessageId(incoming[idx]?.id || null)
+          } else {
+            setFirstUnreadMessageId(null)
+          }
+        }
 
         setConversations((prev) =>
           prev.map((c) => (c.id === activeConversationId ? { ...c, messages: mappedMsgs } : c))
@@ -333,24 +353,22 @@ export default function EduChatPage() {
         const targetConv = prev[existingIndex]
         const isActive = targetConv.id === activeConversationId
 
-        let updatedMessages = targetConv.messages
-        if (isActive) {
-          if (targetConv.messages.some((m) => m.id === newMsg.id)) {
-            updatedMessages = targetConv.messages.map((m) => (m.id === newMsg.id ? newMsg : m))
-          } else if (newMsg.isOutgoing) {
-            const optIndex = targetConv.messages.findIndex(
-              (m) => m.id.startsWith('msg-') && m.content === newMsg.content
-            )
-            if (optIndex !== -1) {
-              const updated = [...targetConv.messages]
-              updated[optIndex] = newMsg
-              updatedMessages = updated
-            } else {
-              updatedMessages = [...targetConv.messages, newMsg]
-            }
+        let updatedMessages = targetConv.messages || []
+        if (updatedMessages.some((m) => m.id === newMsg.id)) {
+          updatedMessages = updatedMessages.map((m) => (m.id === newMsg.id ? newMsg : m))
+        } else if (newMsg.isOutgoing) {
+          const optIndex = updatedMessages.findIndex(
+            (m) => m.id.startsWith('msg-') && m.content === newMsg.content
+          )
+          if (optIndex !== -1) {
+            const updated = [...updatedMessages]
+            updated[optIndex] = newMsg
+            updatedMessages = updated
           } else {
-            updatedMessages = [...targetConv.messages, newMsg]
+            updatedMessages = [...updatedMessages, newMsg]
           }
+        } else {
+          updatedMessages = [...updatedMessages, newMsg]
         }
 
         const isUnread = !isActive && !newMsg.isOutgoing
@@ -497,6 +515,7 @@ export default function EduChatPage() {
   )
 
   const {
+    socket,
     isConnected,
     emitSendMessage,
     emitMarkAsRead,
@@ -517,6 +536,82 @@ export default function EduChatPage() {
     onMessageDeleted: handleMessageDeleted,
     onMessagePinned: handleMessagePinned,
   })
+
+  // WebRTC Audio/Video Calling
+  const {
+    callState,
+    activeCall,
+    statusMessage: callStatusMessage,
+    callDuration,
+    isMuted: isCallMuted,
+    remoteAudioRef,
+    remoteVideoRef,
+    remoteStream,
+    isCameraOn,
+    isPeerCameraOn,
+    localCameraStream,
+    toggleCamera,
+    startCall,
+    acceptCall,
+    rejectCall,
+    endCall,
+    toggleMute: toggleCallMute,
+  } = useWebRTCCall({
+    socket,
+    currentUserId: user?.id || (user as any)?.userId || 'current-user',
+    currentUserName: user?.firstName || (user as any)?.name || 'User',
+    currentUserRole: user?.role || 'student',
+  })
+
+  // Start outgoing call handler
+  const handleInitiateVoiceCall = (callType: 'audio' | 'video' = 'audio') => {
+    if (!activeConversation) return
+
+    const currentId = user?.id || (user as any)?.userId || 'current-user'
+    let targetUserId = ''
+    let targetUserName = activeConversation.name
+    let targetUserRole = activeConversation.role || 'Member'
+    let targetUserAvatar = activeConversation.avatar
+
+    // 1. Try finding peer from conversation members
+    const peerMember = activeConversation.members?.find(
+      (m) => String(m.id) !== String(currentId)
+    )
+
+    if (peerMember) {
+      targetUserId = String(peerMember.id)
+      targetUserName = peerMember.name || targetUserName
+      targetUserRole = peerMember.role || targetUserRole
+    }
+
+    // 2. Fallback to matching with contacts
+    if (!targetUserId && contacts.length > 0) {
+      const matchedContact = contacts.find(
+        (c) =>
+          c.name.toLowerCase() === activeConversation.name.toLowerCase() ||
+          (activeConversation.email && c.email === activeConversation.email)
+      )
+      if (matchedContact) {
+        targetUserId = String(matchedContact.userId || matchedContact.id)
+        targetUserName = matchedContact.name || targetUserName
+        targetUserRole = matchedContact.role || targetUserRole
+      }
+    }
+
+    // 3. Fallback to conversation id if direct chat
+    if (!targetUserId) {
+      targetUserId = activeConversation.id
+    }
+
+    startCall({
+      targetUserId,
+      targetUserName,
+      targetUserRole,
+      targetUserAvatar,
+      conversationId: activeConversation.id,
+      callType,
+    })
+  }
 
   // Filter conversations using strategy map
   const filteredConversations = useMemo(() => {
@@ -558,6 +653,7 @@ export default function EduChatPage() {
       senderRole: user?.role || 'User',
       content: contentText,
       timestamp: timeStr,
+      createdAt: new Date().toISOString(),
       status: 'delivered',
       isOutgoing: true,
       replyToId: currentReplying?.id || null,
@@ -595,7 +691,7 @@ export default function EduChatPage() {
     const payload = {
       conversation_id: currentConvId,
       content: contentText,
-      message_type: attachment ? (attachment.type === 'image' ? 'image' : 'file') : 'text',
+      message_type: attachment ? 'file' : 'text',
       reply_to_id: currentReplying?.id || null,
       attachments: attachment
         ? [
@@ -604,6 +700,7 @@ export default function EduChatPage() {
               file_type: attachment.type,
               file_size: attachment.size,
               url: attachment.url,
+              storage_key: attachment.storage_key,
             },
           ]
         : undefined,
@@ -961,15 +1058,63 @@ export default function EduChatPage() {
 
   const handleSelectConversation = (convId: string) => {
     setActiveConversationId(convId)
+    const targetConv = conversations.find((c) => c.id === convId)
+    const unreadCount = targetConv?.unreadCount || 0
+
+    if (unreadCount > 0 && targetConv?.messages && targetConv.messages.length > 0) {
+      const incoming = targetConv.messages.filter((m) => !m.isOutgoing)
+      if (incoming.length > 0) {
+        const idx = Math.max(0, incoming.length - unreadCount)
+        setFirstUnreadMessageId(incoming[idx]?.id || null)
+      } else {
+        setFirstUnreadMessageId(null)
+      }
+    } else if (unreadCount === 0) {
+      setFirstUnreadMessageId(null)
+    }
+
     setConversations((prev) =>
       prev.map((c) => (c.id === convId ? { ...c, unreadCount: 0 } : c))
     )
     markConversationAsReadApi(convId).catch(() => {})
     emitMarkAsRead(convId)
+    // Delete notification alert from database to free space and notify side drawer
+    deleteConversationNotificationsApi(convId).catch(() => {})
+    window.dispatchEvent(
+      new CustomEvent('notification:conversation_read', { detail: { conversationId: convId } })
+    )
+  }
+
+  // Handle direct navigation to conversation from notification drawer
+  useEffect(() => {
+    const navConvId = (location.state as any)?.conversationId
+    if (navConvId) {
+      handleSelectConversation(navConvId)
+    }
+  }, [location.state])
+
+  const handleRemoveChatHistory = (convId: string) => {
+    setConversations((prev) => prev.filter((c) => c.id !== convId))
+    if (activeConversationId === convId) {
+      setActiveConversationId('')
+    }
+  }
+
+  const handleHideChat = (convId: string) => {
+    setConversations((prev) => prev.filter((c) => c.id !== convId))
+    if (activeConversationId === convId) {
+      setActiveConversationId('')
+    }
+  }
+
+  const handleMarkAsUnread = (convId: string) => {
+    setConversations((prev) =>
+      prev.map((c) => (c.id === convId ? { ...c, unreadCount: Math.max(1, (c.unreadCount || 0) + 1) } : c))
+    )
   }
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-white">
+    <div className="flex h-full w-full overflow-hidden bg-white rounded-2xl border border-slate-200/80 shadow-sm">
       {/* Sidebar: Conversations, Filters, Search */}
       <ChatSidebar
         currentUserRole={user?.role}
@@ -985,6 +1130,9 @@ export default function EduChatPage() {
         filterTab={filterTab}
         onFilterTabChange={setFilterTab}
         isLoading={isLoadingConversations}
+        onRemoveChatHistory={handleRemoveChatHistory}
+        onHideChat={handleHideChat}
+        onMarkAsUnread={handleMarkAsUnread}
       />
 
       {/* Main Conversation Window */}
@@ -993,8 +1141,8 @@ export default function EduChatPage() {
           <>
             <ChatHeader
               conversation={activeConversation}
-              onCall={() => toast.info(`Starting voice call with ${activeConversation.name}...`)}
-              onVideoCall={() => toast.info(`Starting video call with ${activeConversation.name}...`)}
+              onCall={() => handleInitiateVoiceCall('audio')}
+              onVideoCall={() => handleInitiateVoiceCall('video')}
               onInfo={() => toast.info(`Channel: ${activeConversation.name}`)}
               onSendMessage={(txt) => {
                 setMessageInput(txt)
@@ -1038,6 +1186,7 @@ export default function EduChatPage() {
               messages={activeConversation.messages}
               isLoading={isLoadingMessages}
               messagesEndRef={messagesEndRef}
+              firstUnreadMessageId={firstUnreadMessageId}
               activeReactionMsgId={activeReactionMsgId}
               setActiveReactionMsgId={setActiveReactionMsgId}
               onReaction={handleReaction}
@@ -1104,6 +1253,31 @@ export default function EduChatPage() {
         open={Boolean(detailsMessage)}
         onOpenChange={(open) => !open && setDetailsMessage(null)}
         message={detailsMessage}
+      />
+
+      {/* Real-Time WebRTC Call Modal */}
+      <CallModal
+        callState={callState}
+        activeCall={activeCall}
+        statusMessage={callStatusMessage}
+        callDuration={callDuration}
+        isMuted={isCallMuted}
+        remoteAudioRef={remoteAudioRef}
+        remoteVideoRef={remoteVideoRef}
+        remoteStream={remoteStream}
+        isCameraOn={isCameraOn}
+        isPeerCameraOn={isPeerCameraOn}
+        localCameraStream={localCameraStream}
+        onToggleCamera={toggleCamera}
+        currentUser={{
+          name: user?.firstName || (user as any)?.name || 'Me',
+          role: user?.role,
+          organization: (user as any)?.organizationName || 'EduWeConnect',
+        }}
+        onAccept={acceptCall}
+        onReject={rejectCall}
+        onEnd={endCall}
+        onToggleMute={toggleCallMute}
       />
     </div>
   )

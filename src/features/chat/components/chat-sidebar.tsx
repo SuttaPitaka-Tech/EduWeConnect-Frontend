@@ -5,6 +5,7 @@ import type { ChatConversation } from '../types'
 import type { ChatContact as ApiChatContact } from '../api/chat.api'
 import { getInitials, getAvatarStyle, PRESENCE_COLORS } from '../chat-utils'
 import { groupMembersByRole } from '../chat-permissions'
+import { ChatConversationActionsMenu } from './chat-conversation-actions-menu'
 
 export type FilterTab = 'all' | 'channels' | 'direct' | 'members'
 
@@ -22,6 +23,9 @@ interface ChatSidebarProps {
   filterTab: FilterTab
   onFilterTabChange: (tab: FilterTab) => void
   isLoading?: boolean
+  onRemoveChatHistory?: (conversationId: string) => void
+  onHideChat?: (conversationId: string) => void
+  onMarkAsUnread?: (conversationId: string) => void
 }
 
 const TABS: { id: FilterTab; label: string }[] = [
@@ -45,6 +49,9 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   filterTab,
   onFilterTabChange,
   isLoading,
+  onRemoveChatHistory,
+  onHideChat,
+  onMarkAsUnread,
 }) => {
   const trimmedSearch = searchQuery.trim().toLowerCase()
   const isSearching = trimmedSearch.length > 0
@@ -193,11 +200,18 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     const presenceColor = PRESENCE_COLORS[conv.status || 'offline']
 
                     return (
-                      <button
+                      <div
                         key={conv.id}
-                        type="button"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => onSelectConversation(conv.id)}
-                        className={`w-full p-3.5 flex items-start gap-3 text-left transition-colors cursor-pointer ${
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            onSelectConversation(conv.id)
+                          }
+                        }}
+                        className={`w-full p-3.5 flex items-start gap-3 text-left transition-colors cursor-pointer group ${
                           isActive
                             ? 'bg-[#F2F4F7] border-l-4 border-l-[#0B1F33]'
                             : 'hover:bg-slate-50 border-l-4 border-l-transparent'
@@ -234,16 +248,26 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             >
                               {isChannel ? `#${conv.name}` : conv.name}
                             </span>
-                            {Boolean(conv.unreadCount && conv.unreadCount > 0) ? (
-                              <span
-                                title="Unread messages"
-                                className="w-2.5 h-2.5 rounded-full bg-[#5B5FC7] shrink-0 shadow-xs ring-2 ring-[#5B5FC7]/20"
+                            <div className="flex items-center gap-1 shrink-0">
+                              {Boolean(conv.unreadCount && conv.unreadCount > 0) ? (
+                                <span
+                                  title="Unread messages"
+                                  className="w-2.5 h-2.5 rounded-full bg-[#5B5FC7] shrink-0 shadow-xs ring-2 ring-[#5B5FC7]/20"
+                                />
+                              ) : conv.lastMessageTime ? (
+                                <span className="text-[10px] text-slate-400 shrink-0 font-normal">
+                                  {conv.lastMessageTime}
+                                </span>
+                              ) : null}
+
+                              <ChatConversationActionsMenu
+                                conversationId={conv.id}
+                                conversationName={conv.name}
+                                onRemoveChatHistory={onRemoveChatHistory}
+                                onHideChat={onHideChat}
+                                onMarkAsUnread={onMarkAsUnread}
                               />
-                            ) : conv.lastMessageTime ? (
-                              <span className="text-[10px] text-slate-400 shrink-0 font-normal">
-                                {conv.lastMessageTime}
-                              </span>
-                            ) : null}
+                            </div>
                           </div>
 
                           <div className="flex items-center justify-between gap-2">
@@ -263,7 +287,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             )}
                           </div>
                         </div>
-                      </button>
+                      </div>
                     )
                   })}
                 </div>
@@ -447,11 +471,18 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
             const presenceColor = PRESENCE_COLORS[conv.status || 'offline']
 
             return (
-              <button
+              <div
                 key={conv.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => onSelectConversation(conv.id)}
-                className={`w-full p-3.5 flex items-start gap-3 text-left transition-colors cursor-pointer ${
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onSelectConversation(conv.id)
+                  }
+                }}
+                className={`w-full p-3.5 flex items-start gap-3 text-left transition-colors cursor-pointer group ${
                   isActive
                     ? 'bg-[#F2F4F7] border-l-4 border-l-[#0B1F33]'
                     : 'hover:bg-slate-50 border-l-4 border-l-transparent'
@@ -488,16 +519,26 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     >
                       {isChannel ? `#${conv.name}` : conv.name}
                     </span>
-                    {Boolean(conv.unreadCount && conv.unreadCount > 0) ? (
-                      <span
-                        title="Unread messages"
-                        className="w-2.5 h-2.5 rounded-full bg-[#5B5FC7] shrink-0 shadow-xs ring-2 ring-[#5B5FC7]/20"
+                    <div className="flex items-center gap-1 shrink-0">
+                      {Boolean(conv.unreadCount && conv.unreadCount > 0) ? (
+                        <span
+                          title="Unread messages"
+                          className="w-2.5 h-2.5 rounded-full bg-[#5B5FC7] shrink-0 shadow-xs ring-2 ring-[#5B5FC7]/20"
+                        />
+                      ) : conv.lastMessageTime ? (
+                        <span className="text-[10px] text-slate-400 shrink-0 font-normal">
+                          {conv.lastMessageTime}
+                        </span>
+                      ) : null}
+
+                      <ChatConversationActionsMenu
+                        conversationId={conv.id}
+                        conversationName={conv.name}
+                        onRemoveChatHistory={onRemoveChatHistory}
+                        onHideChat={onHideChat}
+                        onMarkAsUnread={onMarkAsUnread}
                       />
-                    ) : conv.lastMessageTime ? (
-                      <span className="text-[10px] text-slate-400 shrink-0 font-normal">
-                        {conv.lastMessageTime}
-                      </span>
-                    ) : null}
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between gap-2">
@@ -517,7 +558,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     )}
                   </div>
                 </div>
-              </button>
+              </div>
             )
           })
         )}

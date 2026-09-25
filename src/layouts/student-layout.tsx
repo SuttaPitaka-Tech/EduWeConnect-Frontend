@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, Navigate } from 'react-router-dom'
+import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import { AppHeader } from '@/components/app-header'
 import { AppFooter } from '@/components/app-footer'
 import { useAuth } from '@/contexts/auth-context'
@@ -16,6 +16,8 @@ import { Menu } from 'lucide-react'
 export default function StudentLayout() {
   const { user } = useAuth()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const location = useLocation()
+  const isChat = location.pathname.includes('/chat')
 
   // Enterprise boundary: Non-student roles route to their respective home portals
   if (user && user.role !== UserRole.Students) {
@@ -49,8 +51,10 @@ export default function StudentLayout() {
         </header>
 
         {/* Scrollable Content Area */}
-        <main className="flex-1 overflow-y-auto min-h-0 flex flex-col">
-          <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 flex flex-col">
+        <main className={`flex-1 min-h-0 flex flex-col ${isChat ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          <div className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col min-h-0 ${
+            isChat ? 'py-4 md:py-6 h-full overflow-hidden' : 'py-6 md:py-8'
+          }`}>
             <Outlet />
           </div>
         </main>
