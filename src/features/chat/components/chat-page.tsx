@@ -27,6 +27,7 @@ import { NewChatDialog } from './new-chat-dialog'
 import { ForwardMessageDialog } from './forward-message-dialog'
 import { MessageDetailsDialog } from './message-details-dialog'
 import { CallModal } from './call-modal'
+import { CallHistoryView } from './call-history-view'
 
 // Realistic multilingual translation dictionary for instant offline preview
 const TRANSLATION_MAP: Record<string, Record<string, string>> = {
@@ -149,6 +150,7 @@ export default function EduChatPage() {
   const [messageInput, setMessageInput] = useState('')
   const [activeReactionMsgId, setActiveReactionMsgId] = useState<string | null>(null)
   const [isNewChatOpen, setIsNewChatOpen] = useState(false)
+  const [isCallHistoryOpen, setIsCallHistoryOpen] = useState(false)
 
   // Message Actions state
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
@@ -1049,6 +1051,7 @@ export default function EduChatPage() {
       if (res?.id) {
         setActiveConversationId(res.id)
       }
+      setIsCallHistoryOpen(false)
       setSearchQuery('')
       toast.success(`Chat opened with ${contact.name}`)
     } catch (err: any) {
@@ -1057,6 +1060,7 @@ export default function EduChatPage() {
   }
 
   const handleSelectConversation = (convId: string) => {
+    setIsCallHistoryOpen(false)
     setActiveConversationId(convId)
     const targetConv = conversations.find((c) => c.id === convId)
     const unreadCount = targetConv?.unreadCount || 0
@@ -1125,6 +1129,8 @@ export default function EduChatPage() {
         onSelectConversation={handleSelectConversation}
         onStartDirectChat={handleStartDirectChat}
         onOpenNewChat={() => setIsNewChatOpen(true)}
+        isCallHistoryOpen={isCallHistoryOpen}
+        onOpenCallHistory={() => setIsCallHistoryOpen((prev) => !prev)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         filterTab={filterTab}
@@ -1137,7 +1143,30 @@ export default function EduChatPage() {
 
       {/* Main Conversation Window */}
       <div className="flex-1 flex flex-col h-full min-w-0 bg-white">
-        {activeConversation ? (
+        {isCallHistoryOpen ? (
+          <CallHistoryView
+            currentUserId={user?.id || (user as any)?.userId}
+            onClose={() => setIsCallHistoryOpen(false)}
+            onInitiateCall={(targetUserId, targetUserName, targetUserRole, callType = 'audio') => {
+              startCall({
+                targetUserId,
+                targetUserName,
+                targetUserRole,
+                callType,
+              })
+            }}
+            onOpenChat={(targetUserId, targetUserName, targetUserRole) => {
+              setIsCallHistoryOpen(false)
+              handleStartDirectChat({
+                id: targetUserId,
+                userId: targetUserId,
+                name: targetUserName,
+                role: targetUserRole || 'student',
+                category: 'Direct',
+              })
+            }}
+          />
+        ) : activeConversation ? (
           <>
             <ChatHeader
               conversation={activeConversation}

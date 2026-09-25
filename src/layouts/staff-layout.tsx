@@ -18,6 +18,8 @@ export default function StaffLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const location = useLocation()
   const isChat = location.pathname.includes('/chat')
+  const isCalendar = location.pathname.includes('/calendar')
+  const isNoScroll = isChat || isCalendar
 
   // Non-staff roles route to their respective home portals
   if (user && user.role !== UserRole.Staff) {
@@ -51,15 +53,15 @@ export default function StaffLayout() {
         </header>
 
         {/* Scrollable Content Area */}
-        <main className={`flex-1 min-h-0 flex flex-col ${isChat ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <main className={`flex-1 min-h-0 flex flex-col ${isNoScroll ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           <div className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col min-h-0 ${
-            isChat ? 'py-4 md:py-6 h-full overflow-hidden' : 'py-6 md:py-8'
+            isChat ? 'py-4 md:py-6 h-full overflow-hidden' : isCalendar ? 'py-1 sm:py-2 md:py-3 h-full overflow-hidden justify-center' : 'py-6 md:py-8'
           }`}>
             <Outlet />
           </div>
         </main>
 
-        <AppFooter />
+        {!isCalendar && <AppFooter />}
       </div>
     </div>
   )

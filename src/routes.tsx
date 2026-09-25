@@ -59,6 +59,7 @@ const StudentTimetablePage = lazyWithRetry(() => import('@/features/student/page
 const StudentAttendancePage = lazyWithRetry(() => import('@/features/student/pages/student-attendance-page'))
 const StudentNotesPage = lazyWithRetry(() => import('@/features/student/pages/student-notes-page'))
 const EduChatPage = lazyWithRetry(() => import('@/features/chat/components/chat-page'))
+const CalendarPage = lazyWithRetry(() => import('@/features/calendar/pages/calendar-page'))
 
 // ── Page-level loading fallback ───────────────────────────────────────────────
 function PageLoader() {
@@ -72,6 +73,18 @@ function Lazy({ children }: { children: JSX.Element }) {
 function AppHomeRedirect() {
   const { user } = useAuth()
   return <Navigate to={getRoleHomeRoute(user?.role)} replace />
+}
+
+function RoleCalendarRedirect() {
+  const { user } = useAuth()
+  if (!user?.role) return <Navigate to="/login" replace />
+  const prefixMap: Record<string, string> = {
+    [UserRole.SuperAdmin]: '/superadmin/calendar',
+    [UserRole.Organization]: '/organization/calendar',
+    [UserRole.Staff]: '/staff/calendar',
+    [UserRole.Students]: '/student/calendar',
+  }
+  return <Navigate to={prefixMap[user.role] || getRoleHomeRoute(user.role)} replace />
 }
 
 // ── Router factory ────────────────────────────────────────────────────────────
@@ -109,6 +122,16 @@ export function createAppRouter(_queryClient: QueryClient) {
           ],
         },
 
+        // ── Direct /calendar convenience redirect to user's active role portal ────
+        {
+          path: '/calendar',
+          element: (
+            <ProtectedRoute>
+              <RoleCalendarRedirect />
+            </ProtectedRoute>
+          ),
+        },
+
         // ── Organization App Shell (Strictly for Organizations) ───────────────────
         {
           path: '/organization',
@@ -122,6 +145,7 @@ export function createAppRouter(_queryClient: QueryClient) {
             { path: 'dashboard', element: <Lazy><OrganizationDashboard /></Lazy> },
             { path: 'create-users', element: <Lazy><OrganizationCreateUsers /></Lazy> },
             { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
+            { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
           ],
         },
 
@@ -142,6 +166,7 @@ export function createAppRouter(_queryClient: QueryClient) {
             { path: 'organizations', element: <Navigate to="/superadmin/organization-management" replace /> },
             { path: 'create-organization', element: <Navigate to="/superadmin/approval" replace /> },
             { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
+            { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
           ],
         },
         {
@@ -162,6 +187,7 @@ export function createAppRouter(_queryClient: QueryClient) {
             { path: 'welcome', element: <Lazy><StaffWelcomePage /></Lazy> },
             { path: 'dashboard', element: <Navigate to="/staff/welcome" replace /> },
             { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
+            { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
           ],
         },
 
@@ -181,6 +207,7 @@ export function createAppRouter(_queryClient: QueryClient) {
             { path: 'attendance', element: <Lazy><StudentAttendancePage /></Lazy> },
             { path: 'notes', element: <Lazy><StudentNotesPage /></Lazy> },
             { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
+            { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
           ],
         },
 

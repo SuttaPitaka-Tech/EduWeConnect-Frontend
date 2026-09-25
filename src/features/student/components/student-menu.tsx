@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, CalendarDays, CalendarCheck, NotebookPen, MessageSquare } from 'lucide-react'
 import type { StudentMenuItem } from '../types'
+import { createCalendarMenuItem } from '@/features/calendar'
 
 export const STUDENT_MENU_ITEMS: StudentMenuItem[] = [
   {
@@ -23,6 +24,7 @@ export const STUDENT_MENU_ITEMS: StudentMenuItem[] = [
     to: '/student/notes',
     icon: NotebookPen,
   },
+  createCalendarMenuItem('/student'),
   {
     title: 'Chat',
     to: '/student/chat',

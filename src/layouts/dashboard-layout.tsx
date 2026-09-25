@@ -18,6 +18,8 @@ export default function DashboardLayout() {
 
   const location = useLocation()
   const isChat = location.pathname.includes('/chat')
+  const isCalendar = location.pathname.includes('/calendar')
+  const isNoScroll = isChat || isCalendar
 
   // Enterprise boundary: Non-organization roles route to their respective home portals
   if (user && user.role !== UserRole.Organization) {
@@ -52,9 +54,13 @@ export default function DashboardLayout() {
         </header>
 
         {/* Scrollable Content Area */}
-        <main className={`flex-1 min-h-0 flex flex-col ${isChat ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <main className={`flex-1 min-h-0 flex flex-col ${isNoScroll ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           {isChat ? (
             <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 flex flex-col min-h-0 h-full overflow-hidden">
+              <Outlet />
+            </div>
+          ) : isCalendar ? (
+            <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-1 sm:py-2 md:py-3 flex flex-col min-h-0 h-full overflow-hidden justify-center">
               <Outlet />
             </div>
           ) : (
@@ -62,7 +68,7 @@ export default function DashboardLayout() {
           )}
         </main>
 
-        <AppFooter />
+        {!isCalendar && <AppFooter />}
       </div>
     </div>
   )

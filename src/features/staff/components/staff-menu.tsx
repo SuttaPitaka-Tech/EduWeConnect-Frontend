@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, MessageSquare } from 'lucide-react'
 import type { StaffMenuItem } from '../types'
+import { createCalendarMenuItem } from '@/features/calendar'
 
 export const STAFF_MENU_ITEMS: StaffMenuItem[] = [
   {
@@ -8,6 +9,7 @@ export const STAFF_MENU_ITEMS: StaffMenuItem[] = [
     to: '/staff/welcome',
     icon: LayoutDashboard,
   },
+  createCalendarMenuItem('/staff'),
   {
     title: 'Chat',
     to: '/staff/chat',

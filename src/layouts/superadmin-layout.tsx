@@ -17,6 +17,8 @@ export default function SuperAdminLayout() {
   } = useCollapsibleSidebar()
   const location = useLocation()
   const isChat = location.pathname.includes('/chat')
+  const isCalendar = location.pathname.includes('/calendar')
+  const isNoScroll = isChat || isCalendar
 
   return (
     <div className="h-screen flex w-full font-sans bg-[var(--cream)] overflow-hidden">
@@ -186,15 +188,15 @@ export default function SuperAdminLayout() {
         </header>
 
         {/* Scrollable Content Area */}
-        <main className={`flex-1 min-h-0 flex flex-col ${isChat ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}`}>
+        <main className={`flex-1 min-h-0 flex flex-col ${isNoScroll ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}`}>
           <div className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col min-h-0 ${
-            isChat ? 'py-4 md:py-6 h-full overflow-hidden' : 'py-6 md:py-8'
+            isChat ? 'py-4 md:py-6 h-full overflow-hidden' : isCalendar ? 'py-1 sm:py-2 md:py-3 h-full overflow-hidden justify-center' : 'py-6 md:py-8'
           }`}>
             <Outlet />
           </div>
 
           {/* Branded Footer */}
-          {!isChat && (
+          {!isChat && !isCalendar && (
             <footer className="w-full px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-[var(--border)]/60 text-xs text-[var(--text-secondary)] font-medium mt-auto bg-white/30 shrink-0">
               <p>© 2026 Sutta Pitaka Tech. All rights reserved.</p>
               <div className="flex items-center gap-2">

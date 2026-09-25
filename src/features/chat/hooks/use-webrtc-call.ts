@@ -33,6 +33,45 @@ const ICE_SERVERS: RTCConfiguration = {
 }
 
 /**
+ * Creates an active black video track to keep video transceiver in sendrecv mode
+ */
+function createEmptyVideoTrack(): MediaStreamTrack {
+  const canvas = document.createElement('canvas')
+  canvas.width = 640
+  canvas.height = 480
+  const ctx = canvas.getContext('2d')
+  if (ctx) {
+    ctx.fillStyle = '#0f172a'
+    ctx.fillRect(0, 0, 640, 480)
+  }
+  const timer = setInterval(() => {
+    if (ctx) {
+      ctx.fillStyle = '#0f172a'
+      ctx.fillRect(0, 0, 640, 480)
+    }
+  }, 1000)
+
+  const stream = (canvas as any).captureStream ? (canvas as any).captureStream(1) : null
+  if (stream && stream.getVideoTracks().length > 0) {
+    const track = stream.getVideoTracks()[0]
+    track.enabled = true
+    const origStop = track.stop.bind(track)
+    track.stop = () => {
+      clearInterval(timer)
+      origStop()
+    }
+    return track
+  }
+  // Fallback
+  const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+  const osc = audioCtx.createOscillator()
+  const dst = audioCtx.createMediaStreamDestination()
+  osc.connect(dst)
+  osc.start()
+  return dst.stream.getTracks()[0]
+}
+
+/**
  * Audio tone generator using Web Audio API (cross-browser, no missing mp3 assets)
  */
 class TonePlayer {
@@ -171,6 +210,7 @@ export function useWebRTCCall({
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
   const localCameraStreamRef = useRef<MediaStream | null>(null)
+  const emptyTrackRef = useRef<MediaStreamTrack | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null)
@@ -192,6 +232,10 @@ export function useWebRTCCall({
       if (localCameraStreamRef.current) {
         localCameraStreamRef.current.getTracks().forEach((t) => t.stop())
         localCameraStreamRef.current = null
+      }
+      if (emptyTrackRef.current) {
+        emptyTrackRef.current.stop()
+        emptyTrackRef.current = null
       }
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close()
@@ -236,6 +280,11 @@ export function useWebRTCCall({
     }
     setLocalCameraStream(null)
 
+    if (emptyTrackRef.current) {
+      emptyTrackRef.current.stop()
+      emptyTrackRef.current = null
+    }
+
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close()
       peerConnectionRef.current = null
@@ -269,26 +318,15 @@ export function useWebRTCCall({
 
   /**
    * Helper to create RTCPeerConnection and bind event listeners.
-   * isCaller = true will add transceiver upfront to negotiate bidirectional video SDP.
-   * isCaller = false (receiver) must NOT add transceiver before setRemoteDescription(offer).
    */
   const createPeerConnection = useCallback(
-    (targetUserId: string, callId: string, isCaller: boolean) => {
+    (targetUserId: string, callId: string, _isCaller: boolean) => {
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close()
         peerConnectionRef.current = null
       }
 
       const pc = new RTCPeerConnection(ICE_SERVERS)
-
-      // Add bidirectional video transceiver upfront ONLY for caller
-      if (isCaller) {
-        try {
-          pc.addTransceiver('video', { direction: 'sendrecv' })
-        } catch (err) {
-          console.warn('[WebRTC] addTransceiver video error:', err)
-        }
-      }
 
       pc.onicecandidate = (event) => {
         if (event.candidate && socket) {
@@ -304,45 +342,38 @@ export function useWebRTCCall({
       pc.ontrack = (event) => {
         const stream = event.streams[0] || new MediaStream([event.track])
         if (remoteStreamRef.current) {
-          if (!remoteStreamRef.current.getTracks().includes(event.track)) {
+          if (!remoteStreamRef.current.getTracks().some((t) => t.id === event.track.id)) {
             remoteStreamRef.current.addTrack(event.track)
           }
         } else {
           remoteStreamRef.current = stream
         }
 
-        setRemoteStream(remoteStreamRef.current)
+        // Always create a new MediaStream instance so React state updates and triggers all DOM re-attaches
+        const updatedStream = new MediaStream(remoteStreamRef.current.getTracks())
+        remoteStreamRef.current = updatedStream
+        setRemoteStream(updatedStream)
 
         if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStreamRef.current
+          remoteAudioRef.current.srcObject = updatedStream
           remoteAudioRef.current
             .play()
             .catch((err) => console.warn('[WebRTC] Remote audio autoplay blocked:', err))
         }
 
         if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = remoteStreamRef.current
+          remoteVideoRef.current.srcObject = updatedStream
           remoteVideoRef.current
             .play()
             .catch((err) => console.warn('[WebRTC] Remote video autoplay blocked:', err))
         }
 
         if (event.track.kind === 'video') {
-          if (!event.track.muted && event.track.readyState === 'live') {
-            setIsPeerCameraOn(true)
-          }
-          event.track.onmute = () => {
-            setIsPeerCameraOn(false)
-          }
           event.track.onunmute = () => {
-            setIsPeerCameraOn(true)
             if (remoteVideoRef.current && remoteStreamRef.current) {
               remoteVideoRef.current.srcObject = remoteStreamRef.current
               remoteVideoRef.current.play().catch(() => {})
             }
-          }
-          event.track.onended = () => {
-            setIsPeerCameraOn(false)
           }
         }
       }
@@ -410,11 +441,11 @@ export function useWebRTCCall({
         })
         localStreamRef.current = audioStream
 
-        // 2. If video call, acquire camera immediately
-        let videoStream: MediaStream | null = null
+        // 2. Prepare initial video track (webcam if video call, or placeholder black track)
+        let initialVideoTrack: MediaStreamTrack | null = null
         if (callType === 'video') {
           try {
-            videoStream = await navigator.mediaDevices.getUserMedia({
+            const videoStream = await navigator.mediaDevices.getUserMedia({
               video: {
                 width: { ideal: 1280 },
                 height: { ideal: 720 },
@@ -425,26 +456,30 @@ export function useWebRTCCall({
             localCameraStreamRef.current = videoStream
             setLocalCameraStream(videoStream)
             setIsCameraOn(true)
+            initialVideoTrack = videoStream.getVideoTracks()[0]
           } catch (e) {
             console.warn('[WebRTC] Camera access failed on video call init:', e)
           }
+        }
+
+        if (!initialVideoTrack) {
+          const emptyTrack = createEmptyVideoTrack()
+          emptyTrackRef.current = emptyTrack
+          initialVideoTrack = emptyTrack
         }
 
         // 3. Create RTCPeerConnection (as caller)
         const tempCallId = `call_${Date.now()}`
         const pc = createPeerConnection(targetUserId, tempCallId, true)
 
-        // 4. Add audio track (m=audio line)
+        // 4. Add audio track (m=audio)
         audioStream.getAudioTracks().forEach((track) => pc.addTrack(track, audioStream))
 
-        // 5. If video stream is available, attach to video sender
-        if (videoStream && videoStream.getVideoTracks().length > 0) {
-          const videoTrack = videoStream.getVideoTracks()[0]
-          const videoSender = getVideoSender(pc)
-          if (videoSender) {
-            await videoSender.replaceTrack(videoTrack)
-          }
-        }
+        // 5. Add initial video track and ensure sendrecv direction (m=video)
+        pc.addTransceiver(initialVideoTrack, {
+          direction: 'sendrecv',
+          streams: [new MediaStream([initialVideoTrack])],
+        })
 
         // 6. Create offer
         const offer = await pc.createOffer()
@@ -505,7 +540,8 @@ export function useWebRTCCall({
       })
       localStreamRef.current = audioStream
 
-      // 2. If it is a video call (or user already turned camera on), get camera stream
+      // 2. Prepare initial video track (webcam if already on or video call, or placeholder black track)
+      let initialVideoTrack: MediaStreamTrack | null = null
       let videoStream = localCameraStreamRef.current
       if (activeCall.callType === 'video' && !videoStream) {
         try {
@@ -525,11 +561,18 @@ export function useWebRTCCall({
         }
       }
 
+      if (videoStream && videoStream.getVideoTracks().length > 0) {
+        initialVideoTrack = videoStream.getVideoTracks()[0]
+      } else {
+        const emptyTrack = createEmptyVideoTrack()
+        emptyTrackRef.current = emptyTrack
+        initialVideoTrack = emptyTrack
+      }
+
       // 3. Create peer connection as CALLEE (isCaller = false, does NOT add transceiver upfront)
       const pc = createPeerConnection(activeCall.peerId, activeCall.callId, false)
 
       // 4. Set remote description from caller's offer FIRST!
-      // This automatically constructs transceivers matching the caller's offer.
       await pc.setRemoteDescription(new RTCSessionDescription(incomingOfferRef.current))
 
       // 5. Attach receiver's audio track to audio transceiver
@@ -541,13 +584,18 @@ export function useWebRTCCall({
         pc.addTrack(audioTrack, audioStream)
       }
 
-      // 6. If receiver camera stream is available, attach to video transceiver
-      if (videoStream && videoStream.getVideoTracks().length > 0) {
-        const videoTrack = videoStream.getVideoTracks()[0]
-        const videoSender = getVideoSender(pc)
-        if (videoSender) {
-          await videoSender.replaceTrack(videoTrack)
+      // 6. Attach receiver's video track to video transceiver and ensure sendrecv direction
+      const transceivers = pc.getTransceivers()
+      const videoTransceiver = transceivers.find(
+        (t) => t.receiver?.track?.kind === 'video' || t.sender?.track?.kind === 'video',
+      )
+      if (videoTransceiver) {
+        videoTransceiver.direction = 'sendrecv'
+        if (videoTransceiver.sender) {
+          await videoTransceiver.sender.replaceTrack(initialVideoTrack)
         }
+      } else {
+        pc.addTrack(initialVideoTrack, new MediaStream([initialVideoTrack]))
       }
 
       // 7. Drain pending ICE candidates
@@ -665,15 +713,17 @@ export function useWebRTCCall({
       setLocalCameraStream(null)
       setIsCameraOn(false)
 
-      // 2. Replace video track with null on RTCPeerConnection sender
+      // 2. Replace video track with empty placeholder on RTCPeerConnection sender
       const pc = peerConnectionRef.current
       if (pc) {
         const videoSender = getVideoSender(pc)
         if (videoSender) {
           try {
-            await videoSender.replaceTrack(null)
+            const emptyTrack = createEmptyVideoTrack()
+            emptyTrackRef.current = emptyTrack
+            await videoSender.replaceTrack(emptyTrack)
           } catch (e) {
-            console.warn('[WebRTC] replaceTrack null error:', e)
+            console.warn('[WebRTC] replaceTrack empty track error:', e)
           }
         }
       }
@@ -872,9 +922,21 @@ export function useWebRTCCall({
         setIsPeerCameraOn(isEnabled)
         toast.info(isEnabled ? 'Peer turned on camera' : 'Peer turned off camera')
 
-        if (isEnabled && remoteVideoRef.current && remoteStreamRef.current) {
-          remoteVideoRef.current.srcObject = remoteStreamRef.current
-          remoteVideoRef.current.play().catch(() => {})
+        if (remoteStreamRef.current) {
+          const freshStream = new MediaStream(remoteStreamRef.current.getTracks())
+          remoteStreamRef.current = freshStream
+          setRemoteStream(freshStream)
+        }
+
+        if (isEnabled) {
+          setTimeout(() => {
+            if (remoteVideoRef.current && remoteStreamRef.current) {
+              if (remoteVideoRef.current.srcObject !== remoteStreamRef.current) {
+                remoteVideoRef.current.srcObject = remoteStreamRef.current
+              }
+              remoteVideoRef.current.play().catch(() => {})
+            }
+          }, 50)
         }
       }
     }
