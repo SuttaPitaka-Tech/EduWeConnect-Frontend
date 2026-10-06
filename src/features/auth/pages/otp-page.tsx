@@ -1,6 +1,5 @@
 import { useLocation } from 'react-router-dom'
-import { registerBg, eduLogo, lotusLarge } from '@/assets/images'
-import { Users, UserCheck, Building } from 'lucide-react'
+import { registerBg, eduLogo } from '@/assets/images'
 import { OtpForm } from '../components/otp-form'
 
 export default function OtpPage() {
@@ -29,54 +28,6 @@ export default function OtpPage() {
               <img src={eduLogo} alt="EduWeConnect Logo" className="h-[120px] md:h-[150px] w-auto object-contain drop-shadow-sm" />
             </div>
 
-            {/* Symmetrical Centered Content */}
-            <div className="flex flex-col items-center justify-center w-full">
-              <div className="flex items-center justify-center gap-3 w-full max-w-[340px] mb-2.5">
-                <div className="h-[1px] flex-1 bg-[var(--gold)]/40" />
-                <span className="text-[var(--navy)] font-semibold text-[13.5px] whitespace-nowrap tracking-wide">
-                  Education Management System
-                </span>
-                <div className="h-[1px] flex-1 bg-[var(--gold)]/40" />
-              </div>
-
-              <p className="text-[var(--navy)]/90 font-medium text-[13.5px] text-center max-w-[320px] leading-relaxed mb-5">
-                Join a unified platform to learn, manage<br />and grow together.
-              </p>
-
-              {/* Feature Icons Row */}
-              <div className="flex items-center justify-center gap-2 sm:gap-3 w-full mb-5">
-                <div className="flex flex-col items-center text-center">
-                  <Users className="w-5 h-5 text-[var(--navy)] mb-1" strokeWidth={1.5} />
-                  <h4 className="text-[var(--navy)] font-bold text-[12.5px] mb-0.5">Students</h4>
-                  <p className="text-[var(--navy)]/70 text-[10.5px] whitespace-nowrap">Learn. Explore. Achieve.</p>
-                </div>
-
-                <div className="w-[1px] h-[36px] bg-[var(--navy)]/20 mx-0.5" />
-
-                <div className="flex flex-col items-center text-center">
-                  <UserCheck className="w-5 h-5 text-[var(--navy)] mb-1" strokeWidth={1.5} />
-                  <h4 className="text-[var(--navy)] font-bold text-[12.5px] mb-0.5">Staff</h4>
-                  <p className="text-[var(--navy)]/70 text-[10.5px] whitespace-nowrap">Manage. Support. Empower.</p>
-                </div>
-
-                <div className="w-[1px] h-[36px] bg-[var(--navy)]/20 mx-0.5" />
-
-                <div className="flex flex-col items-center text-center">
-                  <Building className="w-5 h-5 text-[var(--navy)] mb-1" strokeWidth={1.5} />
-                  <h4 className="text-[var(--navy)] font-bold text-[12.5px] mb-0.5">Organizations</h4>
-                  <p className="text-[var(--navy)]/70 text-[10.5px] whitespace-nowrap">Collaborate. Monitor. Excel.</p>
-                </div>
-              </div>
-
-              {/* Quote */}
-              <div className="flex flex-col items-center text-center max-w-[340px] px-2">
-                <p className="text-[var(--navy)]/90 italic font-serif text-[13.5px] leading-relaxed">
-                  &ldquo;The goal of education is not just knowledge, but character and purpose.&rdquo;
-                </p>
-                <p className="text-[var(--navy)]/80 text-[11.5px] font-bold mt-1 tracking-wide">— Buddha</p>
-                <img src={lotusLarge} alt="lotus" className="w-[28px] h-auto object-contain mt-3 opacity-70" />
-              </div>
-            </div>
           </div>
 
           {/* RIGHT COLUMN: Form Card */}

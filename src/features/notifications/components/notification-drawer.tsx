@@ -45,7 +45,10 @@ export function NotificationDrawer({
   const loadNotifications = useCallback(async () => {
     try {
       const data = await fetchNotificationsApi()
-      setNotifications(data || [])
+      const newNotifs = data || []
+      setNotifications(newNotifs)
+      // Broadcast loaded notifications so other components (like Sidebar menu) can use them without separate API calls
+      window.dispatchEvent(new CustomEvent('notification:loaded', { detail: newNotifs }))
     } catch {
       // Keep current state on error
     }

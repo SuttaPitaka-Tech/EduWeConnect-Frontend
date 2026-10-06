@@ -329,18 +329,18 @@ export function OrgOnboardingWizard({
         </div>
       ) : (
         /* ── Public Registration Theme (Untouched with ambient background) ── */
-        <div className="relative min-h-screen w-full flex items-center justify-center p-3 md:p-6 overflow-hidden bg-[var(--cream)]">
+        <div className="relative min-h-[100svh] w-full flex items-center justify-center p-2 sm:p-3 md:p-4 overflow-x-hidden bg-[var(--cream)]">
           {/* Ambient background decoration */}
           <div
             className="absolute inset-0 pointer-events-none opacity-40 bg-cover bg-center"
             style={{ backgroundImage: `url(${buddhaBg})` }}
           />
 
-          <div className="relative w-full max-w-4xl bg-[var(--warm-white)] rounded-3xl border border-[var(--border)] shadow-xl p-5 md:p-8 flex flex-col gap-4">
+          <div className="relative w-full max-w-3xl bg-[var(--warm-white)] rounded-2xl border border-[var(--border)] shadow-xl p-4 md:p-5 flex flex-col gap-2.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--gold)]/50 hover:shadow-2xl">
             {/* Card Title & Subtitle */}
             {step <= 3 && (
               <div className="flex flex-col items-center text-center -mt-1 mb-0.5">
-                <h1 className="text-xl md:text-2xl font-serif font-bold text-[var(--navy)]">
+                <h1 className="text-lg md:text-xl font-serif font-bold text-[var(--navy)]">
                   Organization Details
                 </h1>
                 <p className="text-[var(--text-secondary)] font-medium text-xs md:text-sm mt-0.5">
@@ -353,6 +353,7 @@ export function OrgOnboardingWizard({
             {step <= 3 && (
               <OnboardingStepper
                 currentStep={step}
+                compact
                 onStepClick={(targetStep) => {
                   if (targetStep < step) setStep(targetStep);
                 }}
@@ -363,7 +364,7 @@ export function OrgOnboardingWizard({
             <form
               noValidate
               onSubmit={(e) => e.preventDefault()}
-              className="flex flex-col gap-4"
+              className="flex flex-col gap-2.5"
             >
               {step === 1 && <OnboardingStepInfo onNext={handleNextFromStep1} isSuperAdmin={false} />}
 

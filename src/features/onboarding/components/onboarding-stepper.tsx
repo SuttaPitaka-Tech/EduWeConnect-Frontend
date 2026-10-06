@@ -4,11 +4,16 @@ import { ONBOARDING_STEPS } from '../constants/constants'
 interface OnboardingStepperProps {
   currentStep: number
   onStepClick?: (stepId: number) => void
+  compact?: boolean
 }
 
-export function OnboardingStepper({ currentStep, onStepClick }: OnboardingStepperProps) {
+export function OnboardingStepper({
+  currentStep,
+  onStepClick,
+  compact = false,
+}: OnboardingStepperProps) {
   return (
-    <div className="w-full max-w-2xl mx-auto px-2 sm:px-6 mb-2">
+    <div className={`w-full max-w-2xl mx-auto px-2 sm:px-6 ${compact ? 'mb-1' : 'mb-2'}`}>
       <div className="flex items-center justify-between">
         {ONBOARDING_STEPS.map((s, idx) => {
           const isCompleted = currentStep > s.id
@@ -33,7 +38,7 @@ export function OnboardingStepper({ currentStep, onStepClick }: OnboardingSteppe
                 }`}
               >
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  className={`${compact ? 'w-8 h-8' : 'w-9 h-9'} rounded-full flex items-center justify-center transition-all duration-300 ${
                     isCompleted
                       ? 'bg-emerald-600 text-white shadow-sm group-hover:scale-105'
                       : isCurrent
@@ -48,7 +53,7 @@ export function OnboardingStepper({ currentStep, onStepClick }: OnboardingSteppe
                   )}
                 </div>
                 <span
-                  className={`text-[11px] md:text-xs font-semibold mt-1.5 uppercase tracking-wider text-center whitespace-nowrap transition-colors ${
+                className={`${compact ? 'text-[10px] md:text-[11px] mt-1' : 'text-[11px] md:text-xs mt-1.5'} font-semibold uppercase tracking-wider text-center whitespace-nowrap transition-colors ${
                     isCurrent
                       ? 'text-[var(--navy)] font-bold'
                       : isCompleted

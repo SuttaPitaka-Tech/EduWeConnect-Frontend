@@ -2,7 +2,9 @@ import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, MessageSquare } from 'lucide-react'
 import type { StaffMenuItem } from '../types'
 import { createCalendarMenuItem } from '@/features/calendar'
-
+import { useAuth } from '@/contexts/auth-context'
+import { useQuery } from '@tanstack/react-query'
+import { API_GATEWAY_URL } from '@/config/api.config'
 export const STAFF_MENU_ITEMS: StaffMenuItem[] = [
   {
     title: 'Dashboard',
@@ -23,6 +25,21 @@ interface StaffMenuProps {
 }
 
 export function StaffMenu({ onNavigate, isCollapsed = false }: StaffMenuProps) {
+  const { user } = useAuth()
+  
+  const { data: permissions } = useQuery<Record<string, boolean>>({
+    queryKey: ['permissions', user?.id],
+    queryFn: async () => {
+      const orgId = user?.institutionId || user?.id
+      if (!orgId) return {}
+      const res = await fetch(`${API_GATEWAY_URL}/menus/permissions/${orgId}`)
+      if (!res.ok) throw new Error('Failed to fetch permissions')
+      return res.json()
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  })
+
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center rounded-xl text-sm font-semibold transition-all duration-300 transform border ${
       isCollapsed ? 'justify-center p-3 w-12 h-12 mx-auto' : 'gap-3 px-4 py-3'
@@ -32,10 +49,17 @@ export function StaffMenu({ onNavigate, isCollapsed = false }: StaffMenuProps) {
         : 'text-white/85 border-transparent bg-[#0B1F33]/35 backdrop-blur-sm hover:bg-white/15 hover:text-white hover:border-white/20 hover:scale-[1.01]'
     }`
 
+  const filteredItems = STAFF_MENU_ITEMS.filter(item => {
+    if (!permissions) return false
+    
+    // Schema uses 'Chat' for Staff role (matches item.title)
+    return !!permissions[`Staff / Teachers-${item.title}`]
+  })
+
   return (
     <div className={`flex-1 w-full flex flex-col py-3 overflow-y-auto ${isCollapsed ? 'px-2' : 'px-4'}`}>
       <nav className="flex flex-col gap-2.5">
-        {STAFF_MENU_ITEMS.map((item) => {
+        {filteredItems.map((item) => {
           const Icon = item.icon
           return (
             <NavLink

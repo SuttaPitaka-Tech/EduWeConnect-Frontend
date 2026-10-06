@@ -1,61 +1,65 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
-  Users,
-  UserCheck,
   Building,
-  GraduationCap,
   Calendar,
-  ChevronDown,
   ArrowUpRight,
-  Trophy,
-  FileText,
   Clock,
   ArrowRight,
-  UserPlus,
-  FileSpreadsheet,
-  CalendarDays,
-  CreditCard,
 } from 'lucide-react'
 import {
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart,
+  Bar,
+  Cell
 } from 'recharts'
-
-// ── Enrollment Data for Area Chart ──────────────────────────────────────────
-const ENROLLMENT_DATA = [
-  { date: 'May 1', enrollments: 200 },
-  { date: 'May 7', enrollments: 360 },
-  { date: 'May 13', enrollments: 680 },
-  { date: 'May 19', enrollments: 510 },
-  { date: 'May 25', enrollments: 610 },
-  { date: 'May 31', enrollments: 760 },
-]
-
-// ── Fee Collection Donut Data ───────────────────────────────────────────────
-const FEE_DATA = [
-  { name: 'Collected', value: 68, amount: '₹ 24,58,760', color: '#102A43' },
-  { name: 'Pending', value: 27, amount: '₹ 9,58,300', color: '#B8862C' },
-  { name: 'Overdue', value: 5, amount: '₹ 2,15,400', color: '#94A3B8' },
-]
-
-// ── Attendance Gauge Data ───────────────────────────────────────────────────
-const ATTENDANCE_DATA = [
-  { name: 'Present', value: 92, color: '#B8862C' },
-  { name: 'Absent & Leave', value: 8, color: '#E2D9C8' },
-]
+import { fetchDashboardStatsApi } from '../api/dashboard.api'
 
 export default function SuperAdminDashboard() {
-  const [selectedMonth] = useState('This Month')
+  const navigate = useNavigate()
+  const [stats, setStats] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchDashboardStatsApi()
+      .then(data => {
+        setStats(data)
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error('Failed to fetch dashboard stats', err)
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex-1 w-full h-full flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[var(--gold)] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+
+
+  const orgData = [
+    { name: 'Total', count: stats?.organizations?.total || 0, fill: '#1967D2' },
+    { name: 'Approved', count: stats?.organizations?.approved || 0, fill: '#137333' },
+    { name: 'Pending', count: stats?.organizations?.pending || 0, fill: '#E37400' },
+    { name: 'Rejected', count: stats?.organizations?.rejected || 0, fill: '#C5221F' },
+  ];
+
+  const currentDate = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date()) + ', ' + new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(new Date());
 
   return (
-    <div className="flex-1 w-full p-5 lg:p-8 flex flex-col gap-6 max-w-[1600px] mx-auto">
+    <div className="flex-1 w-full px-5 pt-2 pb-5 lg:px-8 lg:pt-3 lg:pb-8 flex flex-col gap-6 max-w-[1600px] mx-auto overflow-y-auto">
       
       {/* ── Top Welcome Bar ──────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -71,417 +75,131 @@ export default function SuperAdminDashboard() {
         {/* Date Pill */}
         <div className="flex items-center gap-2 bg-white/90 border border-[var(--border)] px-4 py-2 rounded-xl shadow-sm self-start sm:self-auto">
           <Calendar className="w-4 h-4 text-[var(--navy)]" />
-          <span className="text-xs font-semibold text-[var(--navy)]">27 May 2025, Tuesday</span>
+          <span className="text-xs font-semibold text-[var(--navy)]">{currentDate}</span>
         </div>
       </div>
 
-      {/* ── Row 1: 4 Metric Cards (KPIs) ─────────────────────────────────── */}
+      {/* ── Row 1: Organization Metrics ─────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
-        {/* Card 1: Total Students */}
-        <div className="bg-white/95 rounded-2xl p-5 border border-[var(--border)] shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#F5EEDB] border border-[#E5DEC9] flex items-center justify-center text-[var(--gold)] shrink-0">
-            <Users className="w-6 h-6" strokeWidth={1.75} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-[var(--text-secondary)]">Total Students</p>
-            <p className="text-2xl font-bold text-[var(--navy)] tracking-tight leading-snug mt-0.5">2,458</p>
-            <p className="text-[11px] font-semibold text-[#16A34A] flex items-center gap-0.5 mt-0.5">
-              <ArrowUpRight className="w-3.5 h-3.5" /> 12.5% from last month
-            </p>
-          </div>
-        </div>
-
-        {/* Card 2: Total Staff */}
-        <div className="bg-white/95 rounded-2xl p-5 border border-[var(--border)] shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#F5EEDB] border border-[#E5DEC9] flex items-center justify-center text-[var(--gold)] shrink-0">
-            <UserCheck className="w-6 h-6" strokeWidth={1.75} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-[var(--text-secondary)]">Total Staff</p>
-            <p className="text-2xl font-bold text-[var(--navy)] tracking-tight leading-snug mt-0.5">245</p>
-            <p className="text-[11px] font-semibold text-[#16A34A] flex items-center gap-0.5 mt-0.5">
-              <ArrowUpRight className="w-3.5 h-3.5" /> 8.4% from last month
-            </p>
-          </div>
-        </div>
-
-        {/* Card 3: Organizations */}
-        <div className="bg-white/95 rounded-2xl p-5 border border-[var(--border)] shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#F5EEDB] border border-[#E5DEC9] flex items-center justify-center text-[var(--gold)] shrink-0">
+        {/* Card 1: Total Registered Organizations */}
+        <div 
+          onClick={() => navigate('/superadmin/approvals')}
+          className="bg-white/95 rounded-2xl p-5 border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-[var(--gold)]/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-[#E8F0FE] border border-[#D2E3FC] flex items-center justify-center text-[#1967D2] shrink-0">
             <Building className="w-6 h-6" strokeWidth={1.75} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-[var(--text-secondary)]">Organizations</p>
-            <p className="text-2xl font-bold text-[var(--navy)] tracking-tight leading-snug mt-0.5">32</p>
+            <p className="text-xs font-semibold text-[var(--text-secondary)]">Organizations Applied</p>
+            <p className="text-2xl font-bold text-[var(--navy)] tracking-tight leading-snug mt-0.5">{stats?.organizations?.total || 0}</p>
             <p className="text-[11px] font-semibold text-[#16A34A] flex items-center gap-0.5 mt-0.5">
-              <ArrowUpRight className="w-3.5 h-3.5" /> 6.7% from last month
+              <ArrowUpRight className="w-3.5 h-3.5" /> Total Applications
             </p>
           </div>
         </div>
 
-        {/* Card 4: Total Courses */}
-        <div className="bg-white/95 rounded-2xl p-5 border border-[var(--border)] shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#F5EEDB] border border-[#E5DEC9] flex items-center justify-center text-[var(--gold)] shrink-0">
-            <GraduationCap className="w-6 h-6" strokeWidth={1.75} />
+        {/* Card 2: Approved Organizations */}
+        <div 
+          onClick={() => navigate('/superadmin/approvals')}
+          className="bg-white/95 rounded-2xl p-5 border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-[#137333]/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-[#E6F4EA] border border-[#CEEAD6] flex items-center justify-center text-[#137333] shrink-0">
+            <Building className="w-6 h-6" strokeWidth={1.75} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-[var(--text-secondary)]">Total Courses</p>
-            <p className="text-2xl font-bold text-[var(--navy)] tracking-tight leading-snug mt-0.5">128</p>
+            <p className="text-xs font-semibold text-[var(--text-secondary)]">Approved</p>
+            <p className="text-2xl font-bold text-[var(--navy)] tracking-tight leading-snug mt-0.5">{stats?.organizations?.approved || 0}</p>
             <p className="text-[11px] font-semibold text-[#16A34A] flex items-center gap-0.5 mt-0.5">
-              <ArrowUpRight className="w-3.5 h-3.5" /> 10.3% from last month
+              <ArrowUpRight className="w-3.5 h-3.5" /> Active in platform
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Pending Organizations */}
+        <div 
+          onClick={() => navigate('/superadmin/approvals')}
+          className="bg-white/95 rounded-2xl p-5 border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-[#E37400]/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-[#FEF7E0] border border-[#FEEFC3] flex items-center justify-center text-[#E37400] shrink-0">
+            <Clock className="w-6 h-6" strokeWidth={1.75} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-[var(--text-secondary)]">Pending Approval</p>
+            <p className="text-2xl font-bold text-[var(--navy)] tracking-tight leading-snug mt-0.5">{stats?.organizations?.pending || 0}</p>
+            <p className="text-[11px] font-semibold text-[#E37400] flex items-center gap-0.5 mt-0.5">
+              <ArrowRight className="w-3.5 h-3.5" /> Action required
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Rejected Organizations */}
+        <div 
+          onClick={() => navigate('/superadmin/approvals')}
+          className="bg-white/95 rounded-2xl p-5 border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-[#C5221F]/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-[#FCE8E6] border border-[#FAD2CF] flex items-center justify-center text-[#C5221F] shrink-0">
+            <Building className="w-6 h-6" strokeWidth={1.75} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-[var(--text-secondary)]">Rejected</p>
+            <p className="text-2xl font-bold text-[var(--navy)] tracking-tight leading-snug mt-0.5">{stats?.organizations?.rejected || 0}</p>
+            <p className="text-[11px] font-semibold text-[#C5221F] flex items-center gap-0.5 mt-0.5">
+              <ArrowRight className="w-3.5 h-3.5" /> Applications denied
             </p>
           </div>
         </div>
 
       </div>
 
-      {/* ── Row 2: Charts & Announcements ────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        
-        {/* Left Column: Student Enrollment Overview (7 cols) */}
-        <div className="lg:col-span-7 bg-white/95 rounded-2xl p-5 lg:p-6 border border-[var(--border)] shadow-sm flex flex-col justify-between">
-          <div>
-            {/* Header */}
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-base font-bold text-[var(--navy)]">Student Enrollment Overview</h2>
-              <button 
-                type="button"
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] bg-white border border-[var(--border)] rounded-lg hover:border-[var(--gold)] transition-colors"
-              >
-                <span>{selectedMonth}</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Legend Tag */}
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-2.5 h-2.5 rounded-full bg-[var(--gold)]" />
-              <span className="text-xs font-medium text-[var(--text-secondary)]">New Enrollments</span>
-            </div>
-
-            {/* Area Chart */}
-            <div className="h-[220px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={ENROLLMENT_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="enrollmentGold" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#B8862C" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#B8862C" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="date" 
-                    tickLine={false} 
-                    axisLine={{ stroke: '#E5DEC9' }}
-                    tick={{ fill: '#536579', fontSize: 11, fontWeight: 500 }}
-                  />
-                  <YAxis 
-                    ticks={[0, 200, 400, 600, 800]} 
-                    tickLine={false} 
-                    axisLine={false}
-                    tick={{ fill: '#536579', fontSize: 11, fontWeight: 500 }}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '10px',
-                      border: '1px solid #DED5C5',
-                      boxShadow: '0 8px 24px rgba(16,42,67,0.1)',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                    }}
-                    itemStyle={{ color: '#102A43' }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="enrollments"
-                    stroke="#B8862C"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#enrollmentGold)"
-                    dot={{ fill: '#B8862C', stroke: '#FFFFFF', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, fill: '#B8862C', stroke: '#FFFFFF', strokeWidth: 2 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+      {/* ── Row 2: Entity Metrics ─────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-5">
+        {/* Organization Bar Chart */}
+        <div 
+          onClick={() => navigate('/superadmin/approvals')}
+          className="bg-white/95 rounded-2xl p-5 lg:p-6 border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-[var(--gold)]/5 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between cursor-pointer"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-[var(--navy)]">Organization Analytics</h2>
           </div>
-
-          {/* Bottom Summary Bar */}
-          <div className="grid grid-cols-3 gap-2 pt-4 mt-2 border-t border-[var(--border)]/60 text-center sm:text-left">
-            <div>
-              <p className="text-[11px] font-semibold text-[var(--text-secondary)]">This Month</p>
-              <p className="text-base font-bold text-[var(--navy)] mt-0.5">1,245</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold text-[var(--text-secondary)]">Last Month</p>
-              <p className="text-base font-bold text-[var(--navy)] mt-0.5">1,108</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold text-[var(--text-secondary)]">Growth</p>
-              <p className="text-base font-bold text-[#16A34A] mt-0.5 flex items-center gap-1">
-                12.36% <ArrowUpRight className="w-4 h-4" />
-              </p>
-            </div>
+          <div className="h-[220px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={orgData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} barSize={40}>
+                <XAxis 
+                  dataKey="name" 
+                  tickLine={false} 
+                  axisLine={{ stroke: '#D2E3FC' }}
+                  tick={{ fill: '#536579', fontSize: 12, fontWeight: 600 }}
+                />
+                <YAxis 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fill: '#536579', fontSize: 11, fontWeight: 500 }}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'transparent' }}
+                  contentStyle={{
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '10px',
+                    border: '1px solid #D2E3FC',
+                    boxShadow: '0 8px 24px rgba(16,42,67,0.1)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                  }}
+                  itemStyle={{ color: '#102A43' }}
+                />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  {orgData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Right Column: Recent Announcements (5 cols) */}
-        <div className="lg:col-span-5 bg-white/95 rounded-2xl p-5 lg:p-6 border border-[var(--border)] shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-[var(--navy)]">Recent Announcements</h2>
-              <button 
-                type="button"
-                className="text-xs font-bold text-[var(--gold)] hover:underline"
-              >
-                View All
-              </button>
-            </div>
-
-            {/* List */}
-            <div className="flex flex-col gap-3.5">
-              {/* Item 1 */}
-              <div className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[#F7F1E3]/50 transition-colors">
-                <div className="w-9 h-9 rounded-xl bg-[#F5EEDB] text-[var(--gold)] flex items-center justify-center shrink-0 mt-0.5">
-                  <Trophy className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-xs font-bold text-[var(--navy)] truncate">Annual Sports Day</h3>
-                    <span className="text-[10px] text-[var(--text-secondary)] shrink-0">2h ago</span>
-                  </div>
-                  <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed mt-0.5 line-clamp-2">
-                    The Annual Sports Day will be held on 15th June 2025. All students are encouraged to participate.
-                  </p>
-                </div>
-              </div>
-
-              {/* Item 2 */}
-              <div className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[#F7F1E3]/50 transition-colors">
-                <div className="w-9 h-9 rounded-xl bg-[#F5EEDB] text-[var(--gold)] flex items-center justify-center shrink-0 mt-0.5">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-xs font-bold text-[var(--navy)] truncate">Exam Schedule Published</h3>
-                    <span className="text-[10px] text-[var(--text-secondary)] shrink-0">1d ago</span>
-                  </div>
-                  <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed mt-0.5 line-clamp-2">
-                    The final exam schedule for Term 2 has been published. Please check the examinations section.
-                  </p>
-                </div>
-              </div>
-
-              {/* Item 3 */}
-              <div className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-[#F7F1E3]/50 transition-colors">
-                <div className="w-9 h-9 rounded-xl bg-[#F5EEDB] text-[var(--gold)] flex items-center justify-center shrink-0 mt-0.5">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-xs font-bold text-[var(--navy)] truncate">Holiday Notice</h3>
-                    <span className="text-[10px] text-[var(--text-secondary)] shrink-0">2d ago</span>
-                  </div>
-                  <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed mt-0.5 line-clamp-2">
-                    The school will remain closed on 29th May 2025 on account of Buddha Purnima.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Button */}
-          <button 
-            type="button"
-            className="w-full mt-4 py-2.5 px-4 bg-[#F5EEDB]/60 hover:bg-[#F5EEDB] border border-[var(--gold)]/30 rounded-xl text-xs font-bold text-[var(--gold)] flex items-center justify-center gap-2 transition-all"
-          >
-            <span>View All Announcements</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
       </div>
 
-      {/* ── Row 3: Bottom 3 Columns ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        
-        {/* Col 1: Fee Collection Overview */}
-        <div className="bg-white/95 rounded-2xl p-5 lg:p-6 border border-[var(--border)] shadow-sm flex flex-col justify-between min-h-[280px]">
-          <div>
-            <h2 className="text-base font-bold text-[var(--navy)] mb-4">Fee Collection Overview</h2>
-            
-            <div className="flex items-center justify-center gap-6">
-              {/* Donut Chart */}
-              <div className="w-[130px] h-[130px] shrink-0 relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={FEE_DATA}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={38}
-                      outerRadius={58}
-                      paddingAngle={2}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {FEE_DATA.map((entry, index) => (
-                        <Cell key={`fee-cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
 
-              {/* Status List */}
-              <div className="flex flex-col gap-2 min-w-0">
-                <p className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">
-                  Collection Status
-                </p>
-                {FEE_DATA.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2 text-xs">
-                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                    <span className="font-semibold text-[var(--navy)] truncate">{item.name}</span>
-                    <span className="text-[11px] text-[var(--text-secondary)] whitespace-nowrap ml-auto">
-                      {item.amount} ({item.value}%)
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Col 2: Attendance Overview */}
-        <div className="bg-white/95 rounded-2xl p-5 lg:p-6 border border-[var(--border)] shadow-sm flex flex-col justify-between min-h-[280px]">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-[var(--navy)]">Attendance Overview</h2>
-              <button 
-                type="button"
-                className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] bg-white border border-[var(--border)] rounded-lg hover:border-[var(--gold)] transition-colors"
-              >
-                <span>{selectedMonth}</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-center gap-8 pt-1">
-              {/* Circular Gauge */}
-              <div className="w-[130px] h-[130px] shrink-0 relative flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={ATTENDANCE_DATA}
-                      cx="50%"
-                      cy="50%"
-                      startAngle={90}
-                      endAngle={-270}
-                      innerRadius={46}
-                      outerRadius={58}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      <Cell fill="#B8862C" />
-                      <Cell fill="#EAE2D2" />
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                {/* Center text */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <span className="text-2xl font-bold text-[var(--navy)] leading-none">92%</span>
-                  <span className="text-[10px] font-semibold text-[var(--text-secondary)] mt-1">Average</span>
-                </div>
-              </div>
-
-              {/* Attendance Breakdown */}
-              <div className="flex flex-col gap-2.5">
-                <div className="flex items-center gap-2 text-xs">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[var(--gold)]" />
-                  <span className="font-semibold text-[var(--navy)]">Present</span>
-                  <span className="font-bold text-[var(--navy)] ml-4">92%</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[var(--navy)]" />
-                  <span className="font-semibold text-[var(--navy)]">Absent</span>
-                  <span className="font-bold text-[var(--navy)] ml-4">6%</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#94A3B8]" />
-                  <span className="font-semibold text-[var(--navy)]">Leave</span>
-                  <span className="font-bold text-[var(--navy)] ml-4">2%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Col 3: Quick Actions */}
-        <div className="bg-white/95 rounded-2xl p-5 lg:p-6 border border-[var(--border)] shadow-sm flex flex-col justify-between min-h-[280px]">
-          <div>
-            <h2 className="text-base font-bold text-[var(--navy)] mb-4">Quick Actions</h2>
-            
-            <div className="grid grid-cols-3 gap-3">
-              {/* Action 1 */}
-              <button 
-                type="button" 
-                className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F7F1E3]/50 hover:bg-[#F5EEDB] border border-[var(--border)]/60 hover:border-[var(--gold)]/50 transition-all text-center group"
-              >
-                <UserPlus className="w-5 h-5 text-[var(--navy)] group-hover:text-[var(--gold)] transition-colors mb-1.5" strokeWidth={1.75} />
-                <span className="text-[11px] font-bold text-[var(--navy)] leading-tight">Add Student</span>
-              </button>
-
-              {/* Action 2 */}
-              <button 
-                type="button" 
-                className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F7F1E3]/50 hover:bg-[#F5EEDB] border border-[var(--border)]/60 hover:border-[var(--gold)]/50 transition-all text-center group"
-              >
-                <UserCheck className="w-5 h-5 text-[var(--navy)] group-hover:text-[var(--gold)] transition-colors mb-1.5" strokeWidth={1.75} />
-                <span className="text-[11px] font-bold text-[var(--navy)] leading-tight">Add Staff</span>
-              </button>
-
-              {/* Action 3 */}
-              <button 
-                type="button" 
-                className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F7F1E3]/50 hover:bg-[#F5EEDB] border border-[var(--border)]/60 hover:border-[var(--gold)]/50 transition-all text-center group"
-              >
-                <FileText className="w-5 h-5 text-[var(--navy)] group-hover:text-[var(--gold)] transition-colors mb-1.5" strokeWidth={1.75} />
-                <span className="text-[11px] font-bold text-[var(--navy)] leading-tight">Create Notice</span>
-              </button>
-
-              {/* Action 4 */}
-              <button 
-                type="button" 
-                className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F7F1E3]/50 hover:bg-[#F5EEDB] border border-[var(--border)]/60 hover:border-[var(--gold)]/50 transition-all text-center group"
-              >
-                <CreditCard className="w-5 h-5 text-[var(--navy)] group-hover:text-[var(--gold)] transition-colors mb-1.5" strokeWidth={1.75} />
-                <span className="text-[11px] font-bold text-[var(--navy)] leading-tight">Fee Collection</span>
-              </button>
-
-              {/* Action 5 */}
-              <button 
-                type="button" 
-                className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F7F1E3]/50 hover:bg-[#F5EEDB] border border-[var(--border)]/60 hover:border-[var(--gold)]/50 transition-all text-center group"
-              >
-                <FileSpreadsheet className="w-5 h-5 text-[var(--navy)] group-hover:text-[var(--gold)] transition-colors mb-1.5" strokeWidth={1.75} />
-                <span className="text-[11px] font-bold text-[var(--navy)] leading-tight">Generate Report</span>
-              </button>
-
-              {/* Action 6 */}
-              <button 
-                type="button" 
-                className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F7F1E3]/50 hover:bg-[#F5EEDB] border border-[var(--border)]/60 hover:border-[var(--gold)]/50 transition-all text-center group"
-              >
-                <CalendarDays className="w-5 h-5 text-[var(--navy)] group-hover:text-[var(--gold)] transition-colors mb-1.5" strokeWidth={1.75} />
-                <span className="text-[11px] font-bold text-[var(--navy)] leading-tight">Calendar</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
 
     </div>
   )

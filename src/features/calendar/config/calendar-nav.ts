@@ -15,7 +15,7 @@ export interface CalendarNavItem {
 export function createCalendarMenuItem(roleBasePath: string, badge?: string): CalendarNavItem {
   const normalizedBase = roleBasePath.replace(/\/+$/, '')
   return {
-    title: 'Calendar',
+    title: 'Attendance and Calendar',
     to: `${normalizedBase}/calendar`,
     icon: Calendar,
     badge,

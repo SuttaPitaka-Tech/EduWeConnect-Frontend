@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, ArrowRight, Home } from 'lucide-react'
-import { Button, Input } from '@/components/ui'
+import { Button, Input, toast } from '@/components/ui'
 import { z } from 'zod'
 
 const registerEmailSchema = z.object({
@@ -61,12 +61,15 @@ export function RegisterForm() {
 
   const onSubmit = (values: RegisterEmailValues) => {
     localStorage.setItem('registeredOrgEmail', values.organizationEmail)
+    toast.success('OTP sent!', {
+      description: 'A verification code has been sent to your email.',
+    })
     navigate('/otp', { state: { email: values.organizationEmail, flow: 'register' } })
   }
 
   return (
     <div
-      className="rounded-3xl p-5 md:p-6 shadow-2xl border border-[var(--border)]"
+      className="rounded-3xl p-5 md:p-6 border border-[var(--border)] shadow-[0_18px_50px_rgba(16,42,67,0.16)] transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[var(--gold)]/40 hover:shadow-[0_26px_60px_rgba(16,42,67,0.24)]"
       style={{
         background: 'linear-gradient(145deg, rgba(255,253,248,0.95) 0%, rgba(247,241,227,0.9) 100%)',
         backdropFilter: 'blur(24px)',

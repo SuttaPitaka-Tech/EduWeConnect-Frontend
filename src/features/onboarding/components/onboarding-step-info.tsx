@@ -188,7 +188,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
   }, [stdSearchQuery]);
 
   return (
-    <div className="space-y-3.5 animate-fadeIn">
+    <div className={`${isSuperAdmin ? "space-y-3.5" : "space-y-2"} animate-fadeIn ${isSuperAdmin ? "" : "registration-step-info--compact"}`}>
       <div className="flex items-center gap-2 pb-1 mb-1">
         <Building2 className="w-4 h-4 text-[var(--gold)]" />
         <h3 className="text-xs font-bold text-[var(--navy)] uppercase tracking-wider">
@@ -196,7 +196,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
         </h3>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className={`registration-fields grid grid-cols-1 md:grid-cols-2 ${isSuperAdmin ? "gap-3" : "gap-2"}`}>
         {/* Row 1: Organization Email & Organization Name */}
         <div>
           <label className="block text-[11px] font-semibold text-[var(--navy)] uppercase mb-1">
@@ -208,7 +208,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
               type="email"
               readOnly={!isSuperAdmin}
               placeholder="organization@domain.com"
-              className={`h-[40px] pl-3 ${
+              className={`registration-compact-control h-[40px] pl-3 ${
                 isSuperAdmin
                   ? "pr-3 font-medium bg-white"
                   : "pr-9 font-semibold select-none bg-[var(--cream)] cursor-not-allowed"
@@ -235,7 +235,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
             {...register("organizationName")}
             placeholder="e.g. Nalanda University"
             error={!!errors.organizationName}
-            className="h-[40px] pl-3 rounded-xl text-[13px]"
+            className="registration-compact-control h-[40px] pl-3 rounded-xl text-[13px]"
           />
           {errors.organizationName && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">
@@ -259,7 +259,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
                 onChange={field.onChange}
                 placeholder="Select Organization Type"
                 invalid={!!errors.organizationType}
-                className="h-[40px] rounded-xl text-[13px]"
+                className="registration-compact-control h-[40px] rounded-xl text-[13px]"
               />
             )}
           />
@@ -289,7 +289,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
             }}
             onBlur={() => trigger("organizationMobile")}
             error={!!errors.organizationMobile}
-            className="h-[40px] pl-3 rounded-xl text-[13px]"
+            className="registration-compact-control h-[40px] pl-3 rounded-xl text-[13px]"
           />
           {errors.organizationMobile && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">
@@ -320,7 +320,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
             <button
               type="button"
               onClick={handleSelectAllStandards}
-              className={`h-7 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer border flex items-center gap-1 shadow-2xs ${
+              className={`registration-compact-quick-select h-7 px-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer border flex items-center gap-1 shadow-2xs ${
                 currentStandards.length === ORGANIZATION_STD_OPTIONS.length
                   ? "bg-[var(--navy)] text-white border-[var(--navy)]"
                   : "bg-white text-[var(--navy)] border-[var(--gold)]/40 hover:bg-[var(--gold)]/15 hover:border-[var(--gold)]"
@@ -339,7 +339,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
                   key={preset.id}
                   type="button"
                   onClick={() => handleTogglePreset(preset.standards)}
-                  className={`h-7 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border flex items-center gap-1 shadow-2xs ${
+                  className={`registration-compact-quick-select h-7 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border flex items-center gap-1 shadow-2xs ${
                     allIncluded
                       ? "bg-[var(--navy)] text-white border-[var(--navy)]"
                       : "bg-white text-[var(--navy)] border-[var(--border)] hover:bg-[var(--cream)]/60 hover:border-[var(--gold)]/50"
@@ -355,7 +355,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
               <button
                 type="button"
                 onClick={handleClearAllStandards}
-                className="h-7 px-2 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 hover:border-red-200 border border-transparent transition-colors cursor-pointer ml-auto"
+                className="registration-compact-quick-select h-7 px-2 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 hover:border-red-200 border border-transparent transition-colors cursor-pointer ml-auto"
               >
                 Clear All
               </button>
@@ -367,7 +367,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
             <button
               type="button"
               onClick={() => setIsStdDropdownOpen((prev) => !prev)}
-              className={`w-full min-h-[42px] px-3 py-1.5 rounded-xl border bg-white text-left flex items-center justify-between gap-2 transition-all cursor-pointer shadow-2xs ${
+              className={`registration-compact-standard-picker w-full min-h-[42px] px-3 py-1.5 rounded-xl border bg-white text-left flex items-center justify-between gap-2 transition-all cursor-pointer shadow-2xs ${
                 isStdDropdownOpen
                   ? "border-[var(--gold)] ring-2 ring-[var(--gold)]/20"
                   : "border-[var(--border)] hover:border-[var(--gold)]/60"
@@ -507,7 +507,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
           </div>
 
           {/* Selected Standards Badges with Cancel Icon */}
-          <div className="mt-2 min-h-[38px] p-2 bg-[var(--cream)]/40 border border-[var(--gold)]/25 rounded-xl flex flex-wrap items-center gap-1.5">
+          <div className="registration-compact-selected-standards mt-2 min-h-[38px] p-2 bg-[var(--cream)]/40 border border-[var(--gold)]/25 rounded-xl flex flex-wrap items-center gap-1.5">
             {currentStandards.length === 0 ? (
               <span className="text-[11px] text-[var(--text-secondary)] italic px-1">
                 No standards selected yet. Use the Quick Select buttons or open the checklist above.
@@ -542,7 +542,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
             {...register("address")}
             placeholder="Full Street Address"
             error={!!errors.address}
-            className="rounded-xl text-[13px] min-h-[60px]"
+            className="registration-compact-control registration-compact-address rounded-xl text-[13px] min-h-[60px]"
           />
           {errors.address && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">
@@ -571,7 +571,8 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
                 placeholder="Select Country"
                 searchPlaceholder="Search Country..."
                 invalid={!!errors.country}
-                className="h-[40px] rounded-xl text-[13px]"
+                autoPosition
+                className="registration-compact-control h-[40px] rounded-xl text-[13px]"
               />
             )}
           />
@@ -604,7 +605,8 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
                 searchPlaceholder="Search State..."
                 disabled={!selectedCountry}
                 invalid={!!errors.state}
-                className="h-[40px] rounded-xl text-[13px]"
+                autoPosition
+                className="registration-compact-control h-[40px] rounded-xl text-[13px]"
               />
             )}
           />
@@ -634,7 +636,8 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
                 searchPlaceholder="Search City..."
                 disabled={!selectedState}
                 invalid={!!errors.city}
-                className="h-[40px] rounded-xl text-[13px]"
+                autoPosition
+                className="registration-compact-control h-[40px] rounded-xl text-[13px]"
               />
             )}
           />
@@ -654,7 +657,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
             {...register("district")}
             placeholder="District Name"
             error={!!errors.district}
-            className="h-[40px] pl-3 rounded-xl text-[13px]"
+            className="registration-compact-control h-[40px] pl-3 rounded-xl text-[13px]"
           />
           {errors.district && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">
@@ -683,7 +686,7 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
             }}
             onBlur={() => trigger("pincode")}
             error={!!errors.pincode}
-            className="h-[40px] pl-3 rounded-xl text-[13px]"
+            className="registration-compact-control h-[40px] pl-3 rounded-xl text-[13px]"
           />
           {errors.pincode && (
             <p className="text-[11px] font-medium text-red-500 mt-0.5">
@@ -694,12 +697,16 @@ export function OnboardingStepInfo({ onNext, isSuperAdmin = false }: OnboardingS
       </div>
 
       {/* Step 1 Actions */}
-      <div className="flex justify-end items-center pt-3 border-t border-[var(--gold)]/20 mt-4">
+      <div className={`registration-compact-actions flex justify-end items-center ${isSuperAdmin ? "pt-3 mt-4" : "pt-2 mt-2"} border-t border-[var(--gold)]/20`}>
         <Button
           type="button"
           variant="gold"
           onClick={onNext}
-          className="px-7 h-[42px] rounded-xl font-bold text-[13.5px] flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all"
+          className={`registration-compact-next rounded-xl font-bold flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all ${
+            isSuperAdmin
+              ? "px-7 h-[42px] text-[13.5px]"
+              : "px-6 h-9 text-xs"
+          }`}
         >
           Next: Documents <ArrowRight className="w-4 h-4" />
         </Button>

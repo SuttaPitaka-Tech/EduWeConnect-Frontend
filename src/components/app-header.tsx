@@ -86,7 +86,7 @@ export function AppHeader({ hideLogo = false }: { hideLogo?: boolean } = {}) {
               size="md"
               className="!bg-[var(--cream)] border border-[var(--sand)]"
             />
-            <span className="hidden md:block text-[14px] font-semibold max-w-[150px] truncate text-[var(--navy)]">
+            <span className="hidden md:block text-[14px] font-semibold max-w-[250px] lg:max-w-[400px] truncate text-[var(--navy)]">
               {fullName}
             </span>
             <ChevronDown

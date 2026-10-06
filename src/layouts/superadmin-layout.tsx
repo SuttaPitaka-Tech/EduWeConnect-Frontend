@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AppHeader } from '@/components/app-header'
+import { AppFooter } from '@/components/app-footer'
 import { superadminSidebar, superadminLogo, lotusLarge } from '@/assets/images'
 import { SuperAdminMenu } from '@/features/superadmin/components/superadmin-menu'
 import { Menu, X, Lock, Unlock } from 'lucide-react'
@@ -26,7 +27,7 @@ export default function SuperAdminLayout() {
       <aside 
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`hidden md:flex flex-col shadow-2xl relative shrink-0 border-r border-[var(--gold)]/30 overflow-hidden transition-all duration-300 ease-in-out z-30 ${
+        className={`hidden md:flex flex-col shadow-2xl relative shrink-0 overflow-hidden transition-all duration-300 ease-in-out z-30 ${
           isExpanded ? 'w-[260px] lg:w-[280px]' : 'w-[74px]'
         }`}
         style={{ 
@@ -134,7 +135,7 @@ export default function SuperAdminLayout() {
 
           {/* Mobile Drawer */}
           <div 
-            className="relative w-[270px] max-w-[85vw] h-full flex flex-col shadow-2xl z-10 border-r border-[var(--gold)]/40 overflow-hidden"
+            className="relative w-[270px] max-w-[85vw] h-full flex flex-col shadow-2xl z-10 overflow-hidden"
             style={{ 
               backgroundImage: `url(${superadminSidebar})`,
               backgroundSize: 'cover',
@@ -187,25 +188,15 @@ export default function SuperAdminLayout() {
           </div>
         </header>
 
-        {/* Scrollable Content Area */}
         <main className={`flex-1 min-h-0 flex flex-col ${isNoScroll ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}`}>
-          <div className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col min-h-0 ${
-            isChat ? 'py-4 md:py-6 h-full overflow-hidden' : isCalendar ? 'py-1 sm:py-2 md:py-3 h-full overflow-hidden justify-center' : 'py-6 md:py-8'
+          <div className={`w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col ${
+            isChat ? 'flex-1 min-h-0 py-4 md:py-6 h-full overflow-hidden' : isCalendar ? 'flex-1 min-h-0 py-1 sm:py-2 md:py-3 h-full overflow-hidden justify-center' : 'py-6 md:py-8'
           }`}>
             <Outlet />
           </div>
-
-          {/* Branded Footer */}
-          {!isChat && !isCalendar && (
-            <footer className="w-full px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-[var(--border)]/60 text-xs text-[var(--text-secondary)] font-medium mt-auto bg-white/30 shrink-0">
-              <p>© 2026 Sutta Pitaka Tech. All rights reserved.</p>
-              <div className="flex items-center gap-2">
-                <img src={lotusLarge} alt="Lotus" className="w-4 h-4 object-contain opacity-80" />
-                <span className="text-[11px] font-medium text-[var(--text-secondary)]">Empowering Education. Enriching Lives.</span>
-              </div>
-            </footer>
-          )}
         </main>
+
+        <AppFooter />
       </div>
     </div>
   );
