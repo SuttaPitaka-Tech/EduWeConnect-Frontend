@@ -15,6 +15,7 @@ import {
   Check,
   Search,
   Trash2,
+  ArrowLeft,
 } from 'lucide-react'
 import {
   format,
@@ -37,6 +38,7 @@ import {
   fetchMyMeetingsApi,
   type MeetingScheduleRecord,
 } from '../api/calendar.api'
+import { AttendanceWeeklyLog } from '@/features/attendance/components/attendance-weekly-log'
 
 interface ScheduleItem {
   id: string
@@ -380,6 +382,8 @@ function TimeField({ value, onChange, label }: TimeFieldProps) {
 }
 
 export default function CalendarPage() {
+  const [activeView, setActiveView] = useState<'attendance' | 'calendar'>('attendance')
+  
   const today = new Date()
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
@@ -645,6 +649,22 @@ export default function CalendarPage() {
     return allEvents.find((e) => e.dateKey >= todayKey)
   }, [eventsStore])
 
+  if (activeView === 'attendance') {
+    return (
+      <div className="w-full max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-3 flex flex-col min-h-0 h-full relative">
+        <div className="absolute top-2 right-4 sm:right-6 lg:right-8 z-50">
+          <button 
+            onClick={() => setActiveView('calendar')}
+            className="inline-flex items-center justify-center px-4 py-2 bg-[var(--gold)] text-white rounded-lg text-sm font-bold shadow-md hover:bg-[#A37525] transition-all cursor-pointer"
+          >
+            Schedule Events
+          </button>
+        </div>
+        <AttendanceWeeklyLog />
+      </div>
+    )
+  }
+
   return (
     <div className="w-full max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-3 flex flex-col justify-center min-h-0 h-full">
       {/* ── Top Header Section ───────────────────────────────────── */}
@@ -656,10 +676,20 @@ export default function CalendarPage() {
             <span>EDUWECONNECT</span>
           </div>
 
-          {/* Page Title */}
-          <h1 className="font-serif text-3xl sm:text-[36px] font-bold text-[#102A43] tracking-tight leading-tight">
-            Calendar
-          </h1>
+          {/* Page Title & Back Button */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setActiveView('attendance')}
+              className="p-2 rounded-xl border border-[#DED5C5] bg-white text-[#102A43] hover:bg-[#FDFBF7] hover:border-[#B8862C]/50 hover:text-[#B8862C] shadow-[0_2px_8px_rgba(16,42,67,0.06)] transition-all cursor-pointer"
+              title="Back to Attendance"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="font-serif text-3xl sm:text-[36px] font-bold text-[#102A43] tracking-tight leading-tight">
+              Calendar
+            </h1>
+          </div>
 
           {/* Subtitle */}
           <p className="text-xs sm:text-sm text-[#536579] font-normal">
@@ -667,8 +697,9 @@ export default function CalendarPage() {
           </p>
         </div>
 
-        {/* Today Action Button */}
-        <div>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+
           <button
             type="button"
             onClick={handleToday}

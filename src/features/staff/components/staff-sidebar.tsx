@@ -26,7 +26,7 @@ export function StaffSidebar({
       <aside
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`hidden md:flex flex-col shadow-2xl relative shrink-0 bg-[#0B1F33] border-r border-white/10 overflow-hidden transition-all duration-300 ease-in-out z-30 ${
+        className={`hidden md:flex flex-col shadow-2xl relative shrink-0 bg-[#0B1F33] overflow-hidden transition-all duration-300 ease-in-out z-30 ${
           isExpanded ? 'w-[260px] lg:w-[280px]' : 'w-[74px]'
         }`}
       >

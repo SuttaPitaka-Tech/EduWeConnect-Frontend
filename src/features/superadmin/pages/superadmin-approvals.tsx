@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Building2,
   Search,
@@ -21,6 +22,7 @@ import {
   Mail,
   Calendar,
   Plus,
+  Shield,
 } from 'lucide-react'
 import {
   Button,
@@ -79,9 +81,9 @@ export interface OrganizationRecord {
 }
 
 export default function SuperAdminApprovals() {
+  const navigate = useNavigate()
   const [organizations, setOrganizations] = useState<OrganizationRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [isCreatingOrg, setIsCreatingOrg] = useState(false)
@@ -109,8 +111,7 @@ export default function SuperAdminApprovals() {
   const fetchOrganizations = async (isManual = false) => {
     if (isFetchingRef.current && !isManual) return
     isFetchingRef.current = true
-    if (isManual) setIsRefreshing(true)
-    else setIsLoading(true)
+    if (!isManual) setIsLoading(true)
 
     try {
       const res = await fetch(`${API_GATEWAY_URL}/organization-details`)
@@ -128,7 +129,6 @@ export default function SuperAdminApprovals() {
       toast.error(err.message || 'Error loading organization applications')
     } finally {
       setIsLoading(false)
-      setIsRefreshing(false)
       isFetchingRef.current = false
     }
   }
@@ -309,14 +309,12 @@ export default function SuperAdminApprovals() {
 
             <div className="flex items-center gap-3">
               <Button
-                variant="outline"
                 size="sm"
-                onClick={() => fetchOrganizations(true)}
-                disabled={isRefreshing}
-                className="h-10 px-4 rounded-xl text-xs font-semibold bg-white/80 border-[var(--border)] text-[var(--navy)] hover:bg-[var(--beige)] shadow-xs"
+                onClick={() => navigate('/superadmin/permissions')}
+                className="h-10 px-4 rounded-xl text-xs font-bold bg-[var(--navy)] text-white hover:bg-[var(--navy)]/90 active:scale-98 transition-all shadow-md flex items-center gap-2"
               >
-                <RotateCw className={`w-3.5 h-3.5 mr-2 ${isRefreshing ? 'animate-spin text-[var(--gold)]' : ''}`} />
-                Refresh
+                <Shield className="w-4 h-4 text-[var(--gold)]" />
+                Permissions & Access
               </Button>
 
               <Button
@@ -464,7 +462,7 @@ export default function SuperAdminApprovals() {
               placeholder="Search by name, email, mobile, city..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 pl-9.5 pr-8 rounded-xl text-xs bg-[var(--warm-white)] border-[var(--border)] focus:border-[var(--gold)] transition-all"
+              className="h-10 pl-10 pr-8 rounded-xl text-xs bg-[var(--warm-white)] border-[var(--border)] focus:border-[var(--gold)] transition-all"
             />
             {searchQuery && (
               <button

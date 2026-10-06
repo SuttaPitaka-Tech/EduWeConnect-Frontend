@@ -49,6 +49,7 @@ const OrganizationCreateUsers = lazyWithRetry(() => import('@/features/organizat
 const SuperAdminDashboard = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-dashboard'))
 const SuperAdminApprovals = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-approvals'))
 const SuperAdminOrganizations = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-organizations'))
+const SuperAdminPermissions = lazyWithRetry(() => import('@/features/superadmin/pages/superadmin-permissions'))
 
 // ── Staff & Student ──────────────────────────────────────────────────────────
 const StaffLayout = lazyWithRetry(() => import('@/layouts/staff-layout'))
@@ -162,6 +163,7 @@ export function createAppRouter(_queryClient: QueryClient) {
             { path: 'dashboard', element: <Lazy><SuperAdminDashboard /></Lazy> },
             { path: 'approval', element: <Lazy><SuperAdminApprovals /></Lazy> },
             { path: 'approvals', element: <Navigate to="/superadmin/approval" replace /> },
+            { path: 'permissions', element: <Lazy><SuperAdminPermissions /></Lazy> },
             { path: 'organization-management', element: <Lazy><SuperAdminOrganizations /></Lazy> },
             { path: 'organizations', element: <Navigate to="/superadmin/organization-management" replace /> },
             { path: 'create-organization', element: <Navigate to="/superadmin/approval" replace /> },

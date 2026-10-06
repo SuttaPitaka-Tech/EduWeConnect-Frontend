@@ -68,7 +68,7 @@ export default function DashboardLayout() {
           )}
         </main>
 
-        {!isCalendar && <AppFooter />}
+        <AppFooter />
       </div>
     </div>
   )

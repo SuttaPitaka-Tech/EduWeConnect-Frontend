@@ -208,6 +208,42 @@ button.btn-text {
   background: #94A3B8 !important;
 }
 
+/* Compact controls for the public organization registration form */
+.registration-step-info--compact .registration-fields label {
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+.registration-step-info--compact .registration-compact-control {
+  height: 2rem;
+  font-size: 0.75rem;
+}
+.registration-step-info--compact textarea.registration-compact-control {
+  min-height: 3rem;
+}
+.registration-step-info--compact .registration-compact-quick-select {
+  height: 1.5rem;
+  padding-inline: 0.5rem;
+  font-size: 0.625rem;
+}
+.registration-step-info--compact .registration-compact-standard-picker {
+  min-height: 2.25rem;
+  font-size: 0.75rem;
+}
+.registration-step-info--compact .registration-compact-selected-standards {
+  min-height: 2rem;
+  margin-top: 0.375rem;
+  padding: 0.375rem;
+}
+.registration-step-info--compact .registration-compact-actions {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
+.registration-step-info--compact .registration-compact-next {
+  height: 2.125rem;
+  padding-inline: 1.25rem;
+  font-size: 0.75rem;
+}
+
 /* ── Table Row Hover Effect ── */
 tbody tr {
   transition: background-color 150ms ease;
@@ -215,46 +251,3 @@ tbody tr {
 tbody tr:hover {
   background-color: var(--cream, #F7F1E3) !important;
 }
-
-/* ── Toast Variant Styling (White BG + --cream Border + Themed Icons/Text) ── */
-[data-sonner-toast] {
-  background-color: #FFFFFF !important;
-  border-color: var(--cream, #F7F1E3) !important;
-  border-width: 1px !important;
-  border-style: solid !important;
-  border-radius: 10px !important;
-  box-shadow: 0 10px 30px -5px rgba(16, 42, 67, 0.12), 0 0 0 1px rgba(247, 241, 227, 0.6) !important;
-}
-
-[data-sonner-toast][data-type="success"] [data-title] {
-  color: #15803d !important;
-}
-[data-sonner-toast][data-type="success"] [data-icon] {
-  color: #16a34a !important;
-}
-
-[data-sonner-toast][data-type="error"] [data-title] {
-  color: #b91c1c !important;
-}
-[data-sonner-toast][data-type="error"] [data-icon] {
-  color: #dc2626 !important;
-}
-
-[data-sonner-toast][data-type="warning"] [data-title] {
-  color: #b45309 !important;
-}
-[data-sonner-toast][data-type="warning"] [data-icon] {
-  color: #d97706 !important;
-}
-
-[data-sonner-toast][data-type="info"] [data-title] {
-  color: #1d4ed8 !important;
-}
-[data-sonner-toast][data-type="info"] [data-icon] {
-  color: #2563eb !important;
-}
-
-[data-sonner-toast] [data-description] {
-  color: #475569 !important;
-}
-

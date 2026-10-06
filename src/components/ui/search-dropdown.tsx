@@ -15,6 +15,7 @@ export interface SearchDropdownProps {
   invalid?: boolean;
   className?: string;
   contentClassName?: string;
+  autoPosition?: boolean;
   clearable?: boolean;
   footerAction?: DropdownFooterAction;
   onOpenChange?: (open: boolean) => void;
@@ -32,18 +33,31 @@ export function SearchDropdown({
   invalid = false,
   className,
   contentClassName,
+  autoPosition = false,
   clearable = true,
   footerAction,
   onOpenChange,
   onOpen,
 }: SearchDropdownProps) {
   const [open, setOpen] = React.useState(false);
+  const [openAbove, setOpenAbove] = React.useState(false);
+  const [optionsMaxHeight, setOptionsMaxHeight] = React.useState(224);
   const [query, setQuery] = React.useState("");
   const containerRef = React.useRef<HTMLDivElement>(null);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleOpenChange = React.useCallback(
     (nextOpen: boolean) => {
+      if (nextOpen && autoPosition && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const spaceAbove = Math.max(0, rect.top - 8);
+        const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - 8);
+        const shouldOpenAbove = spaceBelow < 280 && spaceAbove > spaceBelow;
+        const availableSpace = shouldOpenAbove ? spaceAbove : spaceBelow;
+
+        setOpenAbove(shouldOpenAbove);
+        setOptionsMaxHeight(Math.max(40, Math.min(224, availableSpace - 58)));
+      }
       setOpen(nextOpen);
       if (nextOpen) {
         setQuery("");
@@ -52,7 +66,7 @@ export function SearchDropdown({
       }
       onOpenChange?.(nextOpen);
     },
-    [onOpenChange, onOpen],
+    [autoPosition, onOpenChange, onOpen],
   );
 
   // Click outside listener
@@ -169,7 +183,9 @@ export function SearchDropdown({
       {open && (
         <div
           className={cn(
-            "absolute left-0 top-full z-50 mt-1 w-full min-w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl outline-none",
+            `absolute left-0 z-50 w-full min-w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl outline-none ${
+              autoPosition && openAbove ? "bottom-full mb-1" : "top-full mt-1"
+            }`,
             contentClassName,
           )}
           style={{
@@ -208,7 +224,12 @@ export function SearchDropdown({
           </div>
 
           {/* Options List */}
-          <div className="max-h-56 overflow-y-auto space-y-0.5 p-1 bg-white">
+          <div
+            className={`overflow-y-auto space-y-0.5 p-1 bg-white ${
+              autoPosition ? "" : "max-h-56"
+            }`}
+            style={autoPosition ? { maxHeight: `${optionsMaxHeight}px` } : undefined}
+          >
             {isLoading ? (
               <div className="flex items-center justify-center gap-2 py-4 text-xs text-slate-500">
                 <Spinner size={14} />
