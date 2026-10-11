@@ -7,14 +7,19 @@ import { UserRole } from '@/features/auth/enums/auth.enum'
 import { getRoleHomeRoute } from '@/core/config/rbac.config'
 import { StaffSidebar } from '@/features/staff/components/staff-sidebar'
 import { Menu } from 'lucide-react'
+import { usePermissions } from '@/hooks/use-permissions'
+import { AccessPendingView } from '@/components/access-pending-view'
+import { PageSpinner } from '@/components/ui'
 
 /**
  * StaffLayout — dedicated shell for the Staff Portal.
  * Features fixed left sidebar navigation, top header with profile & notifications,
  * and responsive mobile drawer.
+ * If Super Admin has not assigned permissions, shows AccessPendingView.
  */
 export default function StaffLayout() {
   const { user } = useAuth()
+  const { isLoading, hasAnyRolePermission } = usePermissions()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const location = useLocation()
   const isChat = location.pathname.includes('/chat')
@@ -24,6 +29,10 @@ export default function StaffLayout() {
   // Non-staff roles route to their respective home portals
   if (user && user.role !== UserRole.Staff) {
     return <Navigate to={getRoleHomeRoute(user.role)} replace />
+  }
+
+  if (isLoading) {
+    return <PageSpinner />
   }
 
   return (
@@ -54,11 +63,15 @@ export default function StaffLayout() {
 
         {/* Scrollable Content Area */}
         <main className={`flex-1 min-h-0 flex flex-col ${isNoScroll ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-          <div className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col min-h-0 ${
-            isChat ? 'py-4 md:py-6 h-full overflow-hidden' : isCalendar ? 'py-1 sm:py-2 md:py-3 h-full overflow-hidden justify-center' : 'py-6 md:py-8'
-          }`}>
-            <Outlet />
-          </div>
+          {!hasAnyRolePermission ? (
+            <AccessPendingView />
+          ) : (
+            <div className={`flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col min-h-0 ${
+              isChat ? 'py-4 md:py-6 h-full overflow-hidden' : isCalendar ? 'py-1 sm:py-2 md:py-3 h-full overflow-hidden justify-center' : 'py-6 md:py-8'
+            }`}>
+              <Outlet />
+            </div>
+          )}
         </main>
 
         <AppFooter />

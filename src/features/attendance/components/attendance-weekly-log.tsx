@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Check, Clock, Save, CalendarDays, Upload, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Clock, Save, CalendarDays, Upload, ChevronDown, CheckCircle2, XCircle } from 'lucide-react';
 import { startOfWeek, addDays, format, subWeeks, addWeeks, isToday as isDateToday, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, addMonths } from 'date-fns';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth-context';
+import { UserRole } from '@/features/auth/enums/auth.enum';
+import { saveAttendanceApi, fetchAttendanceLogsApi } from '../api/leave-requests.api';
 
 const ATTENDANCE_OPTIONS = [
   { id: 'present', label: 'Present', sub: 'Working day', activeStyle: 'border-emerald-500 bg-emerald-50 ring-emerald-500/20', activeText: 'text-emerald-700', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
@@ -11,7 +14,16 @@ const ATTENDANCE_OPTIONS = [
   { id: 'holiday', label: 'Holiday', sub: 'Day off', activeStyle: 'border-blue-500 bg-blue-50 ring-blue-500/20', activeText: 'text-blue-700', iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
 ];
 
-export function AttendanceWeeklyLog() {
+export interface AttendanceWeeklyLogProps {
+  headerCenter?: React.ReactNode;
+  headerRight?: React.ReactNode;
+}
+
+export function AttendanceWeeklyLog({ headerCenter, headerRight }: AttendanceWeeklyLogProps = {}) {
+  const { user } = useAuth();
+  const organizationId = user?.institutionId || user?.id;
+  const userId = user?.id || 'current-user';
+
   const [viewMode, setViewMode] = useState<'weekly'|'monthly'>('weekly');
   
   // Weekly State
@@ -94,6 +106,39 @@ export function AttendanceWeeklyLog() {
     }
   }, [selectedDay, savedAttendance]);
 
+  // Load existing attendance logs from backend
+  useEffect(() => {
+    async function loadLogs() {
+      try {
+        const res = await fetchAttendanceLogsApi({
+          userId,
+          organizationId,
+        });
+        if (res && res.data && Array.isArray(res.data)) {
+          const mapped: Record<string, any> = {};
+          res.data.forEach((item: any) => {
+            mapped[item.date] = {
+              status: item.status,
+              feedback: item.feedback || '',
+              reason: item.halfDayReason || '',
+              absentReason: item.absentReason || '',
+              leaveReason: item.leaveReason || '',
+              file: item.documentFileName,
+              startTime: item.startTime || '09:00',
+              startPeriod: item.startPeriod || 'AM',
+              endTime: item.endTime || '05:00',
+              endPeriod: item.endPeriod || 'PM',
+            };
+          });
+          setSavedAttendance((prev) => ({ ...prev, ...mapped }));
+        }
+      } catch (err) {
+        // Fallback to local state if backend call fails
+      }
+    }
+    loadLogs();
+  }, [userId, organizationId]);
+
   const isTimeMinuteInvalid = (val: string): boolean => {
     if (!val || !val.includes(':')) return false;
     const parts = val.split(':');
@@ -105,7 +150,7 @@ export function AttendanceWeeklyLog() {
   const isStartMinuteInvalid = isTimeMinuteInvalid(startTime);
   const isEndMinuteInvalid = isTimeMinuteInvalid(endTime);
 
-  const handleSaveAttendance = () => {
+  const handleSaveAttendance = async () => {
     if (isStartMinuteInvalid || isEndMinuteInvalid) {
       toast.error('The minutes you are entering is more than 60 minutes. Please enter correctly.', { id: 'invalid-minute-toast' });
       return;
@@ -129,6 +174,36 @@ export function AttendanceWeeklyLog() {
     }));
     setSavedRecently(true);
     setTimeout(() => setSavedRecently(false), 2000);
+
+    try {
+      const applicantName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : undefined;
+      await saveAttendanceApi({
+        date: dateStr,
+        status: attendanceState,
+        userId,
+        userName: applicantName,
+        userType: user?.role === UserRole.Students ? 'student' : 'staff',
+        organizationId,
+        startTime,
+        startPeriod,
+        endTime,
+        endPeriod,
+        feedback,
+        reason: halfDayReason,
+        absentReason,
+        leaveReason,
+        documentFileName: uploadedFile || undefined,
+      });
+
+      if (attendanceState === 'half' || attendanceState === 'leave') {
+        toast.success(`Attendance submitted for organization approval as pending!`);
+      } else {
+        toast.success(`Attendance recorded successfully!`);
+      }
+    } catch (err) {
+      console.error('Failed to sync attendance to backend:', err);
+      toast.error('Saved locally. Backend sync failed.');
+    }
   };
 
   const handleTimeInput = (val: string, setter: (v: string) => void, prev: string) => {
@@ -271,7 +346,7 @@ export function AttendanceWeeklyLog() {
   return (
     <div className="w-full h-full flex flex-col gap-2 py-0 overflow-hidden">
       {/* ── Header Toolbar ── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 shrink-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0">
         <div>
           <h2 className="text-[10px] font-bold tracking-[0.18em] text-[var(--gold)] uppercase mb-0.5 flex items-center gap-1.5">
             <CalendarDays className="w-3 h-3" />
@@ -286,20 +361,30 @@ export function AttendanceWeeklyLog() {
               : format(currentMonth, 'MMMM yyyy')}
           </p>
         </div>
+
+        {/* Center / In Between Section */}
+        {headerCenter && (
+          <div className="flex items-center gap-2.5 self-start sm:self-center">
+            {headerCenter}
+          </div>
+        )}
         
-        <div className="flex items-center bg-white border border-[var(--border)] rounded-full p-0.5 shadow-sm">
-          <button 
-            onClick={() => setViewMode('weekly')}
-            className={`px-3.5 py-1 text-[11px] font-bold rounded-full transition-all ${viewMode === 'weekly' ? 'bg-[var(--navy)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:text-[var(--navy)] hover:bg-gray-50'}`}
-          >
-            Weekly
-          </button>
-          <button 
-            onClick={() => setViewMode('monthly')}
-            className={`px-3.5 py-1 text-[11px] font-bold rounded-full transition-all ${viewMode === 'monthly' ? 'bg-[var(--navy)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:text-[var(--navy)] hover:bg-gray-50'}`}
-          >
-            Monthly
-          </button>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          {headerRight}
+          <div className="flex items-center bg-white border border-[var(--border)] rounded-full p-0.5 shadow-sm">
+            <button 
+              onClick={() => setViewMode('weekly')}
+              className={`px-3.5 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${viewMode === 'weekly' ? 'bg-[var(--navy)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:text-[var(--navy)] hover:bg-gray-50'}`}
+            >
+              Weekly
+            </button>
+            <button 
+              onClick={() => setViewMode('monthly')}
+              className={`px-3.5 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${viewMode === 'monthly' ? 'bg-[var(--navy)] text-white shadow-md' : 'text-[var(--text-secondary)] hover:text-[var(--navy)] hover:bg-gray-50'}`}
+            >
+              Monthly
+            </button>
+          </div>
         </div>
       </div>
 
@@ -399,16 +484,36 @@ export function AttendanceWeeklyLog() {
                       Present
                     </span>
                   ) : isSavedHalf ? (
-                    <span className="text-[8px] sm:text-[9px] font-bold text-amber-600 mt-1 tracking-widest uppercase">
-                      Half Day
+                    <span className={`text-[8px] sm:text-[9px] font-bold mt-1 tracking-wider uppercase flex items-center justify-center ${
+                      savedAttendance[dateKey]?.feedback?.toLowerCase().includes('approved')
+                        ? 'text-emerald-600'
+                        : savedAttendance[dateKey]?.feedback?.toLowerCase().includes('declined')
+                          ? 'text-red-600'
+                          : 'text-amber-600'
+                    }`}>
+                      {savedAttendance[dateKey]?.feedback?.toLowerCase().includes('approved')
+                        ? 'Half · Appr'
+                        : savedAttendance[dateKey]?.feedback?.toLowerCase().includes('declined')
+                          ? 'Half · Decl'
+                          : 'Half · Pend'}
                     </span>
                   ) : isSavedAbsent ? (
                     <span className="text-[8px] sm:text-[9px] font-bold text-red-600 mt-1 tracking-widest uppercase">
                       Absent
                     </span>
                   ) : isSavedLeave ? (
-                    <span className="text-[8px] sm:text-[9px] font-bold text-orange-600 mt-1 tracking-widest uppercase">
-                      Leave
+                    <span className={`text-[8px] sm:text-[9px] font-bold mt-1 tracking-wider uppercase flex items-center justify-center ${
+                      savedAttendance[dateKey]?.feedback?.toLowerCase().includes('approved')
+                        ? 'text-emerald-600'
+                        : savedAttendance[dateKey]?.feedback?.toLowerCase().includes('declined')
+                          ? 'text-red-600'
+                          : 'text-orange-600'
+                    }`}>
+                      {savedAttendance[dateKey]?.feedback?.toLowerCase().includes('approved')
+                        ? 'Leave · Appr'
+                        : savedAttendance[dateKey]?.feedback?.toLowerCase().includes('declined')
+                          ? 'Leave · Decl'
+                          : 'Leave · Pend'}
                     </span>
                   ) : (
                     <span className={`text-[8px] sm:text-[10px] mt-1 ${isToday ? 'text-[var(--gold)]/40' : 'text-gray-300'}`}>
@@ -529,6 +634,66 @@ export function AttendanceWeeklyLog() {
             </p>
             <h3 className={`${viewMode === 'monthly' ? 'text-sm sm:text-base mb-1.5' : 'text-lg sm:text-xl mb-3'} font-bold text-[var(--navy)] tracking-tight`}>Set attendance</h3>
             
+            {/* Approval Status Banner if Selected Day is Half Day or Leave */}
+            {(() => {
+              const curDateKey = format(selectedDay, 'yyyy-MM-dd');
+              const curRecord = savedAttendance[curDateKey];
+              if (!curRecord || (curRecord.status !== 'half' && curRecord.status !== 'leave')) return null;
+
+              const fb = (curRecord.feedback || '').toLowerCase();
+              const isApproved = fb.includes('approved');
+              const isDeclined = fb.includes('declined');
+
+              if (isApproved) {
+                return (
+                  <div className="mb-2.5 p-2 sm:p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <span className="font-bold block text-[11px] sm:text-xs text-emerald-950">Request Approved</span>
+                        <span className="text-[10px] text-emerald-700 leading-tight">Approved by Organization Admin ({curRecord.feedback})</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-200 text-emerald-900 uppercase tracking-wider shrink-0">
+                      Approved
+                    </span>
+                  </div>
+                );
+              }
+
+              if (isDeclined) {
+                return (
+                  <div className="mb-2.5 p-2 sm:p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-900 text-xs flex items-center justify-between shadow-2xs">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-red-600 shrink-0" />
+                      <div>
+                        <span className="font-bold block text-[11px] sm:text-xs text-red-950">Request Declined</span>
+                        <span className="text-[10px] text-red-700 leading-tight">{curRecord.feedback || 'Declined by Organization Admin'}</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-200 text-red-900 uppercase tracking-wider shrink-0">
+                      Declined
+                    </span>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="mb-2.5 p-2 sm:p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-600 animate-pulse shrink-0" />
+                    <div>
+                      <span className="font-bold block text-[11px] sm:text-xs text-amber-950">Awaiting Approval</span>
+                      <span className="text-[10px] text-amber-700 leading-tight">Submitted as pending approval from Organization Admin</span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-200 text-amber-900 uppercase tracking-wider shrink-0">
+                    Pending
+                  </span>
+                </div>
+              );
+            })()}
+
             <div className={`grid ${viewMode === 'monthly' ? 'grid-cols-2 sm:grid-cols-3 gap-1.5' : 'grid-cols-1 sm:grid-cols-2 gap-2 flex-1 overflow-y-auto p-1 -m-1'}`}>
               {ATTENDANCE_OPTIONS.map((opt) => {
                 const isSelected = attendanceState === opt.id;

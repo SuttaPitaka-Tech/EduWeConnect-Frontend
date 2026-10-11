@@ -24,6 +24,10 @@ import { AuthProvider, useAuth } from '@/contexts/auth-context'
 import { UserRole } from '@/features/auth/enums/auth.enum'
 import { getRoleHomeRoute } from '@/core/config/rbac.config'
 
+import { PermissionRoute } from '@/components/permission-route'
+import { AccessPendingView } from '@/components/access-pending-view'
+import { usePermissions } from '@/hooks/use-permissions'
+
 // ── Pages ──────────────────────────────────────────────────────────────────
 const LandingPage = lazyWithRetry(() => import('@/pages/landing-page'))
 const LoginPage = lazyWithRetry(() => import('@/features/auth/pages/login-page'))
@@ -74,6 +78,15 @@ function Lazy({ children }: { children: JSX.Element }) {
 function AppHomeRedirect() {
   const { user } = useAuth()
   return <Navigate to={getRoleHomeRoute(user?.role)} replace />
+}
+
+function RoleHomeRedirect({ defaultRoute }: { defaultRoute: string }) {
+  const { isLoading, hasAnyRolePermission, firstAllowedRoute } = usePermissions()
+
+  if (isLoading) return <PageSpinner />
+  if (!hasAnyRolePermission) return <AccessPendingView />
+
+  return <Navigate to={firstAllowedRoute || defaultRoute} replace />
 }
 
 function RoleCalendarRedirect() {
@@ -142,11 +155,39 @@ export function createAppRouter(_queryClient: QueryClient) {
             </RoleRoute>
           ),
           children: [
-            { index: true, element: <Navigate to="/organization/dashboard" replace /> },
-            { path: 'dashboard', element: <Lazy><OrganizationDashboard /></Lazy> },
-            { path: 'create-users', element: <Lazy><OrganizationCreateUsers /></Lazy> },
-            { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
-            { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
+            { index: true, element: <RoleHomeRedirect defaultRoute="/organization/dashboard" /> },
+            { 
+              path: 'dashboard', 
+              element: (
+                <PermissionRoute moduleName="Dashboard">
+                  <Lazy><OrganizationDashboard /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { 
+              path: 'create-users', 
+              element: (
+                <PermissionRoute moduleName="Create Users">
+                  <Lazy><OrganizationCreateUsers /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { 
+              path: 'chat', 
+              element: (
+                <PermissionRoute moduleName="Chats">
+                  <Lazy><EduChatPage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { 
+              path: 'calendar', 
+              element: (
+                <PermissionRoute moduleName="Attendance and Calendar">
+                  <Lazy><CalendarPage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
           ],
         },
 
@@ -185,11 +226,32 @@ export function createAppRouter(_queryClient: QueryClient) {
             </RoleRoute>
           ),
           children: [
-            { index: true, element: <Navigate to="/staff/welcome" replace /> },
-            { path: 'welcome', element: <Lazy><StaffWelcomePage /></Lazy> },
-            { path: 'dashboard', element: <Navigate to="/staff/welcome" replace /> },
-            { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
-            { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
+            { index: true, element: <RoleHomeRedirect defaultRoute="/staff/welcome" /> },
+            { 
+              path: 'welcome', 
+              element: (
+                <PermissionRoute moduleName="Dashboard">
+                  <Lazy><StaffWelcomePage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { path: 'dashboard', element: <RoleHomeRedirect defaultRoute="/staff/welcome" /> },
+            { 
+              path: 'chat', 
+              element: (
+                <PermissionRoute moduleName="Chat">
+                  <Lazy><EduChatPage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { 
+              path: 'calendar', 
+              element: (
+                <PermissionRoute moduleName="Attendance and Calendar">
+                  <Lazy><CalendarPage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
           ],
         },
 
@@ -202,14 +264,56 @@ export function createAppRouter(_queryClient: QueryClient) {
             </RoleRoute>
           ),
           children: [
-            { index: true, element: <Navigate to="/student/welcome" replace /> },
-            { path: 'welcome', element: <Lazy><StudentWelcomePage /></Lazy> },
-            { path: 'dashboard', element: <Navigate to="/student/welcome" replace /> },
-            { path: 'timetable', element: <Lazy><StudentTimetablePage /></Lazy> },
-            { path: 'attendance', element: <Lazy><StudentAttendancePage /></Lazy> },
-            { path: 'notes', element: <Lazy><StudentNotesPage /></Lazy> },
-            { path: 'chat', element: <Lazy><EduChatPage /></Lazy> },
-            { path: 'calendar', element: <Lazy><CalendarPage /></Lazy> },
+            { index: true, element: <RoleHomeRedirect defaultRoute="/student/welcome" /> },
+            { 
+              path: 'welcome', 
+              element: (
+                <PermissionRoute moduleName="Dashboard">
+                  <Lazy><StudentWelcomePage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { path: 'dashboard', element: <RoleHomeRedirect defaultRoute="/student/welcome" /> },
+            { 
+              path: 'timetable', 
+              element: (
+                <PermissionRoute moduleName="Time Table">
+                  <Lazy><StudentTimetablePage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { 
+              path: 'attendance', 
+              element: (
+                <PermissionRoute moduleName="Attendance">
+                  <Lazy><StudentAttendancePage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { 
+              path: 'notes', 
+              element: (
+                <PermissionRoute moduleName="Notes">
+                  <Lazy><StudentNotesPage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { 
+              path: 'chat', 
+              element: (
+                <PermissionRoute moduleName="Chats">
+                  <Lazy><EduChatPage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
+            { 
+              path: 'calendar', 
+              element: (
+                <PermissionRoute moduleName="Attendance and Calendar">
+                  <Lazy><CalendarPage /></Lazy>
+                </PermissionRoute>
+              ) 
+            },
           ],
         },
 

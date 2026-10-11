@@ -7,25 +7,33 @@ import { UserRole } from '@/features/auth/enums/auth.enum'
 import { getRoleHomeRoute } from '@/core/config/rbac.config'
 import { OrganizationSidebar } from '@/features/organization-menu'
 import { Menu } from 'lucide-react'
+import { usePermissions } from '@/hooks/use-permissions'
+import { AccessPendingView } from '@/components/access-pending-view'
+import { PageSpinner } from '@/components/ui'
 
 /**
  * DashboardLayout — dedicated shell for Organization management portal.
  * Non-organization roles are automatically redirected to their designated home route via RBAC.
+ * If Super Admin has not assigned any permissions to this organization, displays the Access Pending notice.
  */
 export default function DashboardLayout() {
   const { user } = useAuth()
+  const { isLoading, hasAnyRolePermission } = usePermissions()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
   const location = useLocation()
   const isChat = location.pathname.includes('/chat')
   const isCalendar = location.pathname.includes('/calendar')
-  const isNoScroll = isChat || isCalendar
+  const isNoScroll = isChat
 
   // Enterprise boundary: Non-organization roles route to their respective home portals
   if (user && user.role !== UserRole.Organization) {
     return <Navigate to={getRoleHomeRoute(user.role)} replace />
   }
 
+  if (isLoading) {
+    return <PageSpinner />
+  }
 
   return (
     <div className="h-screen flex w-full font-sans bg-[var(--cream)] overflow-hidden">
@@ -55,12 +63,14 @@ export default function DashboardLayout() {
 
         {/* Scrollable Content Area */}
         <main className={`flex-1 min-h-0 flex flex-col ${isNoScroll ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-          {isChat ? (
+          {!hasAnyRolePermission ? (
+            <AccessPendingView />
+          ) : isChat ? (
             <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 flex flex-col min-h-0 h-full overflow-hidden">
               <Outlet />
             </div>
           ) : isCalendar ? (
-            <div className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-1 sm:py-2 md:py-3 flex flex-col min-h-0 h-full overflow-hidden justify-center">
+            <div className="flex-1 w-full max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-1 sm:py-2 flex flex-col min-h-0 h-full overflow-y-auto">
               <Outlet />
             </div>
           ) : (

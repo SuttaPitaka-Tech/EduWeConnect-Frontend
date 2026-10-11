@@ -1,10 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, MessageSquare, Lock, Clock } from 'lucide-react'
 import type { StaffMenuItem } from '../types'
 import { createCalendarMenuItem } from '@/features/calendar'
-import { useAuth } from '@/contexts/auth-context'
-import { useQuery } from '@tanstack/react-query'
-import { API_GATEWAY_URL } from '@/config/api.config'
+import { usePermissions } from '@/hooks/use-permissions'
+
 export const STAFF_MENU_ITEMS: StaffMenuItem[] = [
   {
     title: 'Dashboard',
@@ -25,20 +24,7 @@ interface StaffMenuProps {
 }
 
 export function StaffMenu({ onNavigate, isCollapsed = false }: StaffMenuProps) {
-  const { user } = useAuth()
-  
-  const { data: permissions } = useQuery<Record<string, boolean>>({
-    queryKey: ['permissions', user?.id],
-    queryFn: async () => {
-      const orgId = user?.institutionId || user?.id
-      if (!orgId) return {}
-      const res = await fetch(`${API_GATEWAY_URL}/menus/permissions/${orgId}`)
-      if (!res.ok) throw new Error('Failed to fetch permissions')
-      return res.json()
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  })
+  const { permissions, isLoading, hasAnyRolePermission } = usePermissions()
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center rounded-xl text-sm font-semibold transition-all duration-300 transform border ${
@@ -50,11 +36,42 @@ export function StaffMenu({ onNavigate, isCollapsed = false }: StaffMenuProps) {
     }`
 
   const filteredItems = STAFF_MENU_ITEMS.filter(item => {
-    if (!permissions) return false
+    if (!permissions || isLoading) return false
     
     // Schema uses 'Chat' for Staff role (matches item.title)
-    return !!permissions[`Staff / Teachers-${item.title}`]
+    return Boolean(permissions[`Staff / Teachers-${item.title}`])
   })
+
+  if (!hasAnyRolePermission && !isLoading) {
+    if (isCollapsed) {
+      return (
+        <div className="flex-1 w-full flex flex-col items-center py-6">
+          <div
+            title="Awaiting Super Admin access permissions"
+            className="p-3 rounded-xl bg-white/5 border border-white/10 text-[var(--gold)]"
+          >
+            <Lock className="w-5 h-5" />
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex-1 w-full flex flex-col py-6 px-4">
+        <div className="rounded-2xl p-4 bg-white/5 border border-white/10 text-center flex flex-col items-center">
+          <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/20 border border-[var(--gold)]/30 flex items-center justify-center text-[var(--gold)] mb-2.5">
+            <Clock className="w-5 h-5 animate-pulse" />
+          </div>
+          <p className="text-xs font-semibold text-white/90">
+            Access Pending
+          </p>
+          <p className="text-[11px] text-white/60 mt-1 leading-relaxed">
+            Super Admin will grant you access to application modules.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={`flex-1 w-full flex flex-col py-3 overflow-y-auto ${isCollapsed ? 'px-2' : 'px-4'}`}>

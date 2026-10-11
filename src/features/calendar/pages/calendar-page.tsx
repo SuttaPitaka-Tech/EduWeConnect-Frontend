@@ -16,6 +16,7 @@ import {
   Search,
   Trash2,
   ArrowLeft,
+  ClipboardList,
 } from 'lucide-react'
 import {
   format,
@@ -30,6 +31,7 @@ import {
   getDay,
 } from 'date-fns'
 import { useAuth } from '@/contexts/auth-context'
+import { UserRole } from '@/features/auth/enums/auth.enum'
 import { fetchChatContactsApi, type ChatContact } from '@/features/chat/api/chat.api'
 import { normalizeRole } from '@/features/chat/chat-permissions'
 import { toast } from 'sonner'
@@ -39,6 +41,7 @@ import {
   type MeetingScheduleRecord,
 } from '../api/calendar.api'
 import { AttendanceWeeklyLog } from '@/features/attendance/components/attendance-weekly-log'
+import { RequestManagementView } from '@/features/attendance/components/request-management-view'
 
 interface ScheduleItem {
   id: string
@@ -382,7 +385,7 @@ function TimeField({ value, onChange, label }: TimeFieldProps) {
 }
 
 export default function CalendarPage() {
-  const [activeView, setActiveView] = useState<'attendance' | 'calendar'>('attendance')
+  const [activeView, setActiveView] = useState<'attendance' | 'calendar' | 'requests'>('attendance')
   
   const today = new Date()
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
@@ -402,6 +405,7 @@ export default function CalendarPage() {
 
   // Attendees & Permission State
   const { user } = useAuth()
+  const isOrganization = user?.role === UserRole.Organization || user?.role?.toLowerCase() === 'organization'
   const [allContacts, setAllContacts] = useState<ChatContact[]>([])
   const [selectedAttendees, setSelectedAttendees] = useState<ChatContact[]>([])
   const [isAttendeeDropdownOpen, setIsAttendeeDropdownOpen] = useState(false)
@@ -649,18 +653,48 @@ export default function CalendarPage() {
     return allEvents.find((e) => e.dateKey >= todayKey)
   }, [eventsStore])
 
+  if (activeView === 'requests') {
+    return <RequestManagementView onBack={() => setActiveView('attendance')} />
+  }
+
   if (activeView === 'attendance') {
     return (
       <div className="w-full max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-3 flex flex-col min-h-0 h-full relative">
-        <div className="absolute top-2 right-4 sm:right-6 lg:right-8 z-50">
-          <button 
-            onClick={() => setActiveView('calendar')}
-            className="inline-flex items-center justify-center px-4 py-2 bg-[var(--gold)] text-white rounded-lg text-sm font-bold shadow-md hover:bg-[#A37525] transition-all cursor-pointer"
-          >
-            Schedule Events
-          </button>
-        </div>
-        <AttendanceWeeklyLog />
+        <AttendanceWeeklyLog
+          headerCenter={
+            isOrganization ? (
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveView('requests')}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-[var(--navy)] text-white rounded-lg text-xs sm:text-sm font-semibold shadow-md hover:bg-[#0B1F33] transition-all cursor-pointer whitespace-nowrap"
+                >
+                  <ClipboardList className="w-4 h-4 text-[var(--gold)] shrink-0" />
+                  <span>Request Management</span>
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setActiveView('calendar')}
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-[var(--gold)] text-white rounded-lg text-xs sm:text-sm font-bold shadow-md hover:bg-[#A37525] transition-all cursor-pointer whitespace-nowrap"
+                >
+                  <CalendarDays className="w-4 h-4 shrink-0" />
+                  <span>Schedule Events</span>
+                </button>
+              </div>
+            ) : undefined
+          }
+          headerRight={
+            !isOrganization ? (
+              <button 
+                type="button"
+                onClick={() => setActiveView('calendar')}
+                className="inline-flex items-center justify-center px-4 py-2 bg-[var(--gold)] text-white rounded-lg text-sm font-bold shadow-md hover:bg-[#A37525] transition-all cursor-pointer whitespace-nowrap"
+              >
+                Schedule Events
+              </button>
+            ) : undefined
+          }
+        />
       </div>
     )
   }
